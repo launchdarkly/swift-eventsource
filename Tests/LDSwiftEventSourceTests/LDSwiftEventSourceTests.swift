@@ -3,10 +3,9 @@ import XCTest
 
 final class LDSwiftEventSourceTests: XCTestCase {
     func testExample() {
-        // This is an example of a functional test case.
         // Use XCTAssert and related functions to verify your tests produce the correct
         // results.
-        XCTAssertEqual(LDSwiftEventSource().text, "Hello, World!")
+        //XCTAssertEqual(LDSwiftEventSource().text, "Hello, World!")
     }
 
     static var allTests = [
