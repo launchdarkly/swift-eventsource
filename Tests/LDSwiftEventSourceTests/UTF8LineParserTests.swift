@@ -13,6 +13,13 @@ final class UTF8LineParserTests: XCTestCase {
         XCTAssertEqual(parser.closeAndReset(), [])
     }
 
+    func testEmptyCrLine() {
+        let line = "\r"
+        let parser = UTF8LineParser()
+        XCTAssertEqual(parser.append(line.data(using: .utf8)!), [])
+        XCTAssertEqual(parser.closeAndReset(), [""])
+    }
+
     func testBasicLine() {
         let line = "test string"
         let parser = UTF8LineParser()
@@ -90,7 +97,24 @@ final class UTF8LineParserTests: XCTestCase {
         XCTAssertEqual(parser.closeAndReset(), [expected])
     }
 
+    func testInvalidCharacterReplacedOnNextLineAfterCr() {
+        let line = "test\r✨string"
+        var data = line.data(using: .utf8)!
+        // Remove 3rd and last byte of "✨"
+        data.remove(at: 7)
+        let parser = UTF8LineParser()
+        XCTAssertEqual(parser.append(data), ["test"])
+        XCTAssertEqual(parser.closeAndReset(), ["�string"])
+    }
 
+    func testMultiLineDataMixedLineEnding() {
+        let line = "test1\rtest2\ntest3\r\ntest4\r\rtest5\n\n"
+        let data = line.data(using: .utf8)!
+        let expected = ["test1", "test2", "test3", "test4", "", "test5", ""]
+        let parser = UTF8LineParser()
+        XCTAssertEqual(parser.append(data), expected)
+        XCTAssertEqual(parser.closeAndReset(), [])
+    }
 
     static var allTests = [
         ("testNoData", testNoData),
