@@ -21,7 +21,7 @@ class EventParser {
         self.connectionHandler = connectionHandler
     }
 
-    func parseLine(line: String) {
+    func parse(line: String) {
         let splitByColon = line.split(separator: ":", maxSplits: 1, omittingEmptySubsequences: false)
 
         switch (splitByColon[0], splitByColon[safe: 1]) {

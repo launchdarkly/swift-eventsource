@@ -194,9 +194,9 @@ public class EventSource: NSObject, URLSessionDataDelegate {
     // Tells the delegate that the task finished transferring data.
     public func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
         //
-        utf8LineParser.closeAndReset().forEach(eventParser.parseLine)
+        utf8LineParser.closeAndReset().forEach(eventParser.parse)
         // Send additional empty line to force a last dispatch
-        eventParser.parseLine(line: "")
+        eventParser.parse(line: "")
 
         log("finished transferring data")
         if let error = error {
@@ -247,7 +247,7 @@ public class EventSource: NSObject, URLSessionDataDelegate {
 
     // Tells the delegate that the data task has received some of the expected data.
     public func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive data: Data) {
-        utf8LineParser.append(data).forEach(eventParser.parseLine)
+        utf8LineParser.append(data).forEach(eventParser.parse)
     }
 
     public struct Config {
