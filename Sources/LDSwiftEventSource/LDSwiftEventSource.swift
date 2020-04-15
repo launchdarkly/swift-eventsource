@@ -8,37 +8,28 @@ public protocol EventHandler {
     func onError(error: Error)
 }
 
-//protocol ConnectionHandler {
-//    func setReconnectionTime(reconnectionTime: TimeInterval)
-//    func setLastEventId(lastEventId: String)
-//}
-
 typealias ConnectionHandler = (setReconnectionTime: (TimeInterval) -> (), setLastEventId: (String) -> ())
 public typealias ConnectionErrorHandler = (Error) -> ConnectionErrorAction
 
 ///
 public enum ConnectionErrorAction {
-    ///
+    /// Specifies that the error should be logged normally and dispatched to the EventHandler. Connection retrying will proceed normally if appropriate.
     case proceed
-    ///
+    /// Specifies that the connection should be immediately shut down and not retried. The error will not be dispatched to the EventHandler
     case shutdown
 }
 
-//public protocol ConnectionErrorHandler {
-//    func onConnectionError(error: Error) -> ConnectionErrorAction
-//}
-
-///
+/// Enum values representing the states of an EventSource
 enum ReadyState {
-    ///
+    /// The EventSource has not been started yet.
     case raw
-    ///
+    /// The EventSource is attempting to make a connection.
     case connecting
-    ///
+    /// The EventSource is active and the EventSource is listening for events.
     case open
-    ///
+    /// The connection has been closed or has failed, and the EventSource will attempt to reconnect.
     case closed
-    ///
+    /// The connection has been permanently closed and will not reconnect.
     case shutdown
 }
 
@@ -193,7 +184,6 @@ public class EventSource: NSObject, URLSessionDataDelegate {
 
     // Tells the delegate that the task finished transferring data.
     public func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
-        //
         utf8LineParser.closeAndReset().forEach(eventParser.parse)
         // Send additional empty line to force a last dispatch
         eventParser.parse(line: "")
@@ -208,16 +198,6 @@ public class EventSource: NSObject, URLSessionDataDelegate {
     // Tells the delegate that the remote server requested an HTTP redirect.
     public func urlSession(_ session: URLSession, task: URLSessionTask, willPerformHTTPRedirection response: HTTPURLResponse, newRequest request: URLRequest, completionHandler: @escaping (URLRequest?) -> Void) {
         log("http redirect requested")
-    }
-
-    // Periodically informs the delegate of the progress of sending body content to the server.
-    public func urlSession(_ session: URLSession, task: URLSessionTask, didSendBodyData bytesSent: Int64, totalBytesSent: Int64, totalBytesExpectedToSend: Int64) {
-        log("progress sending body")
-    }
-
-    // Tells the delegate when a task requires a new request body stream to send to the remote server.
-    public func urlSession(_ session: URLSession, task: URLSessionTask, needNewBodyStream completionHandler: @escaping (InputStream?) -> Void) {
-        log("new body stream needed")
     }
 
     // Tells the delegate that the task is waiting until suitable connectivity is available before beginning the network load.
