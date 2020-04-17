@@ -51,7 +51,7 @@ public class EventSource: NSObject, URLSessionDataDelegate {
     private var readyState: ReadyState = .raw
 
     private var lastEventId: String?
-    private var reconnectTime: TimeInterval?
+    private var reconnectTime: TimeInterval
     private var connectedTime: Date?
 
     private var reconnectionAttempts: Int = 0
@@ -62,6 +62,7 @@ public class EventSource: NSObject, URLSessionDataDelegate {
     public init(config: Config) {
         self.config = config
         self.lastEventId = config.lastEventId
+        self.reconnectTime = config.reconnectTime
     }
 
     private func log(_ msg: String) {
@@ -75,30 +76,28 @@ public class EventSource: NSObject, URLSessionDataDelegate {
                 self.log("Start method called on this already-started EventSource object. Doing nothing")
                 return
             }
-
-            self.log("Starting EventSource client")
-            let connectionHandler: ConnectionHandler = (
-                setReconnectionTime: { reconnectionTime in self.reconnectTime = reconnectionTime },
-                setLastEventId: { eventId in self.lastEventId = eventId }
-            )
-            self.eventParser = EventParser(handler: self.config.handler, connectionHandler: connectionHandler)
-            let sessionConfig = URLSessionConfiguration.default
-            sessionConfig.httpAdditionalHeaders = ["Accept": "text/event-stream", "Cache-Control": "no-cache"]
-            sessionConfig.timeoutIntervalForRequest = self.config.idleTimeout
-            // TODO change queue
-            let session = URLSession.init(configuration: sessionConfig, delegate: self, delegateQueue: nil)
-            var urlRequest = URLRequest(url: self.config.url, cachePolicy: URLRequest.CachePolicy.reloadIgnoringLocalAndRemoteCacheData, timeoutInterval: self.config.idleTimeout)
-            urlRequest.httpMethod = self.config.method
-            urlRequest.httpBody = self.config.body
-            urlRequest.setValue(self.lastEventId, forHTTPHeaderField: "Last-Event-ID")
-            urlRequest.allHTTPHeaderFields?.merge(self.config.headers, uniquingKeysWith: { $1 })
-            session.dataTask(with: urlRequest).resume()
+            self.connect()
         }
     }
 
     private func connect() {
-        var reconnectionAttempts: Int = 0
-        var errorHandlerAction: ConnectionErrorAction? = nil
+        self.log("Starting EventSource client")
+        let connectionHandler: ConnectionHandler = (
+            setReconnectionTime: { reconnectionTime in self.reconnectTime = reconnectionTime },
+            setLastEventId: { eventId in self.lastEventId = eventId }
+        )
+        self.eventParser = EventParser(handler: self.config.handler, connectionHandler: connectionHandler)
+        let sessionConfig = URLSessionConfiguration.default
+        sessionConfig.httpAdditionalHeaders = ["Accept": "text/event-stream", "Cache-Control": "no-cache"]
+        sessionConfig.timeoutIntervalForRequest = self.config.idleTimeout
+        // TODO change queue
+        let session = URLSession.init(configuration: sessionConfig, delegate: self, delegateQueue: nil)
+        var urlRequest = URLRequest(url: self.config.url, cachePolicy: URLRequest.CachePolicy.reloadIgnoringLocalAndRemoteCacheData, timeoutInterval: self.config.idleTimeout)
+        urlRequest.httpMethod = self.config.method
+        urlRequest.httpBody = self.config.body
+        urlRequest.setValue(self.lastEventId, forHTTPHeaderField: "Last-Event-ID")
+        urlRequest.allHTTPHeaderFields?.merge(self.config.headers, uniquingKeysWith: { $1 })
+        session.dataTask(with: urlRequest).resume()
     }
 
     private func dispatchError(error: Error) -> ConnectionErrorAction {
@@ -125,28 +124,23 @@ public class EventSource: NSObject, URLSessionDataDelegate {
             config.handler.onClosed()
         }
 
-        if let connectedTime = connectedTime, Date().timeIntervalSince(connectedTime) >= config.backoffResetThreshold {
-            reconnectionAttempts = 0
+        if nextState != .shutdown {
+            reconnect()
         }
     }
 
-    // MARK: URLSessionDelegate methods
-
-    // Tells the URL session that the session has been invalidated.
-    public func urlSession(_ session: URLSession, didBecomeInvalidWithError error: Error?) {
-        log("became invalid with error \(error)")
-        if readyState != .shutdown {
-            log("Connection problem.")
-            if let error = error {
-                errorHandlerAction = dispatchError(error: error)
-            } else {
-                errorHandlerAction = .proceed
-            }
-        } else {
-            errorHandlerAction = .shutdown
+    private func reconnect() {
+        if let connectedTime = connectedTime, Date().timeIntervalSince(connectedTime) >= config.backoffResetThreshold {
+            reconnectionAttempts = 0
         }
 
-        afterComplete()
+        let maxSleep = min(config.maxReconnectTime, reconnectTime * pow(2.0, Double(reconnectionAttempts)))
+        let sleep = maxSleep / 2 + Double.random(in: 0...maxSleep)
+
+        log("Waiting \(sleep) seconds before reconnecting...")
+        delegateQueue.asyncAfter(deadline: .now() + sleep) {
+            self.connect()
+        }
     }
 
     // MARK: URLSessionTaskDelegate methods
@@ -157,10 +151,15 @@ public class EventSource: NSObject, URLSessionDataDelegate {
         // Send additional empty line to force a last dispatch
         eventParser.parse(line: "")
 
-        log("finished transferring data")
         if let error = error {
-            config.handler.onError(error: error)
-            log("With error \(error)")
+            if readyState != .shutdown {
+                log("Connection error: \(error)")
+                errorHandlerAction = dispatchError(error: error)
+            } else {
+                errorHandlerAction = .shutdown
+            }
+        } else {
+            log("Connection unexpectedly closed.")
         }
 
         afterComplete()
