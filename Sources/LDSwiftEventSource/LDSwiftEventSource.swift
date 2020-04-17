@@ -43,69 +43,6 @@ public struct MessageEvent: Equatable, Hashable {
     }
 }
 
-class ESDelegate: NSObject, URLSessionDataDelegate {
-    // MARK: URLSessionDelegate methods
-
-    // Tells the URL session that the session has been invalidated.
-    func urlSession(_ session: URLSession, didBecomeInvalidWithError error: Error?) {
-
-    }
-
-    // Requests credentials from the delegate in response to a session-level authentication request from the remote server.
-    func urlSession(_ session: URLSession, didReceive challenge: URLAuthenticationChallenge, completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
-
-    }
-
-    // MARK: URLSessionTaskDelegate methods
-
-    // Tells the delegate that the task finished transferring data.
-    func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
-
-    }
-
-    // Tells the delegate that the remote server requested an HTTP redirect.
-    func urlSession(_ session: URLSession, task: URLSessionTask, willPerformHTTPRedirection response: HTTPURLResponse, newRequest request: URLRequest, completionHandler: @escaping (URLRequest?) -> Void) {
-
-    }
-
-    // Periodically informs the delegate of the progress of sending body content to the server.
-    func urlSession(_ session: URLSession, task: URLSessionTask, didSendBodyData bytesSent: Int64, totalBytesSent: Int64, totalBytesExpectedToSend: Int64) {
-
-    }
-
-    // Tells the delegate when a task requires a new request body stream to send to the remote server.
-    func urlSession(_ session: URLSession, task: URLSessionTask, needNewBodyStream completionHandler: @escaping (InputStream?) -> Void) {
-
-    }
-
-    // Requests credentials from the delegate in response to an authentication request from the remote server.
-    func urlSession(_ session: URLSession, task: URLSessionTask, didReceive challenge: URLAuthenticationChallenge, completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
-
-    }
-
-    // Tells the delegate that the task is waiting until suitable connectivity is available before beginning the network load.
-    func urlSession(_ session: URLSession, taskIsWaitingForConnectivity task: URLSessionTask) {
-
-    }
-
-    // MARK: URLSessionDataDelegate methods
-
-    // Tells the delegate that the data task received the initial reply (headers) from the server.
-    func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive response: URLResponse, completionHandler: @escaping (URLSession.ResponseDisposition) -> Void) {
-
-    }
-
-    // Tells the delegate that the data task has received some of the expected data.
-    func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive data: Data) {
-
-    }
-
-    // Asks the delegate whether the data (or upload) task should store the response in the cache.
-    func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, willCacheResponse proposedResponse: CachedURLResponse, completionHandler: @escaping (CachedURLResponse?) -> Void) {
-
-    }
-}
-
 public class EventSource: NSObject, URLSessionDataDelegate {
 
     private let config: Config
@@ -147,9 +84,10 @@ public class EventSource: NSObject, URLSessionDataDelegate {
             self.eventParser = EventParser(handler: self.config.handler, connectionHandler: connectionHandler)
             let sessionConfig = URLSessionConfiguration.default
             sessionConfig.httpAdditionalHeaders = ["Accept": "text/event-stream", "Cache-Control": "no-cache"]
+            sessionConfig.timeoutIntervalForRequest = self.config.idleTimeout
             // TODO change queue
             let session = URLSession.init(configuration: sessionConfig, delegate: self, delegateQueue: nil)
-            var urlRequest = URLRequest(url: self.config.url, cachePolicy: URLRequest.CachePolicy.reloadIgnoringLocalAndRemoteCacheData, timeoutInterval: 60.0)
+            var urlRequest = URLRequest(url: self.config.url, cachePolicy: URLRequest.CachePolicy.reloadIgnoringLocalAndRemoteCacheData, timeoutInterval: self.config.idleTimeout)
             urlRequest.httpMethod = self.config.method
             urlRequest.httpBody = self.config.body
             urlRequest.setValue(self.lastEventId, forHTTPHeaderField: "Last-Event-ID")
@@ -173,11 +111,42 @@ public class EventSource: NSObject, URLSessionDataDelegate {
 
     func getLastEventId() -> String? { lastEventId }
 
+    private func afterComplete() {
+        var nextState: ReadyState = .closed
+        let currentState: ReadyState = readyState
+        if errorHandlerAction == .shutdown {
+            log("Connection has been explicitly shut down by error handler")
+            nextState = .shutdown
+        }
+        readyState = nextState
+        log("State: \(currentState) -> \(nextState)")
+
+        if currentState == .open {
+            config.handler.onClosed()
+        }
+
+        if let connectedTime = connectedTime, Date().timeIntervalSince(connectedTime) >= config.backoffResetThreshold {
+            reconnectionAttempts = 0
+        }
+    }
+
     // MARK: URLSessionDelegate methods
 
     // Tells the URL session that the session has been invalidated.
     public func urlSession(_ session: URLSession, didBecomeInvalidWithError error: Error?) {
-        log("became invalid with error")
+        log("became invalid with error \(error)")
+        if readyState != .shutdown {
+            log("Connection problem.")
+            if let error = error {
+                errorHandlerAction = dispatchError(error: error)
+            } else {
+                errorHandlerAction = .proceed
+            }
+        } else {
+            errorHandlerAction = .shutdown
+        }
+
+        afterComplete()
     }
 
     // MARK: URLSessionTaskDelegate methods
@@ -193,6 +162,8 @@ public class EventSource: NSObject, URLSessionDataDelegate {
             config.handler.onError(error: error)
             log("With error \(error)")
         }
+
+        afterComplete()
     }
 
     // Tells the delegate that the remote server requested an HTTP redirect.
@@ -239,6 +210,10 @@ public class EventSource: NSObject, URLSessionDataDelegate {
         public var connectionErrorHandler: ConnectionErrorHandler = { _ in .proceed }
         public var lastEventId: String? = nil
         public var headers: [String: String] = [:]
+        public var reconnectTime: TimeInterval = 1.0
+        public var maxReconnectTime: TimeInterval = 30.0
+        public var backoffResetThreshold: TimeInterval = 60.0
+        public var idleTimeout: TimeInterval = 300.0
 
         public init(handler: EventHandler, url: URL) {
             self.handler = handler
