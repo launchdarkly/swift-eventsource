@@ -130,12 +130,14 @@ public class EventSource: NSObject, URLSessionDataDelegate {
     }
 
     private func reconnect() {
+        reconnectionAttempts += 1
+
         if let connectedTime = connectedTime, Date().timeIntervalSince(connectedTime) >= config.backoffResetThreshold {
             reconnectionAttempts = 0
         }
 
         let maxSleep = min(config.maxReconnectTime, reconnectTime * pow(2.0, Double(reconnectionAttempts)))
-        let sleep = maxSleep / 2 + Double.random(in: 0...maxSleep)
+        let sleep = maxSleep / 2 + Double.random(in: 0...(maxSleep/2))
 
         log("Waiting \(sleep) seconds before reconnecting...")
         delegateQueue.asyncAfter(deadline: .now() + sleep) {
