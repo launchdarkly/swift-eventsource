@@ -72,7 +72,7 @@ public class EventSource: NSObject, URLSessionDataDelegate {
         self.config = config
         self.lastEventId = config.lastEventId
         self.reconnectTime = config.reconnectTime
-        self.logger = OSLog(subsystem: "com.launchdarkly.swift-event-source", category: "EventSource")
+        self.logger = OSLog(subsystem: "com.launchdarkly.swift-event-source", category: "LDEventSource")
     }
 
     public func start() {
@@ -144,7 +144,7 @@ public class EventSource: NSObject, URLSessionDataDelegate {
         let maxSleep = min(config.maxReconnectTime, reconnectTime * pow(2.0, Double(reconnectionAttempts)))
         let sleep = maxSleep / 2 + Double.random(in: 0...(maxSleep/2))
 
-        os_log("Waiting %d seconds before reconnecting...", log: logger, type: .info, sleep)
+        os_log("Waiting %.3f seconds before reconnecting...", log: logger, type: .info, sleep)
         delegateQueue.asyncAfter(deadline: .now() + sleep) {
             self.connect()
         }
@@ -182,7 +182,7 @@ public class EventSource: NSObject, URLSessionDataDelegate {
 
             config.handler.onOpened()
         } else {
-            os_log("Unsuccessful response: %ld", log: logger, type: .info, httpResponse.statusCode)
+            os_log("Unsuccessful response: %d", log: logger, type: .info, httpResponse.statusCode)
         }
 
         completionHandler(.allow)
