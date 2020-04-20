@@ -182,7 +182,7 @@ public class EventSource: NSObject, URLSessionDataDelegate {
 
             config.handler.onOpened()
         } else {
-            os_log("Unsuccessful response: %d", log: logger, type: .info, httpResponse.statusCode)
+            os_log("Unsuccessful response: %ld", log: logger, type: .info, httpResponse.statusCode)
         }
 
         completionHandler(.allow)
