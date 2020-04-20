@@ -6,10 +6,10 @@ import PackageDescription
 let package = Package(
     name: "LDSwiftEventSource",
     platforms: [
-        .iOS(.v8),
+        .iOS(.v10),
         .macOS(.v10_12),
-        .watchOS(.v2),
-        .tvOS(.v9)
+        .watchOS(.v3),
+        .tvOS(.v10)
     ],
     products: [
         // Products define the executables and libraries produced by a package, and make them visible to other packages.
