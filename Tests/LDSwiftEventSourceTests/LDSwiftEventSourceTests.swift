@@ -52,14 +52,12 @@ final class LDSwiftEventSourceTests: XCTestCase {
 }
 
 private class MockHandler: EventHandler {
-    var onOpenedCallCount: Int = 0
     func onOpened() {
-        onOpenedCallCount += 1
+
     }
 
-    var onClosedCallCount: Int = 0
     func onClosed() {
-        onClosedCallCount += 1
+
     }
 
     func onMessage(event: String, messageEvent: MessageEvent) {
