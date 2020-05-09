@@ -1,30 +1,18 @@
-Pod::Spec.new do |ld|
+Pod::Spec.new do |s|
+  s.name         = "LDSwiftEventSource"
+  s.version      = "0.1.0"
+  s.summary      = "Swift EventSource library"
+  s.homepage     = "https://github.com/launchdarkly/swift-eventsource"
+  s.license      = { :type => "Apache License, Version 2.0", :file => "LICENSE.txt" }
+  s.author       = { "LaunchDarkly" => "team@launchdarkly.com" }
 
-  ld.name         = "LDSwiftEventSource"
-  ld.version      = "0.1.0"
-  ld.summary      = "Swift EventSource library"
+  s.ios.deployment_target     = "10.0"
+  s.watchos.deployment_target = "3.0"
+  s.tvos.deployment_target    = "10.0"
+  s.osx.deployment_target     = "10.12"
 
-  ld.description  = <<-DESC
-                    The best EventSource library around
-                   DESC
+  s.source       = { :git => s.homepage + '.git', :tag => v + s.version}
+  s.source_files = "Source/**/*.swift"
 
-  ld.homepage     = "https://github.com/launchdarkly/swift-eventsource"
-
-  ld.license      = { :type => "Apache License, Version 2.0", :file => "LICENSE.txt" }
-
-  ld.author       = { "LaunchDarkly" => "team@launchdarkly.com" }
-
-  ld.ios.deployment_target     = "8.0"
-  ld.watchos.deployment_target = "2.0"
-  ld.tvos.deployment_target    = "9.0"
-  ld.osx.deployment_target     = "10.10"
-
-  ld.source       = { :git => "https://github.com/launchdarkly/swift-eventsource.git", :tag => 'master'}
-
-  ld.source_files = "LDSwiftEventSource/LDSwiftEventSource/**/*.{h,m,swift}"
-
-  ld.requires_arc = true
-
-  ld.swift_version = '5.0'
-
+  s.swift_versions = ['5.0', '5.1', '5.2']
 end
