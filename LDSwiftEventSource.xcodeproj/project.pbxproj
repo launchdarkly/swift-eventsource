@@ -37,6 +37,7 @@
 		B49B5E67246684B9008BF867 /* LDSwiftEventSource.h in Headers */ = {isa = PBXBuildFile; fileRef = B49B5E65246684B9008BF867 /* LDSwiftEventSource.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B49B5E68246684B9008BF867 /* LDSwiftEventSource.h in Headers */ = {isa = PBXBuildFile; fileRef = B49B5E65246684B9008BF867 /* LDSwiftEventSource.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B49B5E69246684B9008BF867 /* LDSwiftEventSource.h in Headers */ = {isa = PBXBuildFile; fileRef = B49B5E65246684B9008BF867 /* LDSwiftEventSource.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		B49B5E72246C4796008BF867 /* LDSwiftEventSource.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B49B5DFC24667D41008BF867 /* LDSwiftEventSource.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -115,6 +116,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B49B5E72246C4796008BF867 /* LDSwiftEventSource.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

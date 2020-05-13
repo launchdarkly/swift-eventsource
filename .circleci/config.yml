@@ -1,0 +1,25 @@
+version: 2.1
+jobs:
+  build:
+    shell: /bin/bash --login
+
+    macos:
+      xcode: '11.4.0'
+
+    steps:
+    - checkout
+    - run:
+        name: Test macOS
+        command: xcodebuild test -scheme 'LDSwiftEventSource macOS' -destination 'platform=macOS'
+
+    - run:
+        name: Test iOS
+        command: xcodebuild test -scheme 'LDSwiftEventSource iOS' -destination 'platform=macOS' CODE_SIGN_IDENTITY=
+
+    - run:
+        name: Test tvOS
+        command: xcodebuild test -scheme 'LDSwiftEventSource tvOS' -destination 'platform=macOS'
+
+    - run:
+        name: Build watchOS # No unit testing on watchOS
+        command: xcodebuild build -scheme 'LDSwiftEventSource watchOS' -destination 'platform=macOS'
