@@ -1,0 +1,38 @@
+version: 2.1
+jobs:
+  build:
+    shell: /bin/bash --login -eo pipefail
+
+    macos:
+      xcode: '11.4.0'
+
+    steps:
+    - checkout
+
+    - run:
+        name: Setup for builds
+        command: |
+          mkdir -p 'test-results'
+          mkdir -p 'artifacts'
+
+    - run:
+        name: Test macOS
+        command: xcodebuild test -scheme 'LDSwiftEventSource macOS' -destination 'platform=macOS' | tee 'artifacts/raw-logs-macOS.txt' | xcpretty -r junit -o 'test-results/platform-macOS/junit.xml'
+
+    - run:
+        name: Test iOS
+        command: xcodebuild test -scheme 'LDSwiftEventSource iOS' -destination 'platform=iOS Simulator,name=iPhone 8,OS=12.2' CODE_SIGN_IDENTITY= | tee 'artifacts/raw-logs-iOS.txt' | xcpretty -r junit -o 'test-results/platform-iOS/junit.xml'
+
+    - run:
+        name: Test tvOS
+        command: xcodebuild test -scheme 'LDSwiftEventSource tvOS' -destination 'platform=tvOS Simulator,name=Apple TV' | tee 'artifacts/raw-logs-tvOS.txt' | xcpretty -r junit -o 'test-results/platform-tvOS/junit.xml'
+
+    - run:
+        name: Build watchOS # No unit testing on watchOS
+        command: xcodebuild build -scheme 'LDSwiftEventSource watchOS' | tee 'artifacts/raw-logs-watchOS.txt' | xcpretty
+
+    - store_test_results:
+        path: test-results
+
+    - store_artifacts:
+        path: artifacts
