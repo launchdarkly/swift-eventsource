@@ -19,8 +19,8 @@ jobs:
 
     - run:
         name: Test tvOS
-        command: xcodebuild test -scheme 'LDSwiftEventSource tvOS' -destination 'platform=macOS'
+        command: xcodebuild test -scheme 'LDSwiftEventSource tvOS' -destination 'platform=tvOS Simulator,name=Apple TV'
 
     - run:
         name: Build watchOS # No unit testing on watchOS
-        command: xcodebuild build -scheme 'LDSwiftEventSource watchOS' -destination 'platform=macOS'
+        command: xcodebuild build -scheme 'LDSwiftEventSource watchOS'
