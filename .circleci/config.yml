@@ -8,6 +8,7 @@ jobs:
 
     steps:
     - checkout
+
     - run:
         name: Test macOS
         command: xcodebuild test -scheme 'LDSwiftEventSource macOS' -destination 'platform=macOS'
