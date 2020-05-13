@@ -21,7 +21,7 @@ jobs:
 
     - run:
         name: Test iOS
-        command: xcodebuild test -scheme 'LDSwiftEventSource iOS' -destination 'platform=macOS' CODE_SIGN_IDENTITY= | tee 'artifacts/raw-logs-iOS.txt' | xcpretty -r junit -o 'test-results/platform-iOS/junit.xml'
+        command: xcodebuild test -scheme 'LDSwiftEventSource iOS' -destination 'platform=iOS Simulator,name=iPhone 8,OS=12.2' CODE_SIGN_IDENTITY= | tee 'artifacts/raw-logs-iOS.txt' | xcpretty -r junit -o 'test-results/platform-iOS/junit.xml'
 
     - run:
         name: Test tvOS
