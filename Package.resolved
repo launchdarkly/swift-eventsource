@@ -1,0 +1,16 @@
+{
+  "object": {
+    "pins": [
+      {
+        "package": "Embassy",
+        "repositoryURL": "git@github.com:envoy/Embassy.git",
+        "state": {
+          "branch": null,
+          "revision": "189436100c00efbf5fb2653fe7972a9371db0a91",
+          "version": "4.1.1"
+        }
+      }
+    ]
+  },
+  "version": 1
+}

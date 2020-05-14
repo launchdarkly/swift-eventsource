@@ -16,7 +16,9 @@ let package = Package(
             name: "LDSwiftEventSource",
             targets: ["LDSwiftEventSource"]),
     ],
-    dependencies: [],
+    dependencies: [.package(url: "git@github.com:envoy/Embassy.git",
+                            from: "4.1.1")
+    ],
     targets: [
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.
         // Targets can depend on other targets in this package, and on products in packages which this package depends on.
@@ -25,7 +27,7 @@ let package = Package(
             path: "Source"),
         .testTarget(
             name: "LDSwiftEventSourceTests",
-            dependencies: ["LDSwiftEventSource"],
+            dependencies: ["LDSwiftEventSource", "Embassy"],
             path: "Tests"),
     ],
     swiftLanguageVersions: [.v5])

@@ -88,6 +88,7 @@ public class EventSource: NSObject, URLSessionDataDelegate {
     private var errorHandlerAction: ConnectionErrorAction? = nil
     private let utf8LineParser: UTF8LineParser = UTF8LineParser()
     private var eventParser: EventParser!
+    private var sessionTask: URLSessionTask?
 
     public init(config: Config) {
         self.config = config
@@ -105,6 +106,14 @@ public class EventSource: NSObject, URLSessionDataDelegate {
             }
             self.connect()
         }
+    }
+
+    public func stop() {
+        sessionTask?.cancel()
+        if (readyState == .open) {
+            config.handler.onClosed()
+        }
+        readyState = .shutdown
     }
 
     public func getLastEventId() -> String? { lastEventId }
@@ -127,7 +136,9 @@ public class EventSource: NSObject, URLSessionDataDelegate {
         urlRequest.httpBody = self.config.body
         urlRequest.setValue(self.lastEventId, forHTTPHeaderField: "Last-Event-ID")
         urlRequest.allHTTPHeaderFields?.merge(self.config.headers, uniquingKeysWith: { $1 })
-        session.dataTask(with: urlRequest).resume()
+        let task = session.dataTask(with: urlRequest)
+        task.resume()
+        sessionTask = task
     }
 
     private func dispatchError(error: Error) -> ConnectionErrorAction {
