@@ -94,7 +94,7 @@ public class EventSource: NSObject, URLSessionDataDelegate {
         self.config = config
         self.lastEventId = config.lastEventId
         self.reconnectTime = config.reconnectTime
-        self.logger = OSLog(subsystem: "com.launchdarkly.swift-event-source", category: "LDEventSource")
+        self.logger = OSLog(subsystem: "com.launchdarkly.swift-eventsource", category: "LDEventSource")
     }
 
     public func start() {
