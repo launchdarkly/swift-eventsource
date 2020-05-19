@@ -41,7 +41,7 @@ public enum ConnectionErrorAction {
     /// Connection retrying will proceed normally if appropriate.
     case proceed
     /// Specifies that the connection should be immediately shut down and not retried. The error
-    ///  will not be dispatched to the EventHandler
+    /// will not be dispatched to the EventHandler
     case shutdown
 }
 
@@ -66,15 +66,14 @@ public struct MessageEvent: Equatable, Hashable {
     /// The last seen event id, or the event id set in the Config if none have been received.
     public let lastEventId: String?
 
-    init(data: String, lastEventId: String? = nil) {
+    public init(data: String, lastEventId: String? = nil) {
         self.data = data
         self.lastEventId = lastEventId
     }
 }
 
-public class EventSource: NSObject, URLSessionDataDelegate {
-
-    private let config: Config
+class ESDataDelegate: NSObject, URLSessionDataDelegate {
+    private let config: EventSource.Config
 
     private let delegateQueue: DispatchQueue = DispatchQueue(label: "ESDelegateQueue")
     private let logger: OSLog
@@ -90,14 +89,14 @@ public class EventSource: NSObject, URLSessionDataDelegate {
     private var eventParser: EventParser!
     private var sessionTask: URLSessionTask?
 
-    public init(config: Config) {
+    init(config: EventSource.Config) {
         self.config = config
         self.lastEventId = config.lastEventId
         self.reconnectTime = config.reconnectTime
         self.logger = OSLog(subsystem: "com.launchdarkly.swift-eventsource", category: "LDEventSource")
     }
 
-    public func start() {
+    func start() {
         delegateQueue.async {
             guard self.readyState == .raw
             else {
@@ -108,7 +107,7 @@ public class EventSource: NSObject, URLSessionDataDelegate {
         }
     }
 
-    public func stop() {
+    func stop() {
         sessionTask?.cancel()
         if (readyState == .open) {
             config.handler.onClosed()
@@ -116,7 +115,7 @@ public class EventSource: NSObject, URLSessionDataDelegate {
         readyState = .shutdown
     }
 
-    public func getLastEventId() -> String? { lastEventId }
+    func getLastEventId() -> String? { lastEventId }
 
     private func connect() {
         os_log("Starting EventSource client", log: logger, type: .info)
@@ -229,6 +228,24 @@ public class EventSource: NSObject, URLSessionDataDelegate {
     public func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive data: Data) {
         utf8LineParser.append(data).forEach(eventParser.parse)
     }
+}
+
+public class EventSource {
+    private let dataDelegate: ESDataDelegate
+
+    public init(config: Config) {
+        dataDelegate = ESDataDelegate(config: config)
+    }
+
+    public func start() {
+        dataDelegate.start()
+    }
+
+    public func stop() {
+        dataDelegate.stop()
+    }
+
+    public func getLastEventId() -> String? { dataDelegate.getLastEventId() }
 
     /// Struct describing the configuration of the EventSource
     public struct Config {
