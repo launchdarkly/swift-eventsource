@@ -6,7 +6,7 @@ public class UnsuccessfulResponseError: Error {
     /// The HTTP response code received
     public let responseCode: Int
 
-    init(responseCode: Int) {
+    public init(responseCode: Int) {
         self.responseCode = responseCode
     }
 }
@@ -66,7 +66,7 @@ public struct MessageEvent: Equatable, Hashable {
     /// The last seen event id, or the event id set in the Config if none have been received.
     public let lastEventId: String?
 
-    init(data: String, lastEventId: String? = nil) {
+    public init(data: String, lastEventId: String? = nil) {
         self.data = data
         self.lastEventId = lastEventId
     }
