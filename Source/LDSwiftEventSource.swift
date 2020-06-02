@@ -39,7 +39,7 @@ public class EventSource: NSObject, URLSessionDataDelegate {
 
     public func stop() {
         sessionTask?.cancel()
-        if (readyState == .open) {
+        if readyState == .open {
             config.handler.onClosed()
         }
         readyState = .shutdown
