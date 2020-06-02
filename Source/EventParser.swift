@@ -1,5 +1,7 @@
 import Foundation
 
+typealias ConnectionHandler = (setReconnectionTime: (TimeInterval) -> (), setLastEventId: (String) -> ())
+
 class EventParser {
     private struct Constants {
         static let dataLabel: Substring = "data"
