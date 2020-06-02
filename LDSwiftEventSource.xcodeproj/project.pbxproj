@@ -7,6 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		B495D4A8248652DF00AE9233 /* Types.swift in Sources */ = {isa = PBXBuildFile; fileRef = B495D4A7248652DF00AE9233 /* Types.swift */; };
+		B495D4A9248652DF00AE9233 /* Types.swift in Sources */ = {isa = PBXBuildFile; fileRef = B495D4A7248652DF00AE9233 /* Types.swift */; };
+		B495D4AA248652DF00AE9233 /* Types.swift in Sources */ = {isa = PBXBuildFile; fileRef = B495D4A7248652DF00AE9233 /* Types.swift */; };
+		B495D4AB248652DF00AE9233 /* Types.swift in Sources */ = {isa = PBXBuildFile; fileRef = B495D4A7248652DF00AE9233 /* Types.swift */; };
 		B49B5DE924667D07008BF867 /* LDSwiftEventSource.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B49B5DE024667D06008BF867 /* LDSwiftEventSource.framework */; };
 		B49B5E2124667D5E008BF867 /* LDSwiftEventSource.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B49B5E1824667D5E008BF867 /* LDSwiftEventSource.framework */; };
 		B49B5E4824667F59008BF867 /* UTF8LineParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49B5E4524667F43008BF867 /* UTF8LineParser.swift */; };
@@ -65,6 +69,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		B495D4A7248652DF00AE9233 /* Types.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Types.swift; sourceTree = "<group>"; };
 		B49B5DE024667D06008BF867 /* LDSwiftEventSource.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = LDSwiftEventSource.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		B49B5DE324667D06008BF867 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		B49B5DE824667D07008BF867 /* LDSwiftEventSource iOS Tests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "LDSwiftEventSource iOS Tests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -188,6 +193,7 @@
 				B49B5E4624667F43008BF867 /* EventParser.swift */,
 				B49B5E4724667F43008BF867 /* LDSwiftEventSource.swift */,
 				B49B5E65246684B9008BF867 /* LDSwiftEventSource.h */,
+				B495D4A7248652DF00AE9233 /* Types.swift */,
 			);
 			path = Source;
 			sourceTree = "<group>";
@@ -484,6 +490,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				B49B5E4824667F59008BF867 /* UTF8LineParser.swift in Sources */,
+				B495D4A8248652DF00AE9233 /* Types.swift in Sources */,
 				B49B5E4924667F59008BF867 /* EventParser.swift in Sources */,
 				B49B5E4A24667F59008BF867 /* LDSwiftEventSource.swift in Sources */,
 			);
@@ -505,6 +512,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				B49B5E4B24667F62008BF867 /* UTF8LineParser.swift in Sources */,
+				B495D4A9248652DF00AE9233 /* Types.swift in Sources */,
 				B49B5E4C24667F62008BF867 /* EventParser.swift in Sources */,
 				B49B5E4D24667F62008BF867 /* LDSwiftEventSource.swift in Sources */,
 			);
@@ -526,6 +534,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				B49B5E4E24667F67008BF867 /* UTF8LineParser.swift in Sources */,
+				B495D4AA248652DF00AE9233 /* Types.swift in Sources */,
 				B49B5E4F24667F67008BF867 /* EventParser.swift in Sources */,
 				B49B5E5024667F67008BF867 /* LDSwiftEventSource.swift in Sources */,
 			);
@@ -547,6 +556,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				B49B5E5124667F72008BF867 /* UTF8LineParser.swift in Sources */,
+				B495D4AB248652DF00AE9233 /* Types.swift in Sources */,
 				B49B5E5224667F72008BF867 /* EventParser.swift in Sources */,
 				B49B5E5324667F72008BF867 /* LDSwiftEventSource.swift in Sources */,
 			);
