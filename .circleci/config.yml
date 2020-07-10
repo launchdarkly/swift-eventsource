@@ -35,7 +35,7 @@ jobs:
 
     - run:
         name: Build Tests for tvOS device
-        command: xcodebuild build-for-testing -scheme 'LDSwiftEventSource' -sdk appletvos | tee 'artifacts/raw-logs-appletvos.txt' | xcpretty
+        command: xcodebuild build-for-testing -scheme 'LDSwiftEventSource' -sdk appletvos CODE_SIGN_IDENTITY= | tee 'artifacts/raw-logs-appletvos.txt' | xcpretty
         when: always
 
     - run:
