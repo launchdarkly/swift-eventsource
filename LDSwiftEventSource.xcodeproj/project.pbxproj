@@ -7,51 +7,19 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		B495D4A8248652DF00AE9233 /* Types.swift in Sources */ = {isa = PBXBuildFile; fileRef = B495D4A7248652DF00AE9233 /* Types.swift */; };
 		B495D4A9248652DF00AE9233 /* Types.swift in Sources */ = {isa = PBXBuildFile; fileRef = B495D4A7248652DF00AE9233 /* Types.swift */; };
-		B495D4AA248652DF00AE9233 /* Types.swift in Sources */ = {isa = PBXBuildFile; fileRef = B495D4A7248652DF00AE9233 /* Types.swift */; };
-		B495D4AB248652DF00AE9233 /* Types.swift in Sources */ = {isa = PBXBuildFile; fileRef = B495D4A7248652DF00AE9233 /* Types.swift */; };
-		B49B5DE924667D07008BF867 /* LDSwiftEventSource.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B49B5DE024667D06008BF867 /* LDSwiftEventSource.framework */; };
-		B49B5E2124667D5E008BF867 /* LDSwiftEventSource.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B49B5E1824667D5E008BF867 /* LDSwiftEventSource.framework */; };
-		B49B5E4824667F59008BF867 /* UTF8LineParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49B5E4524667F43008BF867 /* UTF8LineParser.swift */; };
-		B49B5E4924667F59008BF867 /* EventParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49B5E4624667F43008BF867 /* EventParser.swift */; };
-		B49B5E4A24667F59008BF867 /* LDSwiftEventSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49B5E4724667F43008BF867 /* LDSwiftEventSource.swift */; };
 		B49B5E4B24667F62008BF867 /* UTF8LineParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49B5E4524667F43008BF867 /* UTF8LineParser.swift */; };
 		B49B5E4C24667F62008BF867 /* EventParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49B5E4624667F43008BF867 /* EventParser.swift */; };
 		B49B5E4D24667F62008BF867 /* LDSwiftEventSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49B5E4724667F43008BF867 /* LDSwiftEventSource.swift */; };
-		B49B5E4E24667F67008BF867 /* UTF8LineParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49B5E4524667F43008BF867 /* UTF8LineParser.swift */; };
-		B49B5E4F24667F67008BF867 /* EventParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49B5E4624667F43008BF867 /* EventParser.swift */; };
-		B49B5E5024667F67008BF867 /* LDSwiftEventSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49B5E4724667F43008BF867 /* LDSwiftEventSource.swift */; };
-		B49B5E5124667F72008BF867 /* UTF8LineParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49B5E4524667F43008BF867 /* UTF8LineParser.swift */; };
-		B49B5E5224667F72008BF867 /* EventParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49B5E4624667F43008BF867 /* EventParser.swift */; };
-		B49B5E5324667F72008BF867 /* LDSwiftEventSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49B5E4724667F43008BF867 /* LDSwiftEventSource.swift */; };
-		B49B5E5424668022008BF867 /* EventParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49B5E4024667F43008BF867 /* EventParserTests.swift */; };
-		B49B5E5524668022008BF867 /* XCTestManifests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49B5E4124667F43008BF867 /* XCTestManifests.swift */; };
-		B49B5E5624668022008BF867 /* UTF8LineParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49B5E4224667F43008BF867 /* UTF8LineParserTests.swift */; };
-		B49B5E5724668022008BF867 /* LDSwiftEventSourceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49B5E4324667F43008BF867 /* LDSwiftEventSourceTests.swift */; };
 		B49B5E5824668031008BF867 /* EventParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49B5E4024667F43008BF867 /* EventParserTests.swift */; };
 		B49B5E5924668031008BF867 /* XCTestManifests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49B5E4124667F43008BF867 /* XCTestManifests.swift */; };
 		B49B5E5A24668031008BF867 /* UTF8LineParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49B5E4224667F43008BF867 /* UTF8LineParserTests.swift */; };
 		B49B5E5B24668031008BF867 /* LDSwiftEventSourceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49B5E4324667F43008BF867 /* LDSwiftEventSourceTests.swift */; };
-		B49B5E5C24668039008BF867 /* EventParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49B5E4024667F43008BF867 /* EventParserTests.swift */; };
-		B49B5E5D24668039008BF867 /* XCTestManifests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49B5E4124667F43008BF867 /* XCTestManifests.swift */; };
-		B49B5E5E24668039008BF867 /* UTF8LineParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49B5E4224667F43008BF867 /* UTF8LineParserTests.swift */; };
-		B49B5E5F24668039008BF867 /* LDSwiftEventSourceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49B5E4324667F43008BF867 /* LDSwiftEventSourceTests.swift */; };
-		B49B5E66246684B9008BF867 /* LDSwiftEventSource.h in Headers */ = {isa = PBXBuildFile; fileRef = B49B5E65246684B9008BF867 /* LDSwiftEventSource.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B49B5E67246684B9008BF867 /* LDSwiftEventSource.h in Headers */ = {isa = PBXBuildFile; fileRef = B49B5E65246684B9008BF867 /* LDSwiftEventSource.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		B49B5E68246684B9008BF867 /* LDSwiftEventSource.h in Headers */ = {isa = PBXBuildFile; fileRef = B49B5E65246684B9008BF867 /* LDSwiftEventSource.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		B49B5E69246684B9008BF867 /* LDSwiftEventSource.h in Headers */ = {isa = PBXBuildFile; fileRef = B49B5E65246684B9008BF867 /* LDSwiftEventSource.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B49B5E72246C4796008BF867 /* LDSwiftEventSource.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B49B5DFC24667D41008BF867 /* LDSwiftEventSource.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		B49B5DEA24667D07008BF867 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = B49B5DB824667C44008BF867 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = B49B5DDF24667D06008BF867;
-			remoteInfo = "LDSwiftEventSource iOS";
-		};
 		B49B5E0624667D42008BF867 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = B49B5DB824667C44008BF867 /* Project object */;
@@ -59,25 +27,13 @@
 			remoteGlobalIDString = B49B5DFB24667D41008BF867;
 			remoteInfo = "LDSwiftEventSource macOS";
 		};
-		B49B5E2224667D5E008BF867 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = B49B5DB824667C44008BF867 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = B49B5E1724667D5E008BF867;
-			remoteInfo = "LDSwiftEventSource tvOS";
-		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		B495D4A7248652DF00AE9233 /* Types.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Types.swift; sourceTree = "<group>"; };
-		B49B5DE024667D06008BF867 /* LDSwiftEventSource.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = LDSwiftEventSource.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		B49B5DE324667D06008BF867 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		B49B5DE824667D07008BF867 /* LDSwiftEventSource iOS Tests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "LDSwiftEventSource iOS Tests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		B49B5DFC24667D41008BF867 /* LDSwiftEventSource.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = LDSwiftEventSource.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		B49B5E0424667D42008BF867 /* LDSwiftEventSource macOS Tests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "LDSwiftEventSource macOS Tests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
-		B49B5E1824667D5E008BF867 /* LDSwiftEventSource.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = LDSwiftEventSource.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		B49B5E2024667D5E008BF867 /* LDSwiftEventSource tvOS Tests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "LDSwiftEventSource tvOS Tests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
-		B49B5E3424667D70008BF867 /* LDSwiftEventSource.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = LDSwiftEventSource.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		B49B5E0424667D42008BF867 /* LDSwiftEventSource Tests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "LDSwiftEventSource Tests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		B49B5E4024667F43008BF867 /* EventParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventParserTests.swift; sourceTree = "<group>"; };
 		B49B5E4124667F43008BF867 /* XCTestManifests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XCTestManifests.swift; sourceTree = "<group>"; };
 		B49B5E4224667F43008BF867 /* UTF8LineParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UTF8LineParserTests.swift; sourceTree = "<group>"; };
@@ -95,21 +51,6 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		B49B5DDD24667D06008BF867 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		B49B5DE524667D07008BF867 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				B49B5DE924667D07008BF867 /* LDSwiftEventSource.framework in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		B49B5DF924667D41008BF867 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -122,28 +63,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				B49B5E72246C4796008BF867 /* LDSwiftEventSource.framework in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		B49B5E1524667D5E008BF867 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		B49B5E1D24667D5E008BF867 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				B49B5E2124667D5E008BF867 /* LDSwiftEventSource.framework in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		B49B5E3124667D70008BF867 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -163,13 +82,8 @@
 		B49B5DC224667C44008BF867 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				B49B5DE024667D06008BF867 /* LDSwiftEventSource.framework */,
-				B49B5DE824667D07008BF867 /* LDSwiftEventSource iOS Tests.xctest */,
 				B49B5DFC24667D41008BF867 /* LDSwiftEventSource.framework */,
-				B49B5E0424667D42008BF867 /* LDSwiftEventSource macOS Tests.xctest */,
-				B49B5E1824667D5E008BF867 /* LDSwiftEventSource.framework */,
-				B49B5E2024667D5E008BF867 /* LDSwiftEventSource tvOS Tests.xctest */,
-				B49B5E3424667D70008BF867 /* LDSwiftEventSource.framework */,
+				B49B5E0424667D42008BF867 /* LDSwiftEventSource Tests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -214,14 +128,6 @@
 /* End PBXGroup section */
 
 /* Begin PBXHeadersBuildPhase section */
-		B49B5DDB24667D06008BF867 /* Headers */ = {
-			isa = PBXHeadersBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				B49B5E66246684B9008BF867 /* LDSwiftEventSource.h in Headers */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		B49B5DF724667D41008BF867 /* Headers */ = {
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
@@ -230,64 +136,12 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		B49B5E1324667D5E008BF867 /* Headers */ = {
-			isa = PBXHeadersBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				B49B5E68246684B9008BF867 /* LDSwiftEventSource.h in Headers */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		B49B5E2F24667D70008BF867 /* Headers */ = {
-			isa = PBXHeadersBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				B49B5E69246684B9008BF867 /* LDSwiftEventSource.h in Headers */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
-		B49B5DDF24667D06008BF867 /* LDSwiftEventSource iOS */ = {
+		B49B5DFB24667D41008BF867 /* LDSwiftEventSource */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = B49B5DF124667D07008BF867 /* Build configuration list for PBXNativeTarget "LDSwiftEventSource iOS" */;
-			buildPhases = (
-				B49B5DDB24667D06008BF867 /* Headers */,
-				B49B5DDC24667D06008BF867 /* Sources */,
-				B49B5DDD24667D06008BF867 /* Frameworks */,
-				B49B5DDE24667D06008BF867 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			name = "LDSwiftEventSource iOS";
-			productName = "LDSwiftEventSource iOS";
-			productReference = B49B5DE024667D06008BF867 /* LDSwiftEventSource.framework */;
-			productType = "com.apple.product-type.framework";
-		};
-		B49B5DE724667D07008BF867 /* LDSwiftEventSource iOS Tests */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = B49B5DF424667D07008BF867 /* Build configuration list for PBXNativeTarget "LDSwiftEventSource iOS Tests" */;
-			buildPhases = (
-				B49B5DE424667D07008BF867 /* Sources */,
-				B49B5DE524667D07008BF867 /* Frameworks */,
-				B49B5DE624667D07008BF867 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				B49B5DEB24667D07008BF867 /* PBXTargetDependency */,
-			);
-			name = "LDSwiftEventSource iOS Tests";
-			productName = "LDSwiftEventSource iOSTests";
-			productReference = B49B5DE824667D07008BF867 /* LDSwiftEventSource iOS Tests.xctest */;
-			productType = "com.apple.product-type.bundle.unit-test";
-		};
-		B49B5DFB24667D41008BF867 /* LDSwiftEventSource macOS */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = B49B5E0D24667D42008BF867 /* Build configuration list for PBXNativeTarget "LDSwiftEventSource macOS" */;
+			buildConfigurationList = B49B5E0D24667D42008BF867 /* Build configuration list for PBXNativeTarget "LDSwiftEventSource" */;
 			buildPhases = (
 				B49B5DF724667D41008BF867 /* Headers */,
 				B49B5DF824667D41008BF867 /* Sources */,
@@ -298,14 +152,14 @@
 			);
 			dependencies = (
 			);
-			name = "LDSwiftEventSource macOS";
+			name = LDSwiftEventSource;
 			productName = "LDSwiftEventSource macOS";
 			productReference = B49B5DFC24667D41008BF867 /* LDSwiftEventSource.framework */;
 			productType = "com.apple.product-type.framework";
 		};
-		B49B5E0324667D42008BF867 /* LDSwiftEventSource macOS Tests */ = {
+		B49B5E0324667D42008BF867 /* LDSwiftEventSource Tests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = B49B5E1024667D42008BF867 /* Build configuration list for PBXNativeTarget "LDSwiftEventSource macOS Tests" */;
+			buildConfigurationList = B49B5E1024667D42008BF867 /* Build configuration list for PBXNativeTarget "LDSwiftEventSource Tests" */;
 			buildPhases = (
 				B49B5E0024667D42008BF867 /* Sources */,
 				B49B5E0124667D42008BF867 /* Frameworks */,
@@ -316,64 +170,10 @@
 			dependencies = (
 				B49B5E0724667D42008BF867 /* PBXTargetDependency */,
 			);
-			name = "LDSwiftEventSource macOS Tests";
+			name = "LDSwiftEventSource Tests";
 			productName = "LDSwiftEventSource macOSTests";
-			productReference = B49B5E0424667D42008BF867 /* LDSwiftEventSource macOS Tests.xctest */;
+			productReference = B49B5E0424667D42008BF867 /* LDSwiftEventSource Tests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
-		};
-		B49B5E1724667D5E008BF867 /* LDSwiftEventSource tvOS */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = B49B5E2924667D5E008BF867 /* Build configuration list for PBXNativeTarget "LDSwiftEventSource tvOS" */;
-			buildPhases = (
-				B49B5E1324667D5E008BF867 /* Headers */,
-				B49B5E1424667D5E008BF867 /* Sources */,
-				B49B5E1524667D5E008BF867 /* Frameworks */,
-				B49B5E1624667D5E008BF867 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			name = "LDSwiftEventSource tvOS";
-			productName = "LDSwiftEventSource tvOS";
-			productReference = B49B5E1824667D5E008BF867 /* LDSwiftEventSource.framework */;
-			productType = "com.apple.product-type.framework";
-		};
-		B49B5E1F24667D5E008BF867 /* LDSwiftEventSource tvOS Tests */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = B49B5E2C24667D5E008BF867 /* Build configuration list for PBXNativeTarget "LDSwiftEventSource tvOS Tests" */;
-			buildPhases = (
-				B49B5E1C24667D5E008BF867 /* Sources */,
-				B49B5E1D24667D5E008BF867 /* Frameworks */,
-				B49B5E1E24667D5E008BF867 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				B49B5E2324667D5E008BF867 /* PBXTargetDependency */,
-			);
-			name = "LDSwiftEventSource tvOS Tests";
-			productName = "LDSwiftEventSource tvOSTests";
-			productReference = B49B5E2024667D5E008BF867 /* LDSwiftEventSource tvOS Tests.xctest */;
-			productType = "com.apple.product-type.bundle.unit-test";
-		};
-		B49B5E3324667D70008BF867 /* LDSwiftEventSource watchOS */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = B49B5E3924667D70008BF867 /* Build configuration list for PBXNativeTarget "LDSwiftEventSource watchOS" */;
-			buildPhases = (
-				B49B5E2F24667D70008BF867 /* Headers */,
-				B49B5E3024667D70008BF867 /* Sources */,
-				B49B5E3124667D70008BF867 /* Frameworks */,
-				B49B5E3224667D70008BF867 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			name = "LDSwiftEventSource watchOS";
-			productName = "LDSwiftEventSource watchOS";
-			productReference = B49B5E3424667D70008BF867 /* LDSwiftEventSource.framework */;
-			productType = "com.apple.product-type.framework";
 		};
 /* End PBXNativeTarget section */
 
@@ -385,25 +185,10 @@
 				LastUpgradeCheck = 1140;
 				ORGANIZATIONNAME = LaunchDarkly;
 				TargetAttributes = {
-					B49B5DDF24667D06008BF867 = {
-						CreatedOnToolsVersion = 11.4;
-					};
-					B49B5DE724667D07008BF867 = {
-						CreatedOnToolsVersion = 11.4;
-					};
 					B49B5DFB24667D41008BF867 = {
 						CreatedOnToolsVersion = 11.4;
 					};
 					B49B5E0324667D42008BF867 = {
-						CreatedOnToolsVersion = 11.4;
-					};
-					B49B5E1724667D5E008BF867 = {
-						CreatedOnToolsVersion = 11.4;
-					};
-					B49B5E1F24667D5E008BF867 = {
-						CreatedOnToolsVersion = 11.4;
-					};
-					B49B5E3324667D70008BF867 = {
 						CreatedOnToolsVersion = 11.4;
 					};
 				};
@@ -421,32 +206,13 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				B49B5DDF24667D06008BF867 /* LDSwiftEventSource iOS */,
-				B49B5DE724667D07008BF867 /* LDSwiftEventSource iOS Tests */,
-				B49B5DFB24667D41008BF867 /* LDSwiftEventSource macOS */,
-				B49B5E0324667D42008BF867 /* LDSwiftEventSource macOS Tests */,
-				B49B5E1724667D5E008BF867 /* LDSwiftEventSource tvOS */,
-				B49B5E1F24667D5E008BF867 /* LDSwiftEventSource tvOS Tests */,
-				B49B5E3324667D70008BF867 /* LDSwiftEventSource watchOS */,
+				B49B5DFB24667D41008BF867 /* LDSwiftEventSource */,
+				B49B5E0324667D42008BF867 /* LDSwiftEventSource Tests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		B49B5DDE24667D06008BF867 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		B49B5DE624667D07008BF867 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		B49B5DFA24667D41008BF867 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -461,52 +227,9 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		B49B5E1624667D5E008BF867 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		B49B5E1E24667D5E008BF867 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		B49B5E3224667D70008BF867 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		B49B5DDC24667D06008BF867 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				B49B5E4824667F59008BF867 /* UTF8LineParser.swift in Sources */,
-				B495D4A8248652DF00AE9233 /* Types.swift in Sources */,
-				B49B5E4924667F59008BF867 /* EventParser.swift in Sources */,
-				B49B5E4A24667F59008BF867 /* LDSwiftEventSource.swift in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		B49B5DE424667D07008BF867 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				B49B5E5424668022008BF867 /* EventParserTests.swift in Sources */,
-				B49B5E5524668022008BF867 /* XCTestManifests.swift in Sources */,
-				B49B5E5624668022008BF867 /* UTF8LineParserTests.swift in Sources */,
-				B49B5E5724668022008BF867 /* LDSwiftEventSourceTests.swift in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		B49B5DF824667D41008BF867 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -529,56 +252,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		B49B5E1424667D5E008BF867 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				B49B5E4E24667F67008BF867 /* UTF8LineParser.swift in Sources */,
-				B495D4AA248652DF00AE9233 /* Types.swift in Sources */,
-				B49B5E4F24667F67008BF867 /* EventParser.swift in Sources */,
-				B49B5E5024667F67008BF867 /* LDSwiftEventSource.swift in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		B49B5E1C24667D5E008BF867 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				B49B5E5C24668039008BF867 /* EventParserTests.swift in Sources */,
-				B49B5E5D24668039008BF867 /* XCTestManifests.swift in Sources */,
-				B49B5E5E24668039008BF867 /* UTF8LineParserTests.swift in Sources */,
-				B49B5E5F24668039008BF867 /* LDSwiftEventSourceTests.swift in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		B49B5E3024667D70008BF867 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				B49B5E5124667F72008BF867 /* UTF8LineParser.swift in Sources */,
-				B495D4AB248652DF00AE9233 /* Types.swift in Sources */,
-				B49B5E5224667F72008BF867 /* EventParser.swift in Sources */,
-				B49B5E5324667F72008BF867 /* LDSwiftEventSource.swift in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		B49B5DEB24667D07008BF867 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = B49B5DDF24667D06008BF867 /* LDSwiftEventSource iOS */;
-			targetProxy = B49B5DEA24667D07008BF867 /* PBXContainerItemProxy */;
-		};
 		B49B5E0724667D42008BF867 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = B49B5DFB24667D41008BF867 /* LDSwiftEventSource macOS */;
+			target = B49B5DFB24667D41008BF867 /* LDSwiftEventSource */;
 			targetProxy = B49B5E0624667D42008BF867 /* PBXContainerItemProxy */;
-		};
-		B49B5E2324667D5E008BF867 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = B49B5E1724667D5E008BF867 /* LDSwiftEventSource tvOS */;
-			targetProxy = B49B5E2224667D5E008BF867 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -615,6 +295,8 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				"COMBINE_HIDPI_IMAGES[sdk=macosx]" = YES;
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = dwarf;
@@ -643,9 +325,18 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.launchdarkly.LDSwiftEventSource;
 				PRODUCT_NAME = LDSwiftEventSource;
 				SDKROOT = macosx;
+				SUPPORTED_PLATFORMS = "macosx iphoneos iphonesimulator appletvos appletvsimulator watchos watchsimulator";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
 				TVOS_DEPLOYMENT_TARGET = 10.0;
+				"VALID_ARCHS[sdk=appletvos*]" = arm64;
+				"VALID_ARCHS[sdk=appletvsimulator*]" = x86_64;
+				"VALID_ARCHS[sdk=iphoneos*]" = "arm64 armv7 armv7s";
+				"VALID_ARCHS[sdk=iphonesimulator*]" = "i386 x86_64";
+				"VALID_ARCHS[sdk=macosx*]" = "x86_64 arm64";
+				"VALID_ARCHS[sdk=watchos*]" = "armv7k arm64_32";
+				"VALID_ARCHS[sdk=watchsimulator*]" = "x86_64 i386";
 				VERSIONING_SYSTEM = "apple-generic";
 				VERSION_INFO_PREFIX = "";
 				WATCHOS_DEPLOYMENT_TARGET = 3.0;
@@ -684,6 +375,8 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				"COMBINE_HIDPI_IMAGES[sdk=macosx]" = YES;
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
@@ -705,100 +398,21 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.launchdarkly.LDSwiftEventSource;
 				PRODUCT_NAME = LDSwiftEventSource;
 				SDKROOT = macosx;
+				SUPPORTED_PLATFORMS = "macosx iphoneos iphonesimulator appletvos appletvsimulator watchos watchsimulator";
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
 				TVOS_DEPLOYMENT_TARGET = 10.0;
+				"VALID_ARCHS[sdk=appletvos*]" = arm64;
+				"VALID_ARCHS[sdk=appletvsimulator*]" = x86_64;
+				"VALID_ARCHS[sdk=iphoneos*]" = "arm64 armv7 armv7s";
+				"VALID_ARCHS[sdk=iphonesimulator*]" = "i386 x86_64";
+				"VALID_ARCHS[sdk=macosx*]" = "x86_64 arm64";
+				"VALID_ARCHS[sdk=watchos*]" = "armv7k arm64_32";
+				"VALID_ARCHS[sdk=watchsimulator*]" = "x86_64 i386";
 				VERSIONING_SYSTEM = "apple-generic";
 				VERSION_INFO_PREFIX = "";
 				WATCHOS_DEPLOYMENT_TARGET = 3.0;
-			};
-			name = Release;
-		};
-		B49B5DF224667D07008BF867 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				APPLICATION_EXTENSION_API_ONLY = YES;
-				CODE_SIGN_STYLE = Automatic;
-				DEFINES_MODULE = YES;
-				DYLIB_COMPATIBILITY_VERSION = 1;
-				DYLIB_CURRENT_VERSION = 1;
-				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@loader_path/Frameworks",
-				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.launchdarkly.LDSwiftEventSource;
-				PRODUCT_NAME = LDSwiftEventSource;
-				SDKROOT = iphoneos;
-				SKIP_INSTALL = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Debug;
-		};
-		B49B5DF324667D07008BF867 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				APPLICATION_EXTENSION_API_ONLY = YES;
-				CODE_SIGN_STYLE = Automatic;
-				DEFINES_MODULE = YES;
-				DYLIB_COMPATIBILITY_VERSION = 1;
-				DYLIB_CURRENT_VERSION = 1;
-				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@loader_path/Frameworks",
-				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.launchdarkly.LDSwiftEventSource;
-				PRODUCT_NAME = LDSwiftEventSource;
-				SDKROOT = iphoneos;
-				SKIP_INSTALL = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				VALIDATE_PRODUCT = YES;
-			};
-			name = Release;
-		};
-		B49B5DF524667D07008BF867 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
-				CODE_SIGN_STYLE = Automatic;
-				INFOPLIST_FILE = "$(inherited)";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@loader_path/Frameworks",
-				);
-				PRODUCT_BUNDLE_IDENTIFIER = "com.launchdarkly.LDSwiftEventSource-iOSTests";
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = iphoneos;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Debug;
-		};
-		B49B5DF624667D07008BF867 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
-				CODE_SIGN_STYLE = Automatic;
-				INFOPLIST_FILE = "$(inherited)";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@loader_path/Frameworks",
-				);
-				PRODUCT_BUNDLE_IDENTIFIER = "com.launchdarkly.LDSwiftEventSource-iOSTests";
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = iphoneos;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
 		};
@@ -807,22 +421,31 @@
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_STYLE = Automatic;
-				COMBINE_HIDPI_IMAGES = YES;
 				DEFINES_MODULE = YES;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
+        "ENABLE_BITCODE[sdk=macosx*]" = NO;
+        ENABLE_BITCODE = YES;
 				INFOPLIST_FILE = "$(inherited)";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = (
+					"$(inherited)",
 					"@executable_path/../Frameworks",
 					"@loader_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "$(inherited)";
-				PRODUCT_NAME = "$(inherited)";
 				SKIP_INSTALL = YES;
-				SWIFT_VERSION = 5.0;
+				"TARGETED_DEVICE_FAMILY[sdk=appletvos*]" = 3;
+				"TARGETED_DEVICE_FAMILY[sdk=appletvsimulator*]" = 3;
+				"TARGETED_DEVICE_FAMILY[sdk=iphoneos*]" = "1,2";
+				"TARGETED_DEVICE_FAMILY[sdk=iphonesimulator*]" = "1,2";
+				"TARGETED_DEVICE_FAMILY[sdk=watchos*]" = 4;
+				"TARGETED_DEVICE_FAMILY[sdk=watchsimulator*]" = 4;
 			};
 			name = Debug;
 		};
@@ -831,22 +454,31 @@
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_STYLE = Automatic;
-				COMBINE_HIDPI_IMAGES = YES;
 				DEFINES_MODULE = YES;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
+        "ENABLE_BITCODE[sdk=macosx*]" = NO;
+        ENABLE_BITCODE = YES;
 				INFOPLIST_FILE = "$(inherited)";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = (
+					"$(inherited)",
 					"@executable_path/../Frameworks",
 					"@loader_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "$(inherited)";
-				PRODUCT_NAME = "$(inherited)";
 				SKIP_INSTALL = YES;
-				SWIFT_VERSION = 5.0;
+				"TARGETED_DEVICE_FAMILY[sdk=appletvos*]" = 3;
+				"TARGETED_DEVICE_FAMILY[sdk=appletvsimulator*]" = 3;
+				"TARGETED_DEVICE_FAMILY[sdk=iphoneos*]" = "1,2";
+				"TARGETED_DEVICE_FAMILY[sdk=iphonesimulator*]" = "1,2";
+				"TARGETED_DEVICE_FAMILY[sdk=watchos*]" = 4;
+				"TARGETED_DEVICE_FAMILY[sdk=watchsimulator*]" = 4;
 			};
 			name = Release;
 		};
@@ -855,16 +487,20 @@
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				CODE_SIGN_STYLE = Automatic;
-				COMBINE_HIDPI_IMAGES = YES;
 				INFOPLIST_FILE = "$(inherited)";
 				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 					"@loader_path/../Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "com.launchdarkly.LDSwiftEventSource-macOSTests";
+				PRODUCT_BUNDLE_IDENTIFIER = com.launchdarkly.LDSwiftEventSourceTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_VERSION = 5.0;
+				SUPPORTED_PLATFORMS = "macosx iphoneos iphonesimulator appletvos appletvsimulator";
 			};
 			name = Debug;
 		};
@@ -873,157 +509,20 @@
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				CODE_SIGN_STYLE = Automatic;
-				COMBINE_HIDPI_IMAGES = YES;
 				INFOPLIST_FILE = "$(inherited)";
 				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 					"@loader_path/../Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "com.launchdarkly.LDSwiftEventSource-macOSTests";
+				PRODUCT_BUNDLE_IDENTIFIER = com.launchdarkly.LDSwiftEventSourceTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_VERSION = 5.0;
-			};
-			name = Release;
-		};
-		B49B5E2A24667D5E008BF867 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				APPLICATION_EXTENSION_API_ONLY = YES;
-				CODE_SIGN_STYLE = Automatic;
-				DEFINES_MODULE = YES;
-				DYLIB_COMPATIBILITY_VERSION = 1;
-				DYLIB_CURRENT_VERSION = 1;
-				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				INFOPLIST_FILE = "$(inherited)";
-				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@loader_path/Frameworks",
-				);
-				PRODUCT_BUNDLE_IDENTIFIER = "$(inherited)";
-				PRODUCT_NAME = "$(inherited)";
-				SDKROOT = appletvos;
-				SKIP_INSTALL = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = 3;
-			};
-			name = Debug;
-		};
-		B49B5E2B24667D5E008BF867 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				APPLICATION_EXTENSION_API_ONLY = YES;
-				CODE_SIGN_STYLE = Automatic;
-				DEFINES_MODULE = YES;
-				DYLIB_COMPATIBILITY_VERSION = 1;
-				DYLIB_CURRENT_VERSION = 1;
-				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				INFOPLIST_FILE = "$(inherited)";
-				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@loader_path/Frameworks",
-				);
-				PRODUCT_BUNDLE_IDENTIFIER = "$(inherited)";
-				PRODUCT_NAME = "$(inherited)";
-				SDKROOT = appletvos;
-				SKIP_INSTALL = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = 3;
-				VALIDATE_PRODUCT = YES;
-			};
-			name = Release;
-		};
-		B49B5E2D24667D5E008BF867 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
-				CODE_SIGN_STYLE = Automatic;
-				INFOPLIST_FILE = "$(inherited)";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@loader_path/Frameworks",
-				);
-				PRODUCT_BUNDLE_IDENTIFIER = "com.launchdarkly.LDSwiftEventSource-tvOSTests";
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = appletvos;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = 3;
-			};
-			name = Debug;
-		};
-		B49B5E2E24667D5E008BF867 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
-				CODE_SIGN_STYLE = Automatic;
-				INFOPLIST_FILE = "$(inherited)";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@loader_path/Frameworks",
-				);
-				PRODUCT_BUNDLE_IDENTIFIER = "com.launchdarkly.LDSwiftEventSource-tvOSTests";
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = appletvos;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = 3;
-				VALIDATE_PRODUCT = YES;
-			};
-			name = Release;
-		};
-		B49B5E3A24667D70008BF867 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				APPLICATION_EXTENSION_API_ONLY = YES;
-				CODE_SIGN_STYLE = Automatic;
-				DEFINES_MODULE = YES;
-				DYLIB_COMPATIBILITY_VERSION = 1;
-				DYLIB_CURRENT_VERSION = 1;
-				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				INFOPLIST_FILE = "$(inherited)";
-				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@loader_path/Frameworks",
-				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.launchdarkly.LDSwiftEventSource.watchOS;
-				PRODUCT_NAME = "$(inherited)";
-				SDKROOT = watchos;
-				SKIP_INSTALL = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = 4;
-			};
-			name = Debug;
-		};
-		B49B5E3B24667D70008BF867 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				APPLICATION_EXTENSION_API_ONLY = YES;
-				CODE_SIGN_STYLE = Automatic;
-				DEFINES_MODULE = YES;
-				DYLIB_COMPATIBILITY_VERSION = 1;
-				DYLIB_CURRENT_VERSION = 1;
-				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				INFOPLIST_FILE = "$(inherited)";
-				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@loader_path/Frameworks",
-				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.launchdarkly.LDSwiftEventSource.watchOS;
-				PRODUCT_NAME = "$(inherited)";
-				SDKROOT = watchos;
-				SKIP_INSTALL = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = 4;
-				VALIDATE_PRODUCT = YES;
+ 				SUPPORTED_PLATFORMS = "macosx iphoneos iphonesimulator appletvos appletvsimulator";
 			};
 			name = Release;
 		};
@@ -1039,25 +538,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		B49B5DF124667D07008BF867 /* Build configuration list for PBXNativeTarget "LDSwiftEventSource iOS" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				B49B5DF224667D07008BF867 /* Debug */,
-				B49B5DF324667D07008BF867 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		B49B5DF424667D07008BF867 /* Build configuration list for PBXNativeTarget "LDSwiftEventSource iOS Tests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				B49B5DF524667D07008BF867 /* Debug */,
-				B49B5DF624667D07008BF867 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		B49B5E0D24667D42008BF867 /* Build configuration list for PBXNativeTarget "LDSwiftEventSource macOS" */ = {
+		B49B5E0D24667D42008BF867 /* Build configuration list for PBXNativeTarget "LDSwiftEventSource" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				B49B5E0E24667D42008BF867 /* Debug */,
@@ -1066,38 +547,11 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		B49B5E1024667D42008BF867 /* Build configuration list for PBXNativeTarget "LDSwiftEventSource macOS Tests" */ = {
+		B49B5E1024667D42008BF867 /* Build configuration list for PBXNativeTarget "LDSwiftEventSource Tests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				B49B5E1124667D42008BF867 /* Debug */,
 				B49B5E1224667D42008BF867 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		B49B5E2924667D5E008BF867 /* Build configuration list for PBXNativeTarget "LDSwiftEventSource tvOS" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				B49B5E2A24667D5E008BF867 /* Debug */,
-				B49B5E2B24667D5E008BF867 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		B49B5E2C24667D5E008BF867 /* Build configuration list for PBXNativeTarget "LDSwiftEventSource tvOS Tests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				B49B5E2D24667D5E008BF867 /* Debug */,
-				B49B5E2E24667D5E008BF867 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		B49B5E3924667D70008BF867 /* Build configuration list for PBXNativeTarget "LDSwiftEventSource watchOS" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				B49B5E3A24667D70008BF867 /* Debug */,
-				B49B5E3B24667D70008BF867 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
