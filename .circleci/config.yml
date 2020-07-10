@@ -23,16 +23,16 @@ jobs:
         command: xcodebuild test -scheme 'LDSwiftEventSource' -sdk macosx -destination 'platform=macOS' | tee 'artifacts/raw-logs-macosx.txt' | xcpretty -r junit -o 'test-results/platform-macosx/junit.xml'
 
     - run:
-        name: Build for iOS device
-        command: xcodebuild build -scheme 'LDSwiftEventSource' -sdk iphoneos | tee 'artifacts/raw-logs-iphoneos.txt' | xcpretty
+        name: Build Tests for iOS device
+        command: xcodebuild build-for-testing -scheme 'LDSwiftEventSource' -sdk iphoneos | tee 'artifacts/raw-logs-iphoneos.txt' | xcpretty
 
     - run:
         name: Build & Test on iOS Simulator
         command: xcodebuild test -scheme 'LDSwiftEventSource' -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 8,OS=12.2' CODE_SIGN_IDENTITY= | tee 'artifacts/raw-logs-iphonesimulator.txt' | xcpretty -r junit -o 'test-results/platform-iphonesimulator/junit.xml'
 
     - run:
-        name: Build for tvOS device
-        command: xcodebuild build -scheme 'LDSwiftEventSource' -sdk appletvos | tee 'artifacts/raw-logs-appletvos.txt' | xcpretty
+        name: Build Tests for tvOS device
+        command: xcodebuild build-for-testing -scheme 'LDSwiftEventSource' -sdk appletvos | tee 'artifacts/raw-logs-appletvos.txt' | xcpretty
 
     - run:
         name: Build & Test on tvOS Simulator
