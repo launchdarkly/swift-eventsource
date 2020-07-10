@@ -31,7 +31,7 @@ jobs:
     - run:
         name: Build & Test on iOS Simulator
         command: xcodebuild test -scheme 'LDSwiftEventSource' -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 8,OS=12.2' CODE_SIGN_IDENTITY= | tee 'artifacts/raw-logs-iphonesimulator.txt' | xcpretty -r junit -o 'test-results/platform-iphonesimulator/junit.xml'
-        when: always        
+        when: always
 
     - run:
         name: Build Tests for tvOS device
@@ -53,7 +53,7 @@ jobs:
         command: xcodebuild build -scheme 'LDSwiftEventSource' -sdk watchos | tee 'artifacts/raw-logs-watchos.txt' | xcpretty
         when: always
 
-     - run:
+    - run:
         name: Build & Test with swiftpm
         command: swift test -v 2>&1 | tee 'artifacts/raw-logs-swiftpm.txt' | xcpretty -r junit -o 'test-results/swiftpm/junit.xml'
         when: always
