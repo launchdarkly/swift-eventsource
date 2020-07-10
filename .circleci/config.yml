@@ -1,5 +1,6 @@
 version: 2.1
 jobs:
+# TODO (gwhelanld): Consider adding linux CI job for swiftpm linux build/test
   build:
     shell: /bin/bash --login -eo pipefail
 
@@ -15,21 +16,39 @@ jobs:
           mkdir -p 'test-results'
           mkdir -p 'artifacts'
 
-    - run:
-        name: Test macOS
-        command: xcodebuild test -scheme 'LDSwiftEventSource macOS' -destination 'platform=macOS' | tee 'artifacts/raw-logs-macOS.txt' | xcpretty -r junit -o 'test-results/platform-macOS/junit.xml'
+# TODO (gwhelanld): Consider adding additional build tests for different device architectures
 
     - run:
-        name: Test iOS
-        command: xcodebuild test -scheme 'LDSwiftEventSource iOS' -destination 'platform=iOS Simulator,name=iPhone 8,OS=12.2' CODE_SIGN_IDENTITY= | tee 'artifacts/raw-logs-iOS.txt' | xcpretty -r junit -o 'test-results/platform-iOS/junit.xml'
+        name: Build & Test on macOS Simulator
+        command: xcodebuild test -scheme 'LDSwiftEventSource' -sdk macosx -destination 'platform=macOS' | tee 'artifacts/raw-logs-macosx.txt' | xcpretty -r junit -o 'test-results/platform-macosx/junit.xml'
 
     - run:
-        name: Test tvOS
-        command: xcodebuild test -scheme 'LDSwiftEventSource tvOS' -destination 'platform=tvOS Simulator,name=Apple TV' | tee 'artifacts/raw-logs-tvOS.txt' | xcpretty -r junit -o 'test-results/platform-tvOS/junit.xml'
+        name: Build for iOS device
+        command: xcodebuild build -scheme 'LDSwiftEventSource' -sdk iphoneos | tee 'artifacts/raw-logs-iphoneos.txt' | xcpretty
 
     - run:
-        name: Build watchOS # No unit testing on watchOS
-        command: xcodebuild build -scheme 'LDSwiftEventSource watchOS' | tee 'artifacts/raw-logs-watchOS.txt' | xcpretty
+        name: Build & Test on iOS Simulator
+        command: xcodebuild test -scheme 'LDSwiftEventSource' -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 8,OS=12.2' CODE_SIGN_IDENTITY= | tee 'artifacts/raw-logs-iphonesimulator.txt' | xcpretty -r junit -o 'test-results/platform-iphonesimulator/junit.xml'
+
+    - run:
+        name: Build for tvOS device
+        command: xcodebuild build -scheme 'LDSwiftEventSource' -sdk appletvos | tee 'artifacts/raw-logs-appletvos.txt' | xcpretty
+
+    - run:
+        name: Build & Test on tvOS Simulator
+        command: xcodebuild test -scheme 'LDSwiftEventSource' -sdk appletvsimulator -destination 'platform=tvOS Simulator,name=Apple TV' | tee 'artifacts/raw-logs-appletvsimulator.txt' | xcpretty -r junit -o 'test-results/platform-appletvsimulator/junit.xml'
+
+    - run:
+        name: Build for watchOS simulator # No XCTest testing on watchOS
+        command: xcodebuild build -scheme 'LDSwiftEventSource' -sdk watchsimulator | tee 'artifacts/raw-logs-watchsimulator.txt' | xcpretty
+
+    - run:
+        name: Build for watchOS device # No XCTest testing on watchOS
+        command: xcodebuild build -scheme 'LDSwiftEventSource' -sdk watchos | tee 'artifacts/raw-logs-watchos.txt' | xcpretty
+
+    - run:
+        name: Build & Test with swiftpm
+        command: swift test -v 2>&1 | tee 'artifacts/raw-logs-swiftpm.txt' | xcpretty -r junit -o 'test-results/swiftpm/junit.xml'
 
     - store_test_results:
         path: test-results
