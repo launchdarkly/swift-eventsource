@@ -14,9 +14,9 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "B49B5E1724667D5E008BF867"
+               BlueprintIdentifier = "B49B5DFB24667D41008BF867"
                BuildableName = "LDSwiftEventSource.framework"
-               BlueprintName = "LDSwiftEventSource tvOS"
+               BlueprintName = "LDSwiftEventSource"
                ReferencedContainer = "container:LDSwiftEventSource.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -33,9 +33,9 @@
             skipped = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "B49B5E1F24667D5E008BF867"
-               BuildableName = "LDSwiftEventSource tvOS Tests.xctest"
-               BlueprintName = "LDSwiftEventSource tvOS Tests"
+               BlueprintIdentifier = "B49B5E0324667D42008BF867"
+               BuildableName = "LDSwiftEventSource Tests.xctest"
+               BlueprintName = "LDSwiftEventSource Tests"
                ReferencedContainer = "container:LDSwiftEventSource.xcodeproj">
             </BuildableReference>
          </TestableReference>
@@ -54,9 +54,9 @@
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "B49B5E1724667D5E008BF867"
+            BlueprintIdentifier = "B49B5DFB24667D41008BF867"
             BuildableName = "LDSwiftEventSource.framework"
-            BlueprintName = "LDSwiftEventSource tvOS"
+            BlueprintName = "LDSwiftEventSource"
             ReferencedContainer = "container:LDSwiftEventSource.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
@@ -70,9 +70,9 @@
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "B49B5E1724667D5E008BF867"
+            BlueprintIdentifier = "B49B5DFB24667D41008BF867"
             BuildableName = "LDSwiftEventSource.framework"
-            BlueprintName = "LDSwiftEventSource tvOS"
+            BlueprintName = "LDSwiftEventSource"
             ReferencedContainer = "container:LDSwiftEventSource.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
