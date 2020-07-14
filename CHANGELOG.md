@@ -4,7 +4,7 @@ All notable changes to the LaunchDarkly Swift EventSource library will be docume
 
 ## [0.5.0] - 2020-07-14
 ### Changed
-- Default `LDSwiftEventSource` product defined for the SwiftPM package is now explicitely a dynamic product. A static product is now available as `LDSwiftEventSourceStatic`.
+- Default `LDSwiftEventSource` product defined for the SwiftPM package is now explicitly a dynamic product. An explicitly static product is now available as `LDSwiftEventSourceStatic`.
 
 ## [0.4.0] - 2020-07-13
 ### Changed
