@@ -16,6 +16,10 @@ let package = Package(
             name: "LDSwiftEventSource",
             type: .dynamic,
             targets: ["LDSwiftEventSource"]),
+        .library(
+            name: "LDSwiftEventSourceStatic",
+            type: .static,
+            targets: ["LDSwiftEventSource"]),
     ],
     dependencies: [],
     targets: [
