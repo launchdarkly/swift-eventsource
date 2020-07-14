@@ -5,7 +5,7 @@ jobs:
     shell: /bin/bash --login -eo pipefail
 
     macos:
-      xcode: '11.4.0'
+      xcode: '11.5.0'
 
     steps:
     - checkout
