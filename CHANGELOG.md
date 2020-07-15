@@ -2,6 +2,10 @@
 
 All notable changes to the LaunchDarkly Swift EventSource library will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [0.5.0] - 2020-07-14
+### Changed
+- Default `LDSwiftEventSource` product defined for the SwiftPM package is now explicitly a dynamic product. An explicitly static product is now available as `LDSwiftEventSourceStatic`.
+
 ## [0.4.0] - 2020-07-13
 ### Changed
 - Converted build system to use a single target to produce a universal framework, rather than separate targets for each platform that share a product name. This is to prevent issues with `xcodebuild` resolving the build scheme to an incorrect platform when building dependent packages with 'Find Implicit Dependencies' enabled. This is due to a bug in `xcodebuild`, for more information see [http://www.openradar.me/20490378](http://www.openradar.me/20490378) and [http://www.openradar.me/22008701](http://www.openradar.me/22008701).
