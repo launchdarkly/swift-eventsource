@@ -34,15 +34,25 @@ public protocol EventHandler {
     func onOpened()
     /// EventSource calls this method when the stream connection has been closed.
     func onClosed()
-    /// EventSource calls this method when it has received a new event from the stream.
-    func onMessage(event: String, messageEvent: MessageEvent)
-    /// EventSource calls this method when it has received a comment line from the stream
-    /// (any line starting with a colon).
+    /** EventSource calls this method when it has received a new event from the stream.
+
+     - Parameter eventType: The type of the event.
+     - Parameter messageEvent: The data for the event.
+     */
+    func onMessage(eventType: String, messageEvent: MessageEvent)
+    /** EventSource calls this method when it has received a comment line from the stream.
+
+     - Parameter comment: The comment received.
+     */
     func onComment(comment: String)
-    /// This method will be called for all exceptions that occur on the socket connection
-    /// (including an {@link UnsuccessfulResponseError} if the server returns an unexpected HTTP status),
-    /// but only after the ConnectionErrorHandler (if any) has processed it.  If you need to
-    /// do anything that affects the state of the connection, use ConnectionErrorHandler.
+    /**
+     This method will be called for all exceptions that occur on the socket connection
+     (including an {@link UnsuccessfulResponseError} if the server returns an unexpected HTTP status),
+     but only after the ConnectionErrorHandler (if any) has processed it.  If you need to
+     do anything that affects the state of the connection, use ConnectionErrorHandler.
+
+     - Parameter error: The error received.
+     */
     func onError(error: Error)
 }
 

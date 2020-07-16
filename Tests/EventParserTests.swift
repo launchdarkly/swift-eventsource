@@ -9,8 +9,8 @@ class MockEventHandler: EventHandler {
 
     var received: [ReceivedEvent] = []
 
-    func onMessage(event: String, messageEvent: MessageEvent) {
-        received.append(.message(event, messageEvent))
+    func onMessage(eventType: String, messageEvent: MessageEvent) {
+        received.append(.message(eventType, messageEvent))
     }
 
     func onComment(comment: String) {

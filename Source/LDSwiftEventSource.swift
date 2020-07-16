@@ -1,12 +1,79 @@
 import Foundation
 import os.log
 
-public class EventSource: NSObject, URLSessionDataDelegate {
+public class EventSource {
+    private let esDelegate: EventSourceDelegate
 
-    private let config: Config
+    /**
+     Initialize an EventSource with the given configuration.
+
+     - Parameter config: The configuration for initializing the EventSource.
+     */
+    public init(config: Config) {
+        esDelegate = EventSourceDelegate(config: config)
+    }
+
+    /**
+     Start the EventSource object.
+
+     This will create a stream connection to the configured URL. The application will be informed of received events
+     and state changes using the configured EventHandler.
+     */
+    public func start() {
+        esDelegate.start()
+    }
+
+    /// Shuts down the EventSource object. It is not valid to restart the EventSource after calling this function.
+    public func stop() {
+        esDelegate.stop()
+    }
+
+    /**
+     Get the most recently received event ID, or the configured `lastEventId` if no event IDs have been received.
+     */
+    public func getLastEventId() -> String? { esDelegate.getLastEventId() }
+
+    /// Struct describing the configuration of the EventSource
+    public struct Config {
+        public let handler: EventHandler
+        public let url: URL
+
+        /// The method to use for the EventSource connection
+        public var method: String = "GET"
+        /// Optional body to be sent with the initial request
+        public var body: Data? = nil
+        /// Error handler that can determine whether to proceed or shutdown.
+        public var connectionErrorHandler: ConnectionErrorHandler = { _ in .proceed }
+        /// An initial value for the last-event-id to be set on the initial request
+        public var lastEventId: String? = nil
+        /// Additional headers to be set on the request
+        public var headers: [String: String] = [:]
+        /// The minimum amount of time to wait before reconnecting after a failure
+        public var reconnectTime: TimeInterval = 1.0
+        /// The maximum amount of time to wait before reconnecting after a failure
+        public var maxReconnectTime: TimeInterval = 30.0
+        /// The minimum amount of time for an EventSource connection to remain open before allowing connection
+        /// backoff to reset.
+        public var backoffResetThreshold: TimeInterval = 60.0
+        /// The maximum amount of time between receiving any data before considering the connection to have
+        /// timed out.
+        public var idleTimeout: TimeInterval = 300.0
+
+        /// Create a new configuration with an EventHandler and a URL
+        public init(handler: EventHandler, url: URL) {
+            self.handler = handler
+            self.url = url
+        }
+    }
+}
+
+class EventSourceDelegate: NSObject, URLSessionDataDelegate {
+
+    private let config: EventSource.Config
 
     private let delegateQueue: DispatchQueue = DispatchQueue(label: "ESDelegateQueue")
     private let logger: OSLog
+
     private var readyState: ReadyState = .raw
 
     private var lastEventId: String?
@@ -19,14 +86,14 @@ public class EventSource: NSObject, URLSessionDataDelegate {
     private var eventParser: EventParser!
     private var sessionTask: URLSessionDataTask?
 
-    public init(config: Config) {
+    init(config: EventSource.Config) {
         self.config = config
         self.lastEventId = config.lastEventId
         self.reconnectTime = config.reconnectTime
         self.logger = OSLog(subsystem: "com.launchdarkly.swift-eventsource", category: "LDEventSource")
     }
 
-    public func start() {
+    func start() {
         delegateQueue.async {
             guard self.readyState == .raw
             else {
@@ -37,7 +104,7 @@ public class EventSource: NSObject, URLSessionDataDelegate {
         }
     }
 
-    public func stop() {
+    func stop() {
         sessionTask?.cancel()
         if readyState == .open {
             config.handler.onClosed()
@@ -45,7 +112,7 @@ public class EventSource: NSObject, URLSessionDataDelegate {
         readyState = .shutdown
     }
 
-    public func getLastEventId() -> String? { lastEventId }
+    func getLastEventId() -> String? { lastEventId }
 
     private func connect() {
         os_log("Starting EventSource client", log: logger, type: .info)
@@ -157,38 +224,5 @@ public class EventSource: NSObject, URLSessionDataDelegate {
 
     public func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive data: Data) {
         utf8LineParser.append(data).forEach(eventParser.parse)
-    }
-
-    /// Struct describing the configuration of the EventSource
-    public struct Config {
-        public let handler: EventHandler
-        public let url: URL
-
-        /// The method to use for the EventSource connection
-        public var method: String = "GET"
-        /// Optional body to be sent with the initial request
-        public var body: Data? = nil
-        /// Error handler that can determine whether to proceed or shutdown.
-        public var connectionErrorHandler: ConnectionErrorHandler = { _ in .proceed }
-        /// An initial value for the last-event-id to be set on the initial request
-        public var lastEventId: String? = nil
-        /// Additional headers to be set on the request
-        public var headers: [String: String] = [:]
-        /// The minimum amount of time to wait before reconnecting after a failure
-        public var reconnectTime: TimeInterval = 1.0
-        /// The maximum amount of time to wait before reconnecting after a failure
-        public var maxReconnectTime: TimeInterval = 30.0
-        /// The minimum amount of time for an EventSource connection to remain open before allowing connection
-        /// backoff to reset.
-        public var backoffResetThreshold: TimeInterval = 60.0
-        /// The maximum amount of time between receiving any data before considering the connection to have
-        /// timed out.
-        public var idleTimeout: TimeInterval = 300.0
-
-        /// Create a new configuration with an EventHandler and a URL
-        public init(handler: EventHandler, url: URL) {
-            self.handler = handler
-            self.url = url
-        }
     }
 }
