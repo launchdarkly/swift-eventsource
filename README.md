@@ -1,6 +1,64 @@
 # LDSwiftEventSource
-**Server-Sent Events for iOS, watchOS, tvOS and macOS**
 
-[![CircleCI](https://circleci.com/gh/launchdarkly/swift-eventsource.svg?style=svg&circle-token=0da2511947a69c1f3f88dd46e934e2d889bd1e36)](https://circleci.com/gh/launchdarkly/swift-eventsource)
+[![CircleCI](https://circleci.com/gh/launchdarkly/swift-eventsource.svg?style=shield)](https://circleci.com/gh/launchdarkly/swift-eventsource)
+[![CocoaPods](https://img.shields.io/cocoapods/v/LDSwiftEventSource.svg)](https://cocoapods.org/pods/LDSwiftEventSource)
+[![Carthage compatible](https://img.shields.io/badge/Carthage-compatible-4BC51D.svg?style=flat)](https://github.com/Carthage/Carthage)
+[![SwiftPM compatible](https://img.shields.io/badge/SwiftPM-compatible-4BC51D.svg?style=flat)](https://swift.org/package-manager/)
+[![Platform](https://img.shields.io/cocoapods/p/LDSwiftEventSource.svg?style=flat)](https://cocoapods.org/pods/LDSwiftEventSource)
 
-Swift EventSource implementation originally written to replace a [LaunchDarkly fork](https://github.com/launchdarkly/ios-eventsource) of an [Objective-C implementation](https://github.com/neilco/ios-eventsource) for use in the [LaunchDarkly iOS (Swift) SDK](https://github.com/launchdarkly/ios-client-sdk).
+LDSwiftEventSource is a cross platform implementation of the [EventSource specification](https://www.w3.org/TR/eventsource/) written in Swift. It was developed for use in the [LaunchDarkly iOS SDK](https://github.com/launchdarkly/ios-client-sdk).
+
+## Requirements
+- iOS 10.0+ / watchOS 3.0+ / tvOS 10.0+ / macOS 10.12+
+- Swift 5.0+
+
+## Installation
+
+### CocoaPods
+
+To use the [CocoaPods](https://cocoapods.org) dependency manager to integrate LDSwiftEventSource into your Xcode project, specify it in your `Podfile`:
+
+```ruby
+pod 'LDSwiftEventSource', '~> 1.0'
+```
+
+### Carthage
+
+To use the [Carthage](https://github.com/Carthage/Carthage) dependency manager to integrate LDSwiftEventSource into your Xcode project, specify it in your `Cartfile` :
+
+```ogdl
+github "LaunchDarkly/swift-eventsource" ~> 1.0
+```
+
+### Swift Package Manager
+
+The [Swift Package Manager](https://swift.org/package-manager/) is a dependency manager integrated into the `swift` compiler and XCode. Note that the LDSwiftEventSource Swift package provides both a `LDSwiftEventSource` product, which is explicitely dynamic, and a `LDSwiftEventSourceStatic` product which is explicitely static.
+
+To integrate LDSwiftEventSource into an XCode project, go to the project editor, and select `Swift Packages`. From here hit the `+` button and follow the prompts using  `https://github.com/LaunchDarkly/swift-eventsource.git` as the URL.
+
+To include LDSwiftEventSource in a Swift package, simply add it to the dependencies section of your `Package.swift` file. And add the desired product as a dependency for your targets.
+
+```swift
+dependencies: [
+    .package(url: "https://github.com/LaunchDarkly/swift-eventsource.git", .upToNextMajor(from: "1.0.0"))
+]
+```
+
+## Contributing
+
+We encourage pull requests and other contributions from the community. Check out our [contributing guidelines](CONTRIBUTING.md) for instructions on how to contribute to this SDK.
+
+## About LaunchDarkly
+
+* LaunchDarkly is a continuous delivery platform that provides feature flags as a service and allows developers to iterate quickly and safely. We allow you to easily flag your features and manage them from the LaunchDarkly dashboard.  With LaunchDarkly, you can:
+    * Roll out a new feature to a subset of your users (like a group of users who opt-in to a beta tester group), gathering feedback and bug reports from real-world use cases.
+    * Gradually roll out a feature to an increasing percentage of users, and track the effect that the feature has on key metrics (for instance, how likely is a user to complete a purchase if they have feature A versus feature B?).
+    * Turn off a feature that you realize is causing performance problems in production, without needing to re-deploy, or even restart the application with a changed configuration file.
+    * Grant access to certain features based on user attributes, like payment plan (eg: users on the ‘gold’ plan get access to more features than users in the ‘silver’ plan). Disable parts of your application to facilitate maintenance, without taking everything offline.
+* LaunchDarkly provides feature flag SDKs for a wide variety of languages and technologies. Check out [our documentation](https://docs.launchdarkly.com/sdk) for a complete list.
+* Explore LaunchDarkly
+    * [launchdarkly.com](https://www.launchdarkly.com/ "LaunchDarkly Main Website") for more information
+    * [docs.launchdarkly.com](https://docs.launchdarkly.com/  "LaunchDarkly Documentation") for our documentation and SDK reference guides
+    * [apidocs.launchdarkly.com](https://apidocs.launchdarkly.com/  "LaunchDarkly API Documentation") for our API documentation
+    * [blog.launchdarkly.com](https://blog.launchdarkly.com/  "LaunchDarkly Blog Documentation") for the latest product updates
+    * [Feature Flagging Guide](https://github.com/launchdarkly/featureflags/  "Feature Flagging Guide") for best practices and strategies
