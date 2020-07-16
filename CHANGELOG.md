@@ -3,6 +3,7 @@
 All notable changes to the LaunchDarkly Swift EventSource library will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
 ## [1.0.0] - 2020-07-16
+This is the first public release of the LDSwiftEventSource library. The following notes are what changed since the previous pre-release version.
 ### Changed
 - Renamed `EventHandler.onMessage` parameter `event` to `eventType`.
 - The `EventSource` class no longer extends `NSObject` or `URLSessionDataDelegate` to not expose `urlSession` functions.
