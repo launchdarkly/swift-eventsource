@@ -1,10 +1,10 @@
 Pod::Spec.new do |s|
   s.name         = "LDSwiftEventSource"
-  s.version      = "0.5.0"
+  s.version      = "1.0.0"
   s.summary      = "Swift EventSource library"
   s.homepage     = "https://github.com/launchdarkly/swift-eventsource"
   s.license      = { :type => "Apache License, Version 2.0", :file => "LICENSE.txt" }
-  s.author       = { "LaunchDarkly" => "team@launchdarkly.com" }
+  s.author       = { "LaunchDarkly" => "sdks@launchdarkly.com" }
 
   s.ios.deployment_target     = "10.0"
   s.watchos.deployment_target = "3.0"

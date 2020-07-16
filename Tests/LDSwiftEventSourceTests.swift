@@ -60,7 +60,7 @@ private class MockHandler: EventHandler {
 
     }
 
-    func onMessage(event: String, messageEvent: MessageEvent) {
+    func onMessage(eventType: String, messageEvent: MessageEvent) {
 
     }
 

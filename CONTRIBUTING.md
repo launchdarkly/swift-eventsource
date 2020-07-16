@@ -1,4 +1,4 @@
-Contributing to the LaunchDarkly Swift EventSource library
+Contributing to the LDSwiftEventSource library
 ================================================
 
 Submitting bug reports and feature requests
@@ -16,14 +16,16 @@ Build instructions
 
 ### Prerequisites
 
-This SDK is built with [XCode](https://developer.apple.com/xcode/). This version has been tested with XCode 11.4.
+This SDK is built with [XCode](https://developer.apple.com/xcode/). This version has been tested with XCode 11.5.
 
-### Building
+### Building And Testing
 
-The exact command used to build the SDK depends on where you want to use it (for example -- iOS, watchOS, etc.). Refer to the `xcodebuild` commands in the SDK's [continuous integration build configuration](.circleci/config.yml) for examples on how to build for the different platforms.
+This library can be built directly with the Swift package manager, or through XCode.  To build and run tests using SwiftPM simply:
 
-If you wish to clean your working directory between builds, include the `clean` goal in your `xcodebuild` command(s).
+```bash
+swift test
+```
 
-### Testing
+Or in XCode, simply select the desired target and select `Product -> Test`.
 
-To build the SDK and run all unit tests, include the `test` goal in your `xcodebuild` command(s).
+For building on the command line with `xcodebuild`, see the [continuous integration build configuration](.circleci/config.yml) for examples on building and running tests.

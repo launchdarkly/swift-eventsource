@@ -8,7 +8,7 @@ class EventParser {
         static let idLabel: Substring = "id"
         static let eventLabel: Substring = "event"
         static let retryLabel: Substring = "retry"
-        static let defaultEventName = "message"
+        static let defaultEventType = "message"
     }
 
     private let handler: EventHandler
@@ -16,7 +16,7 @@ class EventParser {
 
     private var data: String = ""
     private var lastEventId: String?
-    private var eventName: String = Constants.defaultEventName
+    private var eventType: String = Constants.defaultEventType
 
     init(handler: EventHandler, connectionHandler: ConnectionHandler) {
         self.handler = handler
@@ -53,7 +53,7 @@ class EventParser {
         case Constants.idLabel:
             lastEventId = String(value)
         case Constants.eventLabel:
-            eventName = String(value)
+            eventType = String(value)
         case Constants.retryLabel:
             if value.allSatisfy(("0"..."9").contains), let reconnectionTime = Int64(value) {
                 connectionHandler.setReconnectionTime(Double(reconnectionTime) * 0.001)
@@ -69,9 +69,9 @@ class EventParser {
         if let lastEventId = lastEventId {
             connectionHandler.setLastEventId(lastEventId)
         }
-        handler.onMessage(event: eventName, messageEvent: messageEvent)
+        handler.onMessage(eventType: eventType, messageEvent: messageEvent)
         data = ""
-        eventName = Constants.defaultEventName
+        eventType = Constants.defaultEventType
     }
 }
 
