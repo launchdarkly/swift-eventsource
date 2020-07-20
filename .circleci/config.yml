@@ -78,7 +78,7 @@ jobs:
 
     - run:
         name: Build for ARM64 macOS
-        command: xcodebuild test -scheme 'LDSwiftEventSource' -arch arm64e -sdk macosx | tee 'artifacts/raw-logs-macosx-arm64e.txt' | xcpretty
+        command: xcodebuild build -scheme 'LDSwiftEventSource' -arch arm64e -sdk macosx | tee 'artifacts/raw-logs-macosx-arm64e.txt' | xcpretty
         when: always
 
     - run:
