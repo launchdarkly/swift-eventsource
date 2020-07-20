@@ -63,6 +63,30 @@ jobs:
     - store_artifacts:
         path: artifacts
 
+  build_macos_universal:
+    macos:
+      xcode: '12.0.0-UA'
+
+    steps:
+    - checkout
+
+    - run:
+        name: Setup for builds
+        command: |
+          mkdir -p 'test-results'
+          mkdir -p 'artifacts'
+
+    - run:
+        name: Build & Test on macOS Simulator
+        command: xcodebuild test -scheme 'LDSwiftEventSource' -sdk macosx -destination 'platform=macOS' | tee 'artifacts/raw-logs-macosx.txt' | xcpretty -r junit -o 'test-results/platform-macosx/junit.xml'
+        when: always
+
+    - store_test_results:
+        path: test-results
+
+    - store_artifacts:
+        path: artifacts
+
   build_linux:
     shell: /bin/bash --login -eo pipefail
 
@@ -90,3 +114,4 @@ workflows:
     jobs:
       - build
       - build_linux
+      - build_macos_universal
