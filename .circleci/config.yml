@@ -7,21 +7,21 @@ jobs:
       image: norionomura/swift:latest
 
     steps:
-    -checkout
+    - checkout
 
-    -run:
-      name: Install xcpretty
-      command: gem install xcpretty
+    - run:
+        name: Install xcpretty
+        command: gem install xcpretty
 
-    -run:
-      name: Setup for builds
-      command: |
-        mkdir -p 'test-results'
-        mkdir -p 'artifacts'
+    - run:
+        name: Setup for builds
+        command: |
+          mkdir -p 'test-results'
+          mkdir -p 'artifacts'
 
-    -run:
-      name: Build & Test with swiftpm
-      command: swift test -v 2>&1 | tee 'artifacts/raw-logs-swiftpm-linux.txt' | xcpretty -r junit -o 'test-results/swiftpm-linux/junit.xml'
+    - run:
+        name: Build & Test with swiftpm
+        command: swift test -v 2>&1 | tee 'artifacts/raw-logs-swiftpm-linux.txt' | xcpretty -r junit -o 'test-results/swiftpm-linux/junit.xml'
 
     - store_test_results:
         path: test-results
