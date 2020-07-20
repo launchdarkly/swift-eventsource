@@ -107,21 +107,4 @@ final class UTF8LineParserTests: XCTestCase {
         XCTAssertEqual(parser.append(data), expected)
         XCTAssertEqual(parser.closeAndReset(), [])
     }
-
-    static var allTests = [
-        ("testNoData", testNoData),
-        ("testEmptyData", testEmptyData),
-        ("testEmptyCrLine", testEmptyCrLine),
-        ("testBasicLine", testBasicLine),
-        ("testBasicLineCr", testBasicLineCr),
-        ("testBasicLineLf", testBasicLineLf),
-        ("testBasicLineCrLf", testBasicLineCrLf),
-        ("testBasicSplit", testBasicSplit),
-        ("testUnicodeString", testUnicodeString),
-        ("testInvalidCharacterReplaced", testInvalidCharacterReplaced),
-        ("testCodePointSplitNotReplaced", testCodePointSplitNotReplaced),
-        ("testPartialReplacedOnClose", testPartialReplacedOnClose),
-        ("testInvalidCharacterReplacedOnNextLineAfterCr", testInvalidCharacterReplacedOnNextLineAfterCr),
-        ("testMultiLineDataMixedLineEnding", testMultiLineDataMixedLineEnding)
-    ]
 }

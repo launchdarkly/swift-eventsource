@@ -44,11 +44,6 @@ final class LDSwiftEventSourceTests: XCTestCase {
         XCTAssertEqual(config.backoffResetThreshold, 120.0)
         XCTAssertEqual(config.idleTimeout, 180.0)
     }
-
-    static var allTests = [
-        ("testConfigDefaults", testConfigDefaults),
-        ("testConfigModification", testConfigModification)
-    ]
 }
 
 private class MockHandler: EventHandler {
@@ -71,6 +66,4 @@ private class MockHandler: EventHandler {
     func onError(error: Error) {
 
     }
-
-
 }
