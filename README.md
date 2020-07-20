@@ -24,7 +24,7 @@ pod 'LDSwiftEventSource', '~> 1.0'
 
 ### Carthage
 
-To use the [Carthage](https://github.com/Carthage/Carthage) dependency manager to integrate LDSwiftEventSource into your Xcode project, specify it in your `Cartfile` :
+To use the [Carthage](https://github.com/Carthage/Carthage) dependency manager to integrate LDSwiftEventSource into your Xcode project, specify it in your `Cartfile`:
 
 ```ogdl
 github "LaunchDarkly/swift-eventsource" ~> 1.0
@@ -32,9 +32,9 @@ github "LaunchDarkly/swift-eventsource" ~> 1.0
 
 ### Swift Package Manager
 
-The [Swift Package Manager](https://swift.org/package-manager/) is a dependency manager integrated into the `swift` compiler and XCode. Note that the LDSwiftEventSource Swift package provides both a `LDSwiftEventSource` product, which is explicitely dynamic, and a `LDSwiftEventSourceStatic` product which is explicitely static.
+The [Swift Package Manager](https://swift.org/package-manager/) is a dependency manager integrated into the `swift` compiler and Xcode. Note that the LDSwiftEventSource Swift package provides both a `LDSwiftEventSource` product, which is explicitely dynamic, and a `LDSwiftEventSourceStatic` product which is explicitely static.
 
-To integrate LDSwiftEventSource into an XCode project, go to the project editor, and select `Swift Packages`. From here hit the `+` button and follow the prompts using  `https://github.com/LaunchDarkly/swift-eventsource.git` as the URL.
+To integrate LDSwiftEventSource into an Xcode project, go to the project editor, and select `Swift Packages`. From here hit the `+` button and follow the prompts using  `https://github.com/LaunchDarkly/swift-eventsource.git` as the URL.
 
 To include LDSwiftEventSource in a Swift package, simply add it to the dependencies section of your `Package.swift` file. And add the desired product as a dependency for your targets.
 
