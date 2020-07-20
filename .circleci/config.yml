@@ -1,34 +1,5 @@
 version: 2.1
 jobs:
-  build_linux:
-    shell: /bin/bash --login -eo pipefail
-
-    docker:
-      - image: norionomura/swift:latest
-
-    steps:
-    - checkout
-
-    - run:
-        name: Install xcpretty
-        command: gem install xcpretty
-
-    - run:
-        name: Setup for builds
-        command: |
-          mkdir -p 'test-results'
-          mkdir -p 'artifacts'
-
-    - run:
-        name: Build & Test with swiftpm
-        command: swift test -v 2>&1 | tee 'artifacts/raw-logs-swiftpm-linux.txt' | xcpretty -r junit -o 'test-results/swiftpm-linux/junit.xml'
-
-    - store_test_results:
-        path: test-results
-
-    - store_artifacts:
-        path: artifacts
-
   build:
     shell: /bin/bash --login -eo pipefail
 
@@ -91,3 +62,40 @@ jobs:
 
     - store_artifacts:
         path: artifacts
+
+  build_linux:
+    shell: /bin/bash --login -eo pipefail
+
+    docker:
+      - image: norionomura/swift:latest
+
+    steps:
+    - checkout
+
+    - run:
+        name: Install xcpretty
+        command: gem install xcpretty
+
+    - run:
+        name: Setup for builds
+        command: |
+          mkdir -p 'test-results'
+          mkdir -p 'artifacts'
+
+    - run:
+        name: Build & Test with swiftpm
+        command: swift test -v 2>&1 | tee 'artifacts/raw-logs-swiftpm-linux.txt' | xcpretty -r junit -o 'test-results/swiftpm-linux/junit.xml'
+
+    - store_test_results:
+        path: test-results
+
+    - store_artifacts:
+        path: artifacts
+
+workflows:
+  version: 2
+
+  build:
+    jobs:
+      - build
+      - build_linux
