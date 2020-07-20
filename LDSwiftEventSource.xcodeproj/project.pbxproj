@@ -289,6 +289,7 @@
 				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
 				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
 				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
 				CLANG_WARN_STRICT_PROTOTYPES = YES;
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
@@ -330,11 +331,11 @@
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				TVOS_DEPLOYMENT_TARGET = 10.0;
-				"VALID_ARCHS[sdk=appletvos*]" = arm64;
+				"VALID_ARCHS[sdk=appletvos*]" = "arm64 arm64e";
 				"VALID_ARCHS[sdk=appletvsimulator*]" = x86_64;
-				"VALID_ARCHS[sdk=iphoneos*]" = "arm64 armv7 armv7s";
+				"VALID_ARCHS[sdk=iphoneos*]" = "arm64 arm64e armv7 armv7s";
 				"VALID_ARCHS[sdk=iphonesimulator*]" = "i386 x86_64";
-				"VALID_ARCHS[sdk=macosx*]" = "x86_64 arm64";
+				"VALID_ARCHS[sdk=macosx*]" = "x86_64 arm64 arm64e";
 				"VALID_ARCHS[sdk=watchos*]" = "armv7k arm64_32";
 				"VALID_ARCHS[sdk=watchsimulator*]" = "x86_64 i386";
 				VERSIONING_SYSTEM = "apple-generic";
@@ -369,6 +370,7 @@
 				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
 				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
 				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
 				CLANG_WARN_STRICT_PROTOTYPES = YES;
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
@@ -403,11 +405,11 @@
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 5.0;
 				TVOS_DEPLOYMENT_TARGET = 10.0;
-				"VALID_ARCHS[sdk=appletvos*]" = arm64;
+				"VALID_ARCHS[sdk=appletvos*]" = "arm64 arm64e";
 				"VALID_ARCHS[sdk=appletvsimulator*]" = x86_64;
-				"VALID_ARCHS[sdk=iphoneos*]" = "arm64 armv7 armv7s";
+				"VALID_ARCHS[sdk=iphoneos*]" = "arm64 arm64e armv7 armv7s";
 				"VALID_ARCHS[sdk=iphonesimulator*]" = "i386 x86_64";
-				"VALID_ARCHS[sdk=macosx*]" = "x86_64 arm64";
+				"VALID_ARCHS[sdk=macosx*]" = "x86_64 arm64 arm64e";
 				"VALID_ARCHS[sdk=watchos*]" = "armv7k arm64_32";
 				"VALID_ARCHS[sdk=watchsimulator*]" = "x86_64 i386";
 				VERSIONING_SYSTEM = "apple-generic";
@@ -439,7 +441,7 @@
 					"@executable_path/../Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 1.1.0;
 				SKIP_INSTALL = YES;
 				"TARGETED_DEVICE_FAMILY[sdk=appletvos*]" = 3;
 				"TARGETED_DEVICE_FAMILY[sdk=appletvsimulator*]" = 3;
@@ -473,7 +475,7 @@
 					"@executable_path/../Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 1.1.0;
 				SKIP_INSTALL = YES;
 				"TARGETED_DEVICE_FAMILY[sdk=appletvos*]" = 3;
 				"TARGETED_DEVICE_FAMILY[sdk=appletvsimulator*]" = 3;

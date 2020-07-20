@@ -173,25 +173,4 @@ final class EventParserTests: XCTestCase {
         XCTAssertEqual(eventHandler.received, [.message("msg", MessageEvent(data: "foo", lastEventId: nil)),
                                                .message("message", MessageEvent(data: "bar", lastEventId: nil))])
     }
-
-    static var allTests = [
-        ("testDispatchesSingleLineMessage", testDispatchesSingleLineMessage),
-        ("testDoesNotFireMultipleTimesIfSeveralEmptyLines", testDoesNotFireMultipleTimesIfSeveralEmptyLines),
-        ("testDispatchesSingleLineMessageWIthId", testDispatchesSingleLineMessageWIthId),
-        ("testDispatchesSingleLineMessageWithCustomEvent", testDispatchesSingleLineMessageWithCustomEvent),
-        ("testSendsCommentsForLinesStartingWithColon", testSendsCommentsForLinesStartingWithColon),
-        ("testSetsRetryTimeToSevenSeconds", testSetsRetryTimeToSevenSeconds),
-        ("testDoesNotSetRetryTimeUnlessEntireValueIsNumeric", testDoesNotSetRetryTimeUnlessEntireValueIsNumeric),
-        ("testReusesEventIdIfNotSet", testReusesEventIdIfNotSet),
-        ("testRemovesOnlyFirstSpace", testRemovesOnlyFirstSpace),
-        ("testAllowsNoLeadingSpace", testAllowsNoLeadingSpace),
-        ("testDoesNotDispatchEmptyData", testDoesNotDispatchEmptyData),
-        ("testOnlyLeadingSpaceTreatedAsEmpty", testOnlyLeadingSpaceTreatedAsEmpty),
-        ("testLineWithoutColonTreatedAsFieldNameWithEmptyData", testLineWithoutColonTreatedAsFieldNameWithEmptyData),
-        ("testMultipleDataDispatch", testMultipleDataDispatch),
-        ("testEmptyDataWithBufferedDataAppendsNewline", testEmptyDataWithBufferedDataAppendsNewline),
-        ("testCommentCanContainColon", testCommentCanContainColon),
-        ("testInvalidFieldNameIgnoredInEvent", testInvalidFieldNameIgnoredInEvent),
-        ("testEventNameResetAfterDispatch", testEventNameResetAfterDispatch)
-    ]
 }
