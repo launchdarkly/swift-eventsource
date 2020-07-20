@@ -73,6 +73,10 @@ jobs:
     - checkout
 
     - run:
+        name: Install Ruby
+        command: sudo apt-get install ruby
+
+    - run:
         name: Install xcpretty
         command: gem install xcpretty
 
