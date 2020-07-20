@@ -74,7 +74,7 @@ jobs:
 
     - run:
         name: Install Ruby
-        command: sudo apt-get install ruby
+        command: apt-get install ruby
 
     - run:
         name: Install xcpretty
