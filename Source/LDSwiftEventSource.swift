@@ -1,5 +1,7 @@
 import Foundation
+#if !os(Linux)
 import os.log
+#endif
 
 public class EventSource {
     private let esDelegate: EventSourceDelegate
@@ -69,10 +71,13 @@ public class EventSource {
 
 class EventSourceDelegate: NSObject, URLSessionDataDelegate {
 
+    #if !os(Linux)
+    private let logger: OSLog = OSLog(subsystem: "com.launchdarkly.swift-eventsource", category: "LDEventSource")
+    #endif
+
     private let config: EventSource.Config
 
     private let delegateQueue: DispatchQueue = DispatchQueue(label: "ESDelegateQueue")
-    private let logger: OSLog
 
     private var readyState: ReadyState = .raw
 
@@ -90,14 +95,15 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
         self.config = config
         self.lastEventId = config.lastEventId
         self.reconnectTime = config.reconnectTime
-        self.logger = OSLog(subsystem: "com.launchdarkly.swift-eventsource", category: "LDEventSource")
     }
 
     func start() {
         delegateQueue.async {
             guard self.readyState == .raw
             else {
+                #if !os(Linux)
                 os_log("Start method called on this already-started EventSource object. Doing nothing", log: self.logger, type: .info)
+                #endif
                 return
             }
             self.connect()
@@ -115,7 +121,9 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
     func getLastEventId() -> String? { lastEventId }
 
     private func connect() {
+        #if !os(Linux)
         os_log("Starting EventSource client", log: logger, type: .info)
+        #endif
         let connectionHandler: ConnectionHandler = (
             setReconnectionTime: { reconnectionTime in self.reconnectTime = reconnectionTime },
             setLastEventId: { eventId in self.lastEventId = eventId }
@@ -149,11 +157,15 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
         var nextState: ReadyState = .closed
         let currentState: ReadyState = readyState
         if errorHandlerAction == .shutdown {
+            #if !os(Linux)
             os_log("Connection has been explicitly shut down by error handler", log: logger, type: .info)
+            #endif
             nextState = .shutdown
         }
         readyState = nextState
+        #if !os(Linux)
         os_log("State: %@ -> %@", log: logger, type: .debug, currentState.rawValue, nextState.rawValue)
+        #endif
 
         if currentState == .open {
             config.handler.onClosed()
@@ -174,7 +186,9 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
         let maxSleep = min(config.maxReconnectTime, reconnectTime * pow(2.0, Double(reconnectionAttempts)))
         let sleep = maxSleep / 2 + Double.random(in: 0...(maxSleep/2))
 
+        #if !os(Linux)
         os_log("Waiting %.3f seconds before reconnecting...", log: logger, type: .info, sleep)
+        #endif
         delegateQueue.asyncAfter(deadline: .now() + sleep) {
             self.connect()
         }
@@ -190,13 +204,17 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
 
         if let error = error {
             if readyState != .shutdown {
+                #if !os(Linux)
                 os_log("Connection error: %@", log: logger, type: .info, error.localizedDescription)
+                #endif
                 errorHandlerAction = dispatchError(error: error)
             } else {
                 errorHandlerAction = .shutdown
             }
         } else {
+            #if !os(Linux)
             os_log("Connection unexpectedly closed.", log: logger, type: .info)
+            #endif
         }
 
         afterComplete()
@@ -207,7 +225,9 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
                            dataTask: URLSessionDataTask,
                            didReceive response: URLResponse,
                            completionHandler: @escaping (URLSession.ResponseDisposition) -> Void) {
+        #if !os(Linux)
         os_log("initial reply received", log: logger, type: .debug)
+        #endif
 
         let httpResponse = response as! HTTPURLResponse
         if (200..<300).contains(httpResponse.statusCode) {
@@ -216,7 +236,9 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
             config.handler.onOpened()
             completionHandler(.allow)
         } else {
+            #if !os(Linux)
             os_log("Unsuccessful response: %d", log: logger, type: .info, httpResponse.statusCode)
+            #endif
             errorHandlerAction = dispatchError(error: UnsuccessfulResponseError(responseCode: httpResponse.statusCode))
             completionHandler(.cancel)
         }
