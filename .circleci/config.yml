@@ -4,7 +4,7 @@ jobs:
     shell: /bin/bash --login -eo pipefail
 
     docker:
-      image: norionomura/swift:latest
+      - image: norionomura/swift:latest
 
     steps:
     - checkout
