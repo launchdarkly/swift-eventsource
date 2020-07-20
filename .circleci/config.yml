@@ -73,29 +73,12 @@ jobs:
     - checkout
 
     - run:
-        name: apt-get update
-        command: apt-get -y update
-
-    - run:
-        name: Install Ruby
-        command: apt-get -y install ruby
-
-    - run:
-        name: Install xcpretty
-        command: gem install xcpretty
-
-    - run:
         name: Setup for builds
-        command: |
-          mkdir -p 'test-results'
-          mkdir -p 'artifacts'
+        command: mkdir -p 'artifacts'
 
     - run:
         name: Build & Test with swiftpm
-        command: swift test -v 2>&1 | tee 'artifacts/raw-logs-swiftpm-linux.txt' | xcpretty -r junit -o 'test-results/swiftpm-linux/junit.xml'
-
-    - store_test_results:
-        path: test-results
+        command: swift test -v | tee 'artifacts/raw-logs-swiftpm-linux.txt'
 
     - store_artifacts:
         path: artifacts
