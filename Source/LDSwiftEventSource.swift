@@ -1,4 +1,9 @@
 import Foundation
+
+#if os(Linux)
+import FoundationNetworking
+#endif
+
 #if !os(Linux)
 import os.log
 #endif
