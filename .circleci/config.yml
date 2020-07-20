@@ -73,6 +73,10 @@ jobs:
     - checkout
 
     - run:
+        name: apt-get update
+        command: apt-get update -y
+
+    - run:
         name: Install Ruby
         command: apt-get install rubygems-integration
 
