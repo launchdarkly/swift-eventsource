@@ -77,8 +77,13 @@ jobs:
           mkdir -p 'artifacts'
 
     - run:
-        name: Build & Test on macOS Simulator
-        command: xcodebuild test -scheme 'LDSwiftEventSource' -sdk macosx -destination 'platform=macOS' | tee 'artifacts/raw-logs-macosx.txt' | xcpretty -r junit -o 'test-results/platform-macosx/junit.xml'
+        name: Build for ARM64 macOS
+        command: xcodebuild test -scheme 'LDSwiftEventSource' -arch arm64e -sdk macosx | tee 'artifacts/raw-logs-macosx-arm64.txt' | xcpretty
+        when: always
+
+    - run:
+        name: Build & Test on x86_64 macOS Simulator
+        command: xcodebuild test -scheme 'LDSwiftEventSource' -sdk macosx -destination 'platform=macOS' | tee 'artifacts/raw-logs-macosx-x86_64.txt' | xcpretty -r junit -o 'test-results/platform-macosx-x86_64/junit.xml'
         when: always
 
     - store_test_results:
