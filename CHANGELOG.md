@@ -2,6 +2,11 @@
 
 All notable changes to the LaunchDarkly Swift EventSource library will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [1.1.0] - 2020-07-20
+### Added
+- Support `arm64e` on `appletvos`, `iphoneos`, and `macosx` SDKs by extending valid architectures.
+- Support for building LDSwiftEventSource on Linux. Currently this library will not generate log messages on Linux, and may not behave correctly on Linux due to Foundation being [incomplete](https://github.com/apple/swift-corelibs-foundation/blob/master/Docs/Status.md).
+
 ## [1.0.0] - 2020-07-16
 This is the first public release of the LDSwiftEventSource library. The following notes are what changed since the previous pre-release version.
 ### Changed
