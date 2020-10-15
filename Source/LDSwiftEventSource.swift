@@ -8,6 +8,8 @@ import FoundationNetworking
 import os.log
 #endif
 
+typealias HeaderTransform = ([String: String]) -> [String: String]
+
 public class EventSource {
     private let esDelegate: EventSourceDelegate
 
@@ -56,7 +58,7 @@ public class EventSource {
         /// Additional headers to be set on the request
         public var headers: [String: String] = [:]
         /// Provides the ability to add conditional headers
-        public var extraHeaders: ([String: String]) -> [String: String] = { $0 }
+        public var extraHeaders: HeaderTransform = { $0 }
         /// The minimum amount of time to wait before reconnecting after a failure
         public var reconnectTime: TimeInterval = 1.0
         /// The maximum amount of time to wait before reconnecting after a failure
