@@ -8,7 +8,7 @@ import FoundationNetworking
 import os.log
 #endif
 
-typealias HeaderTransform = ([String: String]) -> [String: String]
+public typealias HeaderTransform = ([String: String]) -> [String: String]
 
 public class EventSource {
     private let esDelegate: EventSourceDelegate
