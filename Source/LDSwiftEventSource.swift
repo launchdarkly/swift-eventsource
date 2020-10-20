@@ -8,8 +8,6 @@ import FoundationNetworking
 import os.log
 #endif
 
-public typealias HeaderTransform = ([String: String]) -> [String: String]
-
 public class EventSource {
     private let esDelegate: EventSourceDelegate
 
@@ -58,7 +56,7 @@ public class EventSource {
         /// Additional headers to be set on the request
         public var headers: [String: String] = [:]
         /// Provides the ability to add conditional headers
-        public var extraHeaders: HeaderTransform = { $0 }
+        public var headerTransform: HeaderTransform = { $0 }
         /// The minimum amount of time to wait before reconnecting after a failure
         public var reconnectTime: TimeInterval = 1.0
         /// The maximum amount of time to wait before reconnecting after a failure
@@ -148,7 +146,7 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
         urlRequest.httpMethod = self.config.method
         urlRequest.httpBody = self.config.body
         urlRequest.setValue(self.lastEventId, forHTTPHeaderField: "Last-Event-ID")
-        urlRequest.allHTTPHeaderFields = self.config.extraHeaders(
+        urlRequest.allHTTPHeaderFields = self.config.headerTransform(
             urlRequest.allHTTPHeaderFields?.merging(self.config.headers) { $1 } ?? self.config.headers
         )
         let task = session.dataTask(with: urlRequest)

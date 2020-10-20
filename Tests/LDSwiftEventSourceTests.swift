@@ -29,7 +29,7 @@ final class LDSwiftEventSourceTests: XCTestCase {
         config.body = testBody
         config.lastEventId = "eventId"
         config.headers = testHeaders
-        config.extraHeaders = { _ in [:] }
+        config.headerTransform = { _ in [:] }
         config.reconnectTime = 2.0
         config.maxReconnectTime = 60.0
         config.backoffResetThreshold = 120.0
@@ -40,7 +40,7 @@ final class LDSwiftEventSourceTests: XCTestCase {
         XCTAssertEqual(config.body, testBody)
         XCTAssertEqual(config.lastEventId, "eventId")
         XCTAssertEqual(config.headers, testHeaders)
-        XCTAssertEqual(config.extraHeaders(config.headers), [:])
+        XCTAssertEqual(config.headerTransform(config.headers), [:])
         XCTAssertEqual(config.reconnectTime, 2.0)
         XCTAssertEqual(config.maxReconnectTime, 60.0)
         XCTAssertEqual(config.backoffResetThreshold, 120.0)
