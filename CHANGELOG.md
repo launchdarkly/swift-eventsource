@@ -2,6 +2,10 @@
 
 All notable changes to the LaunchDarkly Swift EventSource library will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [1.2.0] - 2020-10-21
+### Added
+- Added `headerTransform` closure to `LDConfig` to allow dynamic http header configuration.
+
 ## [1.1.0] - 2020-07-20
 ### Added
 - Support `arm64e` on `appletvos`, `iphoneos`, and `macosx` SDKs by extending valid architectures.
