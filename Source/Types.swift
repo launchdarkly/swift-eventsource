@@ -5,6 +5,11 @@ import Foundation
 /// it has the ability to tell EventSource to stop reconnecting.
 public typealias ConnectionErrorHandler = (Error) -> ConnectionErrorAction
 
+/// Type for a function that will take in the current http headers
+/// and return a new set of http headers to be used when connecting
+/// and reconnecting to a stream.
+public typealias HeaderTransform = ([String: String]) -> [String: String]
+
 /// Potential actions a ConnectionErrorHandler can return
 public enum ConnectionErrorAction {
     /// Specifies that the error should be logged normally and dispatched to the EventHandler.

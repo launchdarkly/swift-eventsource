@@ -55,6 +55,8 @@ public class EventSource {
         public var lastEventId: String? = nil
         /// Additional headers to be set on the request
         public var headers: [String: String] = [:]
+        /// Provides the ability to add conditional headers
+        public var headerTransform: HeaderTransform = { $0 }
         /// The minimum amount of time to wait before reconnecting after a failure
         public var reconnectTime: TimeInterval = 1.0
         /// The maximum amount of time to wait before reconnecting after a failure
@@ -144,7 +146,9 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
         urlRequest.httpMethod = self.config.method
         urlRequest.httpBody = self.config.body
         urlRequest.setValue(self.lastEventId, forHTTPHeaderField: "Last-Event-ID")
-        urlRequest.allHTTPHeaderFields?.merge(self.config.headers, uniquingKeysWith: { $1 })
+        urlRequest.allHTTPHeaderFields = self.config.headerTransform(
+            urlRequest.allHTTPHeaderFields?.merging(self.config.headers) { $1 } ?? self.config.headers
+        )
         let task = session.dataTask(with: urlRequest)
         task.resume()
         sessionTask = task
