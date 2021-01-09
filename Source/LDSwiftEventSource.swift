@@ -191,6 +191,7 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
         if let connectedTime = connectedTime, Date().timeIntervalSince(connectedTime) >= config.backoffResetThreshold {
             reconnectionAttempts = 0
         }
+        self.connectedTime = nil
 
         let maxSleep = min(config.maxReconnectTime, reconnectTime * pow(2.0, Double(reconnectionAttempts)))
         let sleep = maxSleep / 2 + Double.random(in: 0...(maxSleep/2))
