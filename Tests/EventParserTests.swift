@@ -28,14 +28,15 @@ class MockEventHandler: EventHandler {
 }
 
 final class EventParserTests: XCTestCase {
-    var receivedReconnectionTime: TimeInterval? = nil
-    var receivedLastEventId: String? = nil
+    var receivedReconnectionTime: TimeInterval?
+    var receivedLastEventId: String?
     lazy var connectionHandler: ConnectionHandler = { (setReconnectionTime: { self.receivedReconnectionTime = $0 },
                                                        setLastEventId: { self.receivedLastEventId = $0 }) }()
     let eventHandler = MockEventHandler()
     var parser: EventParser!
 
     override func setUp() {
+        super.setUp()
         receivedReconnectionTime = nil
         receivedLastEventId = nil
         eventHandler.reset()

@@ -50,22 +50,17 @@ final class LDSwiftEventSourceTests: XCTestCase {
 
 private class MockHandler: EventHandler {
     func onOpened() {
-
     }
 
     func onClosed() {
-
     }
 
     func onMessage(eventType: String, messageEvent: MessageEvent) {
-
     }
 
     func onComment(comment: String) {
-
     }
 
     func onError(error: Error) {
-
     }
 }

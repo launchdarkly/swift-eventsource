@@ -5,6 +5,7 @@ final class UTF8LineParserTests: XCTestCase {
     var parser = UTF8LineParser()
 
     override func setUp() {
+        super.setUp()
         parser = UTF8LineParser()
     }
 

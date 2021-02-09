@@ -37,8 +37,8 @@ class UTF8LineParser {
 
         Decode: while true {
             switch utf8Parser.parseScalar(from: &dataIter) {
-            case .valid(let v):
-                let scalar = Unicode.UTF8.decode(v)
+            case .valid(let scalarResult):
+                let scalar = Unicode.UTF8.decode(scalarResult)
                 if seenCr {
                     lines.append(currentString)
                     currentString = ""

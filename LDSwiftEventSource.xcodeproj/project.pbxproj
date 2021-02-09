@@ -143,6 +143,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = B49B5E0D24667D42008BF867 /* Build configuration list for PBXNativeTarget "LDSwiftEventSource" */;
 			buildPhases = (
+				B46C1C6B24CF348B00283630 /* Linter Script */,
 				B49B5DF724667D41008BF867 /* Headers */,
 				B49B5DF824667D41008BF867 /* Sources */,
 				B49B5DF924667D41008BF867 /* Frameworks */,
@@ -228,6 +229,28 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		B46C1C6B24CF348B00283630 /* Linter Script */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Linter Script";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "echo `pwd`\nif which mint >/dev/null; then\n  /usr/bin/xcrun --sdk macosx mint run realm/SwiftLint\nelse\n  echo \"warning: mint not installed, available from https://github.com/yonaskolb/Mint\"\nfi\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		B49B5DF824667D41008BF867 /* Sources */ = {
