@@ -8,6 +8,11 @@ import FoundationNetworking
 import os.log
 #endif
 
+/**
+ Provides an EventSource client for consuming Server-Sent Events.
+
+ See the [Server-Sent Events spec](https://html.spec.whatwg.org/multipage/server-sent-events.html) for more details.
+ */
 public class EventSource {
     private let esDelegate: EventSourceDelegate
 
@@ -42,17 +47,19 @@ public class EventSource {
 
     /// Struct describing the configuration of the EventSource
     public struct Config {
+        /// The EventHandler called in response to activity on the stream.
         public let handler: EventHandler
+        /// The URL of the request used when connecting to the EventSource API.
         public let url: URL
 
         /// The method to use for the EventSource connection
         public var method: String = "GET"
         /// Optional body to be sent with the initial request
-        public var body: Data? = nil
+        public var body: Data?
         /// Error handler that can determine whether to proceed or shutdown.
         public var connectionErrorHandler: ConnectionErrorHandler = { _ in .proceed }
         /// An initial value for the last-event-id to be set on the initial request
-        public var lastEventId: String? = nil
+        public var lastEventId: String?
         /// Additional headers to be set on the request
         public var headers: [String: String] = [:]
         /// Provides the ability to add conditional headers
@@ -77,7 +84,6 @@ public class EventSource {
 }
 
 class EventSourceDelegate: NSObject, URLSessionDataDelegate {
-
     #if !os(Linux)
     private let logger: OSLog = OSLog(subsystem: "com.launchdarkly.swift-eventsource", category: "LDEventSource")
     #endif
@@ -93,8 +99,9 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
     private var connectedTime: Date?
 
     private var reconnectionAttempts: Int = 0
-    private var errorHandlerAction: ConnectionErrorAction? = nil
+    private var errorHandlerAction: ConnectionErrorAction?
     private let utf8LineParser: UTF8LineParser = UTF8LineParser()
+    // swiftlint:disable:next implicitly_unwrapped_optional
     private var eventParser: EventParser!
     private var sessionTask: URLSessionDataTask?
 
@@ -109,7 +116,7 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
             guard self.readyState == .raw
             else {
                 #if !os(Linux)
-                os_log("Start method called on this already-started EventSource object. Doing nothing", log: self.logger, type: .info)
+                os_log("start() called on already-started EventSource object. Returning", log: self.logger, type: .info)
                 #endif
                 return
             }
@@ -139,7 +146,7 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
         let sessionConfig = URLSessionConfiguration.default
         sessionConfig.httpAdditionalHeaders = ["Accept": "text/event-stream", "Cache-Control": "no-cache"]
         sessionConfig.timeoutIntervalForRequest = self.config.idleTimeout
-        let session = URLSession.init(configuration: sessionConfig, delegate: self, delegateQueue: nil)
+        let session = URLSession(configuration: sessionConfig, delegate: self, delegateQueue: nil)
         var urlRequest = URLRequest(url: self.config.url,
                                     cachePolicy: URLRequest.CachePolicy.reloadIgnoringLocalAndRemoteCacheData,
                                     timeoutInterval: self.config.idleTimeout)
@@ -194,7 +201,7 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
         self.connectedTime = nil
 
         let maxSleep = min(config.maxReconnectTime, reconnectTime * pow(2.0, Double(reconnectionAttempts)))
-        let sleep = maxSleep / 2 + Double.random(in: 0...(maxSleep/2))
+        let sleep = maxSleep / 2 + Double.random(in: 0...(maxSleep / 2))
 
         #if !os(Linux)
         os_log("Waiting %.3f seconds before reconnecting...", log: logger, type: .info, sleep)
@@ -239,6 +246,7 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
         os_log("initial reply received", log: logger, type: .debug)
         #endif
 
+        // swiftlint:disable:next force_cast
         let httpResponse = response as! HTTPURLResponse
         if (200..<300).contains(httpResponse.statusCode) {
             connectedTime = Date()

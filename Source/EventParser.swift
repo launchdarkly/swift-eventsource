@@ -1,6 +1,6 @@
 import Foundation
 
-typealias ConnectionHandler = (setReconnectionTime: (TimeInterval) -> (), setLastEventId: (String) -> ())
+typealias ConnectionHandler = (setReconnectionTime: (TimeInterval) -> Void, setLastEventId: (String) -> Void)
 
 class EventParser {
     private struct Constants {
@@ -58,7 +58,8 @@ class EventParser {
             if value.allSatisfy(("0"..."9").contains), let reconnectionTime = Int64(value) {
                 connectionHandler.setReconnectionTime(Double(reconnectionTime) * 0.001)
             }
-        default: break
+        default:
+            break
         }
     }
 
@@ -78,6 +79,6 @@ class EventParser {
 private extension Array {
     /// Returns the element at the specified index if it is within bounds, otherwise nil.
     subscript (safe index: Index) -> Element? {
-        return index >= startIndex && index < endIndex ? self[index] : nil
+        index >= startIndex && index < endIndex ? self[index] : nil
     }
 }
