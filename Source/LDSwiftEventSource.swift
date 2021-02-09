@@ -250,6 +250,10 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
             os_log("Unsuccessful response: %d", log: logger, type: .info, httpResponse.statusCode)
             #endif
             errorHandlerAction = dispatchError(error: UnsuccessfulResponseError(responseCode: httpResponse.statusCode))
+
+            if errorHandlerAction == .shutdown {
+                readyState = .shutdown
+            }
             completionHandler(.cancel)
         }
     }
