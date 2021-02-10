@@ -57,6 +57,12 @@ jobs:
         command: swift test -v 2>&1 | tee 'artifacts/raw-logs-swiftpm.txt' | xcpretty -r junit -o 'test-results/swiftpm/junit.xml'
         when: always
 
+    - run:
+        name: Build Documentation
+        command: |
+          sudo gem install jazzy
+          jazzy -o artifacts/docs
+
     - store_test_results:
         path: test-results
 

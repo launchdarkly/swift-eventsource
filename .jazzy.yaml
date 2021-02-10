@@ -1,0 +1,13 @@
+module: LDSwiftEventSource
+author: LaunchDarkly
+author_url: https://launchdarkly.com
+github_url: https://github.com/launchdarkly/swift-eventsource
+clean: true
+swift_build_tool: spm
+readme: README.md
+documentation:
+  - CHANGELOG.md
+  - CONTRIBUTING.md
+  - LICENSE.txt
+
+copyright: 'Copyright © 2020 Catamorphic Co.'
