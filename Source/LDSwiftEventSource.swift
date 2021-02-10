@@ -17,65 +17,68 @@ public class EventSource {
     private let esDelegate: EventSourceDelegate
 
     /**
-     Initialize an EventSource with the given configuration.
+     Initialize the `EventSource` client with the given configuration.
 
-     - Parameter config: The configuration for initializing the EventSource.
+     - Parameter config: The configuration for initializing the `EventSource` client.
      */
     public init(config: Config) {
         esDelegate = EventSourceDelegate(config: config)
     }
 
     /**
-     Start the EventSource object.
+     Start the `EventSource` client.
 
-     This will create a stream connection to the configured URL. The application will be informed of received events
-     and state changes using the configured EventHandler.
+     This will initiate a streaming connection to the configured URL. The application will be informed of received
+     events and state changes using the configured `EventHandler`.
      */
     public func start() {
         esDelegate.start()
     }
 
-    /// Shuts down the EventSource object. It is not valid to restart the EventSource after calling this function.
+    /// Shuts down the `EventSource` client. It is not valid to restart the `EventSource` after calling this function.
     public func stop() {
         esDelegate.stop()
     }
 
-    /**
-     Get the most recently received event ID, or the configured `lastEventId` if no event IDs have been received.
-     */
+    /// Get the most recently received event ID, or the value of `EventSource.Config.lastEventId` if no event IDs have
+    /// been received.
     public func getLastEventId() -> String? { esDelegate.getLastEventId() }
 
-    /// Struct describing the configuration of the EventSource
+    /// Struct for configuring the EventSource.
     public struct Config {
-        /// The EventHandler called in response to activity on the stream.
+        /// The `EventHandler` called in response to activity on the stream.
         public let handler: EventHandler
-        /// The URL of the request used when connecting to the EventSource API.
+        /// The `URL` of the request used when connecting to the EventSource API.
         public let url: URL
 
-        /// The method to use for the EventSource connection
+        /// The HTTP method to use for the API request.
         public var method: String = "GET"
-        /// Optional body to be sent with the initial request
+        /// Optional HTTP body to be included in the API request.
         public var body: Data?
-        /// Error handler that can determine whether to proceed or shutdown.
-        public var connectionErrorHandler: ConnectionErrorHandler = { _ in .proceed }
-        /// An initial value for the last-event-id to be set on the initial request
+        /// An initial value for the last-event-id header to be sent on the initial request
         public var lastEventId: String?
-        /// Additional headers to be set on the request
+        /// Additional HTTP headers to be set on the request
         public var headers: [String: String] = [:]
-        /// Provides the ability to add conditional headers
+        /// Transform function to allow dynamically configuring the headers on each API request.
         public var headerTransform: HeaderTransform = { $0 }
         /// The minimum amount of time to wait before reconnecting after a failure
         public var reconnectTime: TimeInterval = 1.0
         /// The maximum amount of time to wait before reconnecting after a failure
         public var maxReconnectTime: TimeInterval = 30.0
-        /// The minimum amount of time for an EventSource connection to remain open before allowing connection
+        /// The minimum amount of time for an `EventSource` connection to remain open before allowing the connection
         /// backoff to reset.
         public var backoffResetThreshold: TimeInterval = 60.0
-        /// The maximum amount of time between receiving any data before considering the connection to have
-        /// timed out.
+        /// The maximum amount of time between receiving any data before considering the connection to have timed out.
         public var idleTimeout: TimeInterval = 300.0
 
-        /// Create a new configuration with an EventHandler and a URL
+        /**
+         An error handler that is called when an error occurs and can shut down the client in response.
+
+         The default error handler will always attempt to reconnect on an error, unless `EventSource.stop()` is called.
+         */
+        public var connectionErrorHandler: ConnectionErrorHandler = { _ in .proceed }
+
+        /// Create a new configuration with an `EventHandler` and a `URL`
         public init(handler: EventHandler, url: URL) {
             self.handler = handler
             self.url = url
