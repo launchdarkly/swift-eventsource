@@ -95,14 +95,20 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
 
     private let delegateQueue: DispatchQueue = DispatchQueue(label: "ESDelegateQueue")
 
-    private var readyState: ReadyState = .raw
+    private var readyState: ReadyState = .raw {
+        didSet {
+            #if !os(Linux)
+            os_log("State: %@ -> %@", log: logger, type: .debug, oldValue.rawValue, readyState.rawValue)
+            #endif
+        }
+    }
 
     private var lastEventId: String?
     private var reconnectTime: TimeInterval
     private var connectedTime: Date?
 
     private var reconnectionAttempts: Int = 0
-    private var errorHandlerAction: ConnectionErrorAction?
+    private var errorHandlerAction: ConnectionErrorAction = .proceed
     private let utf8LineParser: UTF8LineParser = UTF8LineParser()
     // swiftlint:disable:next implicitly_unwrapped_optional
     private var eventParser: EventParser!
@@ -182,9 +188,6 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
             nextState = .shutdown
         }
         readyState = nextState
-        #if !os(Linux)
-        os_log("State: %@ -> %@", log: logger, type: .debug, currentState.rawValue, nextState.rawValue)
-        #endif
 
         if currentState == .open {
             config.handler.onClosed()
