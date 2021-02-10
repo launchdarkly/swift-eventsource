@@ -35,7 +35,7 @@ public class EventSource {
         esDelegate.start()
     }
 
-    /// Shuts down the `EventSource` client. It is not valid to restart the `EventSource` after calling this function.
+    /// Shuts down the `EventSource` client. It is not valid to restart the client after calling this function.
     public func stop() {
         esDelegate.stop()
     }
