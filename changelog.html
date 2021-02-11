@@ -122,7 +122,7 @@
 <ul>
 <li>Reconnection backoff was always reset if the  previous successful connection was at least <code>backoffResetThreshold</code> prior to the scheduling of a reconnection attempt. The connection backoff has been corrected to not reset after the first reconnection attempt until the next successful connection. Thanks to  @tomasf for the PR (<a href="https://github.com/launchdarkly/swift-eventsource/pull/14">#14</a>).</li>
 <li>On an <code><a href="Classes/UnsuccessfulResponseError.html">UnsuccessfulResponseError</a></code> the configured <code>connectionErrorHandler</code> would be called twice, the second time with a <code>URLError.cancelled</code> error. Only if the second call returned <code><a href="Enums/ConnectionErrorAction.html#/s:18LDSwiftEventSource21ConnectionErrorActionO8shutdownyA2CmF">ConnectionErrorAction.shutdown</a></code> would the <code><a href="Classes/EventSource.html">EventSource</a></code> client actually shutdown. This has been corrected to only call the <code>connectionErrorHandler</code> once, and will shutdown the client if <code><a href="Enums/ConnectionErrorAction.html#/s:18LDSwiftEventSource21ConnectionErrorActionO8shutdownyA2CmF">ConnectionErrorAction.shutdown</a></code> is returned. Thanks to  @tomasf for the PR (<a href="https://github.com/launchdarkly/swift-eventsource/pull/13">#13</a>).</li>
-<li>A race condition that could cause the eventsource to restart after shutting down has been fixed.</li>
+<li>A race condition that could cause the <code><a href="Classes/EventSource.html">EventSource</a></code> client to restart after shutting down has been fixed.</li>
 </ul>
 <h2 id='1-2-0-2020-10-21' class='heading'>[1.2.0] - 2020-10-21</h2>
 <h3 id='added' class='heading'>Added</h3>
