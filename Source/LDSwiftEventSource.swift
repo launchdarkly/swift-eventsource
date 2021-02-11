@@ -95,17 +95,24 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
 
     private let delegateQueue: DispatchQueue = DispatchQueue(label: "ESDelegateQueue")
 
-    private var readyState: ReadyState = .raw
+    private var readyState: ReadyState = .raw {
+        didSet {
+            #if !os(Linux)
+            os_log("State: %@ -> %@", log: logger, type: .debug, oldValue.rawValue, readyState.rawValue)
+            #endif
+        }
+    }
 
     private var lastEventId: String?
     private var reconnectTime: TimeInterval
     private var connectedTime: Date?
 
     private var reconnectionAttempts: Int = 0
-    private var errorHandlerAction: ConnectionErrorAction?
+    private var errorHandlerAction: ConnectionErrorAction = .proceed
     private let utf8LineParser: UTF8LineParser = UTF8LineParser()
     // swiftlint:disable:next implicitly_unwrapped_optional
     private var eventParser: EventParser!
+    private var urlSession: URLSession?
     private var sessionTask: URLSessionDataTask?
 
     init(config: EventSource.Config) {
@@ -123,19 +130,41 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
                 #endif
                 return
             }
+            self.urlSession = self.createSession()
             self.connect()
         }
     }
 
     func stop() {
+        let previousState = readyState
+        readyState = .shutdown
         sessionTask?.cancel()
-        if readyState == .open {
+        if previousState == .open {
             config.handler.onClosed()
         }
-        readyState = .shutdown
     }
 
     func getLastEventId() -> String? { lastEventId }
+
+    func createSession() -> URLSession {
+        let sessionConfig = URLSessionConfiguration.default
+        sessionConfig.httpAdditionalHeaders = ["Accept": "text/event-stream", "Cache-Control": "no-cache"]
+        sessionConfig.timeoutIntervalForRequest = self.config.idleTimeout
+        return URLSession(configuration: sessionConfig, delegate: self, delegateQueue: nil)
+    }
+
+    func createRequest() -> URLRequest {
+        var urlRequest = URLRequest(url: self.config.url,
+                                    cachePolicy: URLRequest.CachePolicy.reloadIgnoringLocalAndRemoteCacheData,
+                                    timeoutInterval: self.config.idleTimeout)
+        urlRequest.httpMethod = self.config.method
+        urlRequest.httpBody = self.config.body
+        urlRequest.setValue(self.lastEventId, forHTTPHeaderField: "Last-Event-ID")
+        urlRequest.allHTTPHeaderFields = self.config.headerTransform(
+            urlRequest.allHTTPHeaderFields?.merging(self.config.headers) { $1 } ?? self.config.headers
+        )
+        return urlRequest
+    }
 
     private func connect() {
         #if !os(Linux)
@@ -146,25 +175,12 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
             setLastEventId: { eventId in self.lastEventId = eventId }
         )
         self.eventParser = EventParser(handler: self.config.handler, connectionHandler: connectionHandler)
-        let sessionConfig = URLSessionConfiguration.default
-        sessionConfig.httpAdditionalHeaders = ["Accept": "text/event-stream", "Cache-Control": "no-cache"]
-        sessionConfig.timeoutIntervalForRequest = self.config.idleTimeout
-        let session = URLSession(configuration: sessionConfig, delegate: self, delegateQueue: nil)
-        var urlRequest = URLRequest(url: self.config.url,
-                                    cachePolicy: URLRequest.CachePolicy.reloadIgnoringLocalAndRemoteCacheData,
-                                    timeoutInterval: self.config.idleTimeout)
-        urlRequest.httpMethod = self.config.method
-        urlRequest.httpBody = self.config.body
-        urlRequest.setValue(self.lastEventId, forHTTPHeaderField: "Last-Event-ID")
-        urlRequest.allHTTPHeaderFields = self.config.headerTransform(
-            urlRequest.allHTTPHeaderFields?.merging(self.config.headers) { $1 } ?? self.config.headers
-        )
-        let task = session.dataTask(with: urlRequest)
-        task.resume()
+        let task = urlSession?.dataTask(with: createRequest())
+        task?.resume()
         sessionTask = task
     }
 
-    private func dispatchError(error: Error) -> ConnectionErrorAction {
+    func dispatchError(error: Error) -> ConnectionErrorAction {
         let action: ConnectionErrorAction = config.connectionErrorHandler(error)
         if action != .shutdown {
             config.handler.onError(error: error)
@@ -173,6 +189,9 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
     }
 
     private func afterComplete() {
+        guard readyState != .shutdown
+        else { return }
+
         var nextState: ReadyState = .closed
         let currentState: ReadyState = readyState
         if errorHandlerAction == .shutdown {
@@ -182,9 +201,6 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
             nextState = .shutdown
         }
         readyState = nextState
-        #if !os(Linux)
-        os_log("State: %@ -> %@", log: logger, type: .debug, currentState.rawValue, nextState.rawValue)
-        #endif
 
         if currentState == .open {
             config.handler.onClosed()
@@ -214,6 +230,8 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
         }
     }
 
+    // MARK: URLSession Delegates
+
     // Tells the delegate that the task finished transferring data.
     public func urlSession(_ session: URLSession,
                            task: URLSessionTask,
@@ -223,7 +241,7 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
         eventParser.parse(line: "")
 
         if let error = error {
-            if readyState != .shutdown {
+            if readyState != .shutdown && errorHandlerAction != .shutdown {
                 #if !os(Linux)
                 os_log("Connection error: %@", log: logger, type: .info, error.localizedDescription)
                 #endif
@@ -249,6 +267,12 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
         os_log("initial reply received", log: logger, type: .debug)
         #endif
 
+        guard readyState != .shutdown
+        else {
+            completionHandler(.cancel)
+            return
+        }
+
         // swiftlint:disable:next force_cast
         let httpResponse = response as! HTTPURLResponse
         if (200..<300).contains(httpResponse.statusCode) {
@@ -261,10 +285,6 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
             os_log("Unsuccessful response: %d", log: logger, type: .info, httpResponse.statusCode)
             #endif
             errorHandlerAction = dispatchError(error: UnsuccessfulResponseError(responseCode: httpResponse.statusCode))
-
-            if errorHandlerAction == .shutdown {
-                readyState = .shutdown
-            }
             completionHandler(.cancel)
         }
     }
