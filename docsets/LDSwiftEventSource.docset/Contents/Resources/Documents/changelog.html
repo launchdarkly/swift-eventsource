@@ -115,8 +115,11 @@
 
 <ul>
 <li><a href="https://github.com/realm/SwiftLint">SwiftLint</a> configuration. Linting will be automatically run as part of the build if <a href="https://github.com/yonaskolb/Mint">Mint</a> is installed.</li>
-<li>Support for building docs with <a href="https://github.com/realm/jazzy">jazzy</a>. These docs are available through <a href="https://launchdarkly.github.io/swift-eventsource/">GitHub Pages</a>.
-### Fixed</li>
+<li>Support for building docs with <a href="https://github.com/realm/jazzy">jazzy</a>. These docs are available through <a href="https://launchdarkly.github.io/swift-eventsource/">GitHub Pages</a>.</li>
+</ul>
+<h3 id='fixed' class='heading'>Fixed</h3>
+
+<ul>
 <li>Reconnection backoff was always reset if the  previous successful connection was at least <code>backoffResetThreshold</code> prior to the scheduling of a reconnection attempt. The connection backoff has been corrected to not reset after the first reconnection attempt until the next successful connection. Thanks to  @tomasf for the PR (<a href="https://github.com/launchdarkly/swift-eventsource/pull/14">#14</a>).</li>
 <li>On an <code><a href="Classes/UnsuccessfulResponseError.html">UnsuccessfulResponseError</a></code> the configured <code>connectionErrorHandler</code> would be called twice, the second time with a <code>URLError.cancelled</code> error. Only if the second call returned <code><a href="Enums/ConnectionErrorAction.html#/s:18LDSwiftEventSource21ConnectionErrorActionO8shutdownyA2CmF">ConnectionErrorAction.shutdown</a></code> would the <code><a href="Classes/EventSource.html">EventSource</a></code> client actually shutdown. This has been corrected to only call the <code>connectionErrorHandler</code> once, and will shutdown the client if <code><a href="Enums/ConnectionErrorAction.html#/s:18LDSwiftEventSource21ConnectionErrorActionO8shutdownyA2CmF">ConnectionErrorAction.shutdown</a></code> is returned. Thanks to  @tomasf for the PR (<a href="https://github.com/launchdarkly/swift-eventsource/pull/13">#13</a>).</li>
 <li>A race condition that could cause the eventsource to restart after shutting down has been fixed.</li>
