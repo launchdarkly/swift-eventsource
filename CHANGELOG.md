@@ -2,6 +2,16 @@
 
 All notable changes to the LaunchDarkly Swift EventSource library will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [1.2.1] - 2021-02-10
+### Added
+- [SwiftLint](https://github.com/realm/SwiftLint) configuration. Linting will be automatically run as part of the build if [Mint](https://github.com/yonaskolb/Mint) is installed.
+- Support for building docs with [jazzy](https://github.com/realm/jazzy). These docs are available through [GitHub Pages](https://launchdarkly.github.io/swift-eventsource/).
+
+### Fixed
+- Reconnection backoff was always reset if the  previous successful connection was at least `backoffResetThreshold` prior to the scheduling of a reconnection attempt. The connection backoff has been corrected to not reset after the first reconnection attempt until the next successful connection. Thanks to  @tomasf for the PR ([#14](https://github.com/launchdarkly/swift-eventsource/pull/14)).
+- On an `UnsuccessfulResponseError` the configured `connectionErrorHandler` would be called twice, the second time with a `URLError.cancelled` error. Only if the second call returned `ConnectionErrorAction.shutdown` would the `EventSource` client actually shutdown. This has been corrected to only call the `connectionErrorHandler` once, and will shutdown the client if `ConnectionErrorAction.shutdown` is returned. Thanks to  @tomasf for the PR ([#13](https://github.com/launchdarkly/swift-eventsource/pull/13)).
+- A race condition that could cause the eventsource to restart after shutting down has been fixed.
+
 ## [1.2.0] - 2020-10-21
 ### Added
 - Added `headerTransform` closure to `LDConfig` to allow dynamic http header configuration.
