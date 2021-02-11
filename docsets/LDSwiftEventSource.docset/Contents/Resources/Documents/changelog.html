@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>CHANGELOG  Reference</title>
+    <link rel="stylesheet" type="text/css" href="css/jazzy.css" />
+    <link rel="stylesheet" type="text/css" href="css/highlight.css" />
+    <meta charset='utf-8'>
+    <script src="js/jquery.min.js" defer></script>
+    <script src="js/jazzy.js" defer></script>
+    
+    <script src="js/lunr.min.js" defer></script>
+    <script src="js/typeahead.jquery.js" defer></script>
+    <script src="js/jazzy.search.js" defer></script>
+  </head>
+  <body>
+    <a title="CHANGELOG  Reference"></a>
+    <header>
+      <div class="content-wrapper">
+        <p><a href="index.html">LDSwiftEventSource 1.2.1 Docs</a> (100% documented)</p>
+        <p class="header-right"><a href="https://github.com/launchdarkly/swift-eventsource"><img src="img/gh.png"/>View on GitHub</a></p>
+        <p class="header-right">
+          <form role="search" action="search.json">
+            <input type="text" placeholder="Search documentation" data-typeahead>
+          </form>
+        </p>
+      </div>
+    </header>
+    <div class="content-wrapper">
+      <p id="breadcrumbs">
+        <a href="index.html">LDSwiftEventSource Reference</a>
+        <img id="carat" src="img/carat.png" />
+        CHANGELOG  Reference
+      </p>
+    </div>
+    <div class="content-wrapper">
+      <nav class="sidebar">
+        <ul class="nav-groups">
+          <li class="nav-group-name">
+            <a href="Guides.html">Guides</a>
+            <ul class="nav-group-tasks">
+              <li class="nav-group-task">
+                <a href="changelog.html">CHANGELOG</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="contributing.html">CONTRIBUTING</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="licensetxt.html">LICENSE.txt</a>
+              </li>
+            </ul>
+          </li>
+          <li class="nav-group-name">
+            <a href="Classes.html">Classes</a>
+            <ul class="nav-group-tasks">
+              <li class="nav-group-task">
+                <a href="Classes/EventSource.html">EventSource</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="Classes/EventSource/Config.html">– Config</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="Classes/UnsuccessfulResponseError.html">UnsuccessfulResponseError</a>
+              </li>
+            </ul>
+          </li>
+          <li class="nav-group-name">
+            <a href="Enums.html">Enumerations</a>
+            <ul class="nav-group-tasks">
+              <li class="nav-group-task">
+                <a href="Enums/ConnectionErrorAction.html">ConnectionErrorAction</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="Enums/ReadyState.html">ReadyState</a>
+              </li>
+            </ul>
+          </li>
+          <li class="nav-group-name">
+            <a href="Protocols.html">Protocols</a>
+            <ul class="nav-group-tasks">
+              <li class="nav-group-task">
+                <a href="Protocols/EventHandler.html">EventHandler</a>
+              </li>
+            </ul>
+          </li>
+          <li class="nav-group-name">
+            <a href="Structs.html">Structures</a>
+            <ul class="nav-group-tasks">
+              <li class="nav-group-task">
+                <a href="Structs/MessageEvent.html">MessageEvent</a>
+              </li>
+            </ul>
+          </li>
+          <li class="nav-group-name">
+            <a href="Typealiases.html">Type Aliases</a>
+            <ul class="nav-group-tasks">
+              <li class="nav-group-task">
+                <a href="Typealiases.html#/s:18LDSwiftEventSource22ConnectionErrorHandlera">ConnectionErrorHandler</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="Typealiases.html#/s:18LDSwiftEventSource15HeaderTransforma">HeaderTransform</a>
+              </li>
+            </ul>
+          </li>
+        </ul>
+      </nav>
+      <article class="main-content">
+        <section>
+          <section class="section">
+            
+            <h1 id='change-log' class='heading'>Change log</h1>
+
+<p>All notable changes to the LaunchDarkly Swift EventSource library will be documented in this file. This project adheres to <a href="http://semver.org">Semantic Versioning</a>.</p>
+<h2 id='1-2-1-2021-02-10' class='heading'>[1.2.1] - 2021-02-10</h2>
+<h3 id='added' class='heading'>Added</h3>
+
+<ul>
+<li><a href="https://github.com/realm/SwiftLint">SwiftLint</a> configuration. Linting will be automatically run as part of the build if <a href="https://github.com/yonaskolb/Mint">Mint</a> is installed.</li>
+<li>Support for building docs with <a href="https://github.com/realm/jazzy">jazzy</a>. These docs are available through <a href="https://launchdarkly.github.io/swift-eventsource/">GitHub Pages</a>.
+### Fixed</li>
+<li>Reconnection backoff was always reset if the  previous successful connection was at least <code>backoffResetThreshold</code> prior to the scheduling of a reconnection attempt. The connection backoff has been corrected to not reset after the first reconnection attempt until the next successful connection. Thanks to  @tomasf for the PR (<a href="https://github.com/launchdarkly/swift-eventsource/pull/14">#14</a>).</li>
+<li>On an <code><a href="Classes/UnsuccessfulResponseError.html">UnsuccessfulResponseError</a></code> the configured <code>connectionErrorHandler</code> would be called twice, the second time with a <code>URLError.cancelled</code> error. Only if the second call returned <code><a href="Enums/ConnectionErrorAction.html#/s:18LDSwiftEventSource21ConnectionErrorActionO8shutdownyA2CmF">ConnectionErrorAction.shutdown</a></code> would the <code><a href="Classes/EventSource.html">EventSource</a></code> client actually shutdown. This has been corrected to only call the <code>connectionErrorHandler</code> once, and will shutdown the client if <code><a href="Enums/ConnectionErrorAction.html#/s:18LDSwiftEventSource21ConnectionErrorActionO8shutdownyA2CmF">ConnectionErrorAction.shutdown</a></code> is returned. Thanks to  @tomasf for the PR (<a href="https://github.com/launchdarkly/swift-eventsource/pull/13">#13</a>).</li>
+<li>A race condition that could cause the eventsource to restart after shutting down has been fixed.</li>
+</ul>
+<h2 id='1-2-0-2020-10-21' class='heading'>[1.2.0] - 2020-10-21</h2>
+<h3 id='added' class='heading'>Added</h3>
+
+<ul>
+<li>Added <code>headerTransform</code> closure to <code>LDConfig</code> to allow dynamic http header configuration.</li>
+</ul>
+<h2 id='1-1-0-2020-07-20' class='heading'>[1.1.0] - 2020-07-20</h2>
+<h3 id='added' class='heading'>Added</h3>
+
+<ul>
+<li>Support <code>arm64e</code> on <code>appletvos</code>, <code>iphoneos</code>, and <code>macosx</code> SDKs by extending valid architectures.</li>
+<li>Support for building LDSwiftEventSource on Linux. Currently this library will not generate log messages on Linux, and may not behave correctly on Linux due to Foundation being <a href="https://github.com/apple/swift-corelibs-foundation/blob/master/Docs/Status.md">incomplete</a>.</li>
+</ul>
+<h2 id='1-0-0-2020-07-16' class='heading'>[1.0.0] - 2020-07-16</h2>
+
+<p>This is the first public release of the LDSwiftEventSource library. The following notes are what changed since the previous pre-release version.</p>
+<h3 id='changed' class='heading'>Changed</h3>
+
+<ul>
+<li>Renamed <code>EventHandler.onMessage</code> parameter <code>event</code> to <code>eventType</code>.</li>
+<li>The <code><a href="Classes/EventSource.html">EventSource</a></code> class no longer extends <code>NSObject</code> or <code>URLSessionDataDelegate</code> to not expose <code>urlSession</code> functions.</li>
+</ul>
+<h2 id='0-5-0-2020-07-14' class='heading'>[0.5.0] - 2020-07-14</h2>
+<h3 id='changed' class='heading'>Changed</h3>
+
+<ul>
+<li>Default <code>LDSwiftEventSource</code> product defined for the SwiftPM package is now explicitly a dynamic product. An explicitly static product is now available as <code>LDSwiftEventSourceStatic</code>.</li>
+</ul>
+<h2 id='0-4-0-2020-07-13' class='heading'>[0.4.0] - 2020-07-13</h2>
+<h3 id='changed' class='heading'>Changed</h3>
+
+<ul>
+<li>Converted build system to use a single target to produce a universal framework, rather than separate targets for each platform that share a product name. This is to prevent issues with <code>xcodebuild</code> resolving the build scheme to an incorrect platform when building dependent packages with &lsquo;Find Implicit Dependencies&rsquo; enabled. This is due to a bug in <code>xcodebuild</code>, for more information see <a href="http://www.openradar.me/20490378">http://www.openradar.me/20490378</a> and <a href="http://www.openradar.me/22008701">http://www.openradar.me/22008701</a>.</li>
+</ul>
+<h2 id='0-3-0-2020-06-02' class='heading'>[0.3.0] - 2020-06-02</h2>
+<h3 id='added' class='heading'>Added</h3>
+
+<ul>
+<li>Added <code>stop()</code> method to shutdown the EventSource connection.
+### Changed</li>
+<li>Logging <code>subsystem</code> renamed from <code>com.launchdarkly.swift-event-source</code> to <code>com.launchdarkly.swift-eventsource</code></li>
+</ul>
+<h2 id='0-2-0-2020-05-21' class='heading'>[0.2.0] - 2020-05-21</h2>
+<h3 id='added' class='heading'>Added</h3>
+
+<ul>
+<li>Public constructors for <code><a href="Classes/UnsuccessfulResponseError.html">UnsuccessfulResponseError</a></code> and <code><a href="Structs/MessageEvent.html">MessageEvent</a></code> to allow consumers of the library to use them for unit tests.</li>
+</ul>
+<h2 id='0-1-0-2020-05-09' class='heading'>[0.1.0] - 2020-05-09</h2>
+<h3 id='added' class='heading'>Added</h3>
+
+<ul>
+<li>Initial implementation for internal alpha testing.</li>
+</ul>
+
+          </section>
+        </section>
+        <section id="footer">
+          <p>Copyright © 2020 Catamorphic Co.</p>
+          <p>Generated by <a class="link" href="https://github.com/realm/jazzy" target="_blank" rel="external">jazzy ♪♫ v0.13.6</a>, a <a class="link" href="https://realm.io" target="_blank" rel="external">Realm</a> project.</p>
+        </section>
+      </article>
+    </div>
+  </body>
+</div>
+</html>
