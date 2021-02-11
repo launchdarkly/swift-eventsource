@@ -10,7 +10,7 @@ All notable changes to the LaunchDarkly Swift EventSource library will be docume
 ### Fixed
 - Reconnection backoff was always reset if the  previous successful connection was at least `backoffResetThreshold` prior to the scheduling of a reconnection attempt. The connection backoff has been corrected to not reset after the first reconnection attempt until the next successful connection. Thanks to  @tomasf for the PR ([#14](https://github.com/launchdarkly/swift-eventsource/pull/14)).
 - On an `UnsuccessfulResponseError` the configured `connectionErrorHandler` would be called twice, the second time with a `URLError.cancelled` error. Only if the second call returned `ConnectionErrorAction.shutdown` would the `EventSource` client actually shutdown. This has been corrected to only call the `connectionErrorHandler` once, and will shutdown the client if `ConnectionErrorAction.shutdown` is returned. Thanks to  @tomasf for the PR ([#13](https://github.com/launchdarkly/swift-eventsource/pull/13)).
-- A race condition that could cause the eventsource to restart after shutting down has been fixed.
+- A race condition that could cause the `EventSource` client to restart after shutting down has been fixed.
 
 ## [1.2.0] - 2020-10-21
 ### Added
