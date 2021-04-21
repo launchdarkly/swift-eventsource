@@ -70,6 +70,8 @@ public class EventSource {
         public var backoffResetThreshold: TimeInterval = 60.0
         /// The maximum amount of time between receiving any data before considering the connection to have timed out.
         public var idleTimeout: TimeInterval = 300.0
+        /// A url session configuration that will be used to create the `URLSession`
+        public var urlSessionConfiguration: URLSessionConfiguration?
 
         /**
          An error handler that is called when an error occurs and can shut down the client in response.
@@ -147,7 +149,7 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
     func getLastEventId() -> String? { lastEventId }
 
     func createSession() -> URLSession {
-        let sessionConfig = URLSessionConfiguration.default
+        let sessionConfig = config.urlSessionConfiguration ?? URLSessionConfiguration.default
         sessionConfig.httpAdditionalHeaders = ["Accept": "text/event-stream", "Cache-Control": "no-cache"]
         sessionConfig.timeoutIntervalForRequest = self.config.idleTimeout
         return URLSession(configuration: sessionConfig, delegate: self, delegateQueue: nil)
