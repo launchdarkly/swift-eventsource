@@ -171,8 +171,8 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
         os_log("Starting EventSource client", log: logger, type: .info)
         #endif
         let connectionHandler: ConnectionHandler = (
-            setReconnectionTime: { reconnectionTime in self.reconnectTime = reconnectionTime },
-            setLastEventId: { eventId in self.lastEventId = eventId }
+            setReconnectionTime: { [weak self] reconnectionTime in self?.reconnectTime = reconnectionTime },
+            setLastEventId: { [weak self] eventId in self?.lastEventId = eventId }
         )
         eventParser = EventParser(handler: config.handler, connectionHandler: connectionHandler)
         let task = urlSession?.dataTask(with: createRequest())
