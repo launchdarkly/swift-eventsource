@@ -122,7 +122,8 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
     }
 
     func start() {
-        delegateQueue.async {
+        delegateQueue.async { [weak self] in
+            guard let self = self else { return }
             guard self.readyState == .raw
             else {
                 #if !os(Linux)
@@ -225,8 +226,8 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
         #if !os(Linux)
         os_log("Waiting %.3f seconds before reconnecting...", log: logger, type: .info, sleep)
         #endif
-        delegateQueue.asyncAfter(deadline: .now() + sleep) {
-            self.connect()
+        delegateQueue.asyncAfter(deadline: .now() + sleep) { [weak self] in
+            self?.connect()
         }
     }
 
