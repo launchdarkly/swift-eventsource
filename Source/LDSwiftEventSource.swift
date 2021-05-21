@@ -143,6 +143,7 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
         if previousState == .open {
             config.handler.onClosed()
         }
+        urlSession?.invalidateAndCancel()
     }
 
     func getLastEventId() -> String? { lastEventId }
