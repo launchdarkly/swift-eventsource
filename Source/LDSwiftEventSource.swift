@@ -117,8 +117,8 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
 
     init(config: EventSource.Config) {
         self.config = config
-        self.lastEventId = config.lastEventId
-        self.reconnectTime = config.reconnectTime
+        lastEventId = config.lastEventId
+        reconnectTime = config.reconnectTime
     }
 
     func start() {
@@ -154,14 +154,14 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
     }
 
     func createRequest() -> URLRequest {
-        var urlRequest = URLRequest(url: self.config.url,
+        var urlRequest = URLRequest(url: config.url,
                                     cachePolicy: URLRequest.CachePolicy.reloadIgnoringLocalAndRemoteCacheData,
-                                    timeoutInterval: self.config.idleTimeout)
-        urlRequest.httpMethod = self.config.method
-        urlRequest.httpBody = self.config.body
-        urlRequest.setValue(self.lastEventId, forHTTPHeaderField: "Last-Event-ID")
-        urlRequest.allHTTPHeaderFields = self.config.headerTransform(
-            urlRequest.allHTTPHeaderFields?.merging(self.config.headers) { $1 } ?? self.config.headers
+                                    timeoutInterval: config.idleTimeout)
+        urlRequest.httpMethod = config.method
+        urlRequest.httpBody = config.body
+        urlRequest.setValue(lastEventId, forHTTPHeaderField: "Last-Event-ID")
+        urlRequest.allHTTPHeaderFields = config.headerTransform(
+            urlRequest.allHTTPHeaderFields?.merging(config.headers) { $1 } ?? config.headers
         )
         return urlRequest
     }
@@ -174,7 +174,7 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
             setReconnectionTime: { reconnectionTime in self.reconnectTime = reconnectionTime },
             setLastEventId: { eventId in self.lastEventId = eventId }
         )
-        self.eventParser = EventParser(handler: self.config.handler, connectionHandler: connectionHandler)
+        eventParser = EventParser(handler: config.handler, connectionHandler: connectionHandler)
         let task = urlSession?.dataTask(with: createRequest())
         task?.resume()
         sessionTask = task
