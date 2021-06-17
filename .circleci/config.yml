@@ -1,10 +1,19 @@
 version: 2.1
 jobs:
   build:
+    parameters:
+      xcode-version:
+        type: string
+      ios-sim:
+        type: string
+      build-doc:
+        type: boolean
+        default: false
+
     shell: /bin/bash --login -eo pipefail
 
     macos:
-      xcode: '11.5.0'
+      xcode: <<parameters.xcode-version>>
 
     steps:
     - checkout
@@ -29,7 +38,7 @@ jobs:
 
     - run:
         name: Build & Test on iOS Simulator
-        command: xcodebuild test -scheme 'LDSwiftEventSource' -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 8,OS=12.2' CODE_SIGN_IDENTITY= | tee 'artifacts/raw-logs-iphonesimulator.txt' | xcpretty -r junit -o 'test-results/platform-iphonesimulator/junit.xml'
+        command: xcodebuild test -scheme 'LDSwiftEventSource' -sdk iphonesimulator -destination '<<parameters.ios-sim>>' CODE_SIGN_IDENTITY= | tee 'artifacts/raw-logs-iphonesimulator.txt' | xcpretty -r junit -o 'test-results/platform-iphonesimulator/junit.xml'
         when: always
 
     - run:
@@ -57,11 +66,14 @@ jobs:
         command: swift test -v 2>&1 | tee 'artifacts/raw-logs-swiftpm.txt' | xcpretty -r junit -o 'test-results/swiftpm/junit.xml'
         when: always
 
-    - run:
-        name: Build Documentation
-        command: |
-          sudo gem install jazzy
-          jazzy -o artifacts/docs
+    - when:
+        condition: <<parameters.build-doc>>
+        steps:
+          - run:
+              name: Build Documentation
+              command: |
+                sudo gem install jazzy
+                jazzy -o artifacts/docs
 
     - store_test_results:
         path: test-results
@@ -123,6 +135,22 @@ workflows:
 
   build:
     jobs:
-      - build
+      - build:
+          name: Xcode 12.5 - Swift 5.4
+          xcode-version: '12.5.0'
+          ios-sim: 'platform=iOS Simulator,name=iPhone 8,OS=14.5'
+          build-doc: true
+      - build:
+          name: Xcode 12.0 - Swift 5.3
+          xcode-version: '12.0.1'
+          ios-sim: 'platform=iOS Simulator,name=iPhone 8,OS=14.0'
+      - build:
+          name: Xcode 11.4 - Swift 5.2
+          xcode-version: '11.4.1'
+          ios-sim: 'platform=iOS Simulator,name=iPhone 8,OS=12.2'
+      - build:
+          name: Xcode 11.0 - Swift 5.1
+          xcode-version: '11.0.0'
+          ios-sim: 'platform=iOS Simulator,name=iPhone 8,OS=12.2'
       - build_linux
       - build_macos_universal
