@@ -1,10 +1,14 @@
 version: 2.1
 jobs:
   build:
+    parameters:
+      xcode-version:
+        type: string
+
     shell: /bin/bash --login -eo pipefail
 
     macos:
-      xcode: '10.3'
+      xcode: <<parameters.xcode-version>>
 
     steps:
     - checkout
@@ -123,6 +127,17 @@ workflows:
 
   build:
     jobs:
-      - build
+      - build:
+          name: Xcode 12.5 - Swift 5.4
+          xcode-version: '12.5.0'
+      - build:
+          name: Xcode 12.0 - Swift 5.3
+          xcode-version: '12.0.1'
+      - build:
+          name: Xcode 11.4 - Swift 5.2
+          xcode-version: '11.4.1'
+      - build:
+          name: Xcode 11.0 - Swift 5.1
+          xcode-version: '11.0.0'
       - build_linux
       - build_macos_universal
