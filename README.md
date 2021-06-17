@@ -10,7 +10,7 @@ LDSwiftEventSource is a cross platform implementation of the [EventSource specif
 
 ## Requirements
 - iOS 10.0+ / watchOS 3.0+ / tvOS 10.0+ / macOS 10.12+
-- Swift 5.0+
+- Swift 5.1+
 
 ## Installation
 
