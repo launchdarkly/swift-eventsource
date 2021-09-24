@@ -1,11 +1,5 @@
 import Foundation
 
-/**
- Type for a function that will be notified when the `EventSource` client encounters a connection failure.
-
- This is different from `EventHandler.onError(error:)` in that it will not be called for other kinds of errors; also,
- it has the ability to tell the client to stop reconnecting by returning a `ConnectionErrorAction.shutdown`.
-*/
 public typealias ConnectionErrorHandler = (Error) -> ConnectionErrorAction
 
 /**
