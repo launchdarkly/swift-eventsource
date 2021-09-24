@@ -8,6 +8,11 @@ import FoundationNetworking
 import os.log
 #endif
 
+/**
+ Provides an EventSource client for consuming Server-Sent Events.
+
+ See the [Server-Sent Events spec](https://html.spec.whatwg.org/multipage/server-sent-events.html) for more details.
+ */
 public class EventSource {
     private let esDelegate: EventSourceDelegate
 
