@@ -74,6 +74,11 @@ jobs:
               command: |
                 sudo gem install jazzy
                 jazzy -o artifacts/docs
+          - run:
+              name: Validate coverage
+              command: |
+                FULLDOC=`jq '.warnings | length == 0' artifacts/docs/undocumented.json`
+                [ $FULLDOC == "true" ]
 
     - store_test_results:
         path: test-results
@@ -136,10 +141,14 @@ workflows:
   build:
     jobs:
       - build:
+          name: Xcode 13.0 - Swift 5.5
+          xcode-version: '13.0.0'
+          ios-sim: 'platform=iOS Simulator,name=iPhone 11,OS=15.0'
+          build-doc: true
+      - build:
           name: Xcode 12.5 - Swift 5.4
           xcode-version: '12.5.0'
           ios-sim: 'platform=iOS Simulator,name=iPhone 8,OS=14.5'
-          build-doc: true
       - build:
           name: Xcode 12.0 - Swift 5.3
           xcode-version: '12.0.1'
