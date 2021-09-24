@@ -78,7 +78,7 @@ jobs:
               name: Validate coverage
               command: |
                 FULLDOC=`jq '.warnings | length == 0' artifacts/docs/undocumented.json`
-                [ FULLDOC == "true" ]
+                [ $FULLDOC == "true" ]
 
     - store_test_results:
         path: test-results
