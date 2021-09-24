@@ -77,8 +77,7 @@ jobs:
           - run:
               name: Validate coverage
               command: |
-                brew install jq
-                FULLDOC=`jq '.warnings | length == 0' docs/undocumented.json`
+                FULLDOC=`jq '.warnings | length == 0' artifacts/docs/undocumented.json`
                 [ FULLDOC == "true" ]
 
     - store_test_results:
