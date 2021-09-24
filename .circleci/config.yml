@@ -74,6 +74,12 @@ jobs:
               command: |
                 sudo gem install jazzy
                 jazzy -o artifacts/docs
+          - run:
+              name: Validate coverage
+              command: |
+                brew install jq
+                FULLDOC=`jq '.warnings | length == 0' docs/undocumented.json`
+                [ FULLDOC == "true" ]
 
     - store_test_results:
         path: test-results
