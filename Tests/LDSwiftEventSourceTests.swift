@@ -107,7 +107,7 @@ final class LDSwiftEventSourceTests: XCTestCase {
         config.headers = testHeaders
         config.idleTimeout = 180.0
         config.headerTransform = { provided in
-            XCTAssertEqual(provided, ["removing": "a", "updating": "b", "Last-Event-ID": "eventId"])
+            XCTAssertEqual(provided, ["removing": "a", "updating": "b", "Last-Event-Id": "eventId"])
             return overrideHeaders
         }
         request = EventSourceDelegate(config: config).createRequest()

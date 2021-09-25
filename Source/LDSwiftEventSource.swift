@@ -182,7 +182,7 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
                                     timeoutInterval: self.config.idleTimeout)
         urlRequest.httpMethod = self.config.method
         urlRequest.httpBody = self.config.body
-        urlRequest.setValue(self.lastEventId, forHTTPHeaderField: "Last-Event-ID")
+        urlRequest.setValue(self.lastEventId, forHTTPHeaderField: "Last-Event-Id")
         urlRequest.allHTTPHeaderFields = self.config.headerTransform(
             urlRequest.allHTTPHeaderFields?.merging(self.config.headers) { $1 } ?? self.config.headers
         )
