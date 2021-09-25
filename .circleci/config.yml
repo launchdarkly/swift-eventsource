@@ -119,7 +119,8 @@ jobs:
     parameters:
       docker-image:
         type: string
-      requires-explicit-test-discovery:
+      discover-tests:
+        description: Whether to use explicit test discovery with SwiftPM
         type: boolean
         default: false
 
@@ -136,8 +137,13 @@ jobs:
         command: mkdir -p 'artifacts'
 
     - run:
-        name: Build & Test with swiftpm
-        command: swift test -v | tee 'artifacts/raw-logs-swiftpm-linux.txt'
+        name: >-
+          Build & Test with SwiftPM
+          <<# parameters.discover-tests >>using explicit test discovery<</ parameters.discover-tests >>
+        command: >-
+          swift test -v
+          <<# parameters.discover-tests >> --enable-test-discovery <</ parameters.discover-tests >>
+          | tee 'artifacts/raw-logs-swiftpm-linux.txt'
 
     - store_artifacts:
         path: artifacts
@@ -174,10 +180,13 @@ workflows:
       - build_linux:
           name: Linux - Swift 5.3
           docker-image: norionomura/swift:5.3
+          discover-tests: true
       - build_linux:
           name: Linux - Swift 5.2
           docker-image: norionomura/swift:5.2
+          discover-tests: true
       - build_linux:
           name: Linux - Swift 5.1
           docker-image: norionomura/swift:5.1
+          discover-tests: true
       - build_macos_universal
