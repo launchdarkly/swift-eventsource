@@ -71,6 +71,32 @@ public class EventSource {
         /// The maximum amount of time between receiving any data before considering the connection to have timed out.
         public var idleTimeout: TimeInterval = 300.0
 
+        private var _urlSessionConfiguration: URLSessionConfiguration = URLSessionConfiguration.default
+        /**
+         The `URLSessionConfiguration` used to create the `URLSession`.
+
+         - Important:
+            Note that this copies the given `URLSessionConfiguration` when set, and returns copies (updated with any
+         overrides specified by other configuration options) when the value is retrieved. This prevents updating the
+         `URLSessionConfiguration` after initializing `EventSource` with the `Config`, and prevents the `EventSource`
+         from updating any properties of the given `URLSessionConfiguration`.
+
+         - Since: 1.3.0
+         */
+        public var urlSessionConfiguration: URLSessionConfiguration {
+            get {
+                // swiftlint:disable:next force_cast
+                let sessionConfig = _urlSessionConfiguration.copy() as! URLSessionConfiguration
+                sessionConfig.httpAdditionalHeaders = ["Accept": "text/event-stream", "Cache-Control": "no-cache"]
+                sessionConfig.timeoutIntervalForRequest = idleTimeout
+                return sessionConfig
+            }
+            set {
+                // swiftlint:disable:next force_cast
+                _urlSessionConfiguration = newValue.copy() as! URLSessionConfiguration
+            }
+        }
+
         /**
          An error handler that is called when an error occurs and can shut down the client in response.
 
@@ -147,10 +173,7 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
     func getLastEventId() -> String? { lastEventId }
 
     func createSession() -> URLSession {
-        let sessionConfig = URLSessionConfiguration.default
-        sessionConfig.httpAdditionalHeaders = ["Accept": "text/event-stream", "Cache-Control": "no-cache"]
-        sessionConfig.timeoutIntervalForRequest = self.config.idleTimeout
-        return URLSession(configuration: sessionConfig, delegate: self, delegateQueue: nil)
+        URLSession(configuration: config.urlSessionConfiguration, delegate: self, delegateQueue: nil)
     }
 
     func createRequest() -> URLRequest {
