@@ -58,16 +58,19 @@ class UTF8LineParser {
             case .emptyInput:
                 break Decode
             case .error(let len):
+                // Since a line feed cannot be split between chunks we can flush on return here
+                if seenCr {
+                    lines.append(currentString)
+                    currentString = ""
+                    seenCr = false
+                }
                 if dataIter.position == data.endIndex {
                     // Error at end of block, carry over in case of split code point
                     remainderPos = data.index(data.endIndex, offsetBy: -len)
+                    // May as well break here as next will be .emptyInput
+                    break Decode
                 } else {
                     // Invalid character, replace with replacement character
-                    if seenCr {
-                        lines.append(currentString)
-                        currentString = ""
-                        seenCr = false
-                    }
                     currentString.append(replacement)
                 }
             }
@@ -77,26 +80,11 @@ class UTF8LineParser {
         return lines
     }
 
-    func closeAndReset() -> [String] {
-        var lines: [String] = []
-
-        if seenCr {
-            lines.append(currentString)
-            currentString = ""
-        }
-
-        if !remainder.isEmpty {
-            currentString.append(replacement)
-            remainder = Data()
-        }
-
-        if !currentString.isEmpty {
-            lines.append(currentString)
-        }
-
-        currentString = ""
+    func closeAndReset() -> String? {
+        let last = seenCr ? currentString : nil
         seenCr = false
-
-        return lines
+        currentString = ""
+        remainder = Data()
+        return last
     }
 }

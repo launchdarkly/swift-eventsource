@@ -36,6 +36,11 @@ class EventParser {
         }
     }
 
+    func reset() {
+        data = ""
+        eventType = Constants.defaultEventType
+    }
+
     private func dropLeadingSpace(str: Substring) -> Substring {
         if str.first == " " {
             return str[str.index(after: str.startIndex)...]

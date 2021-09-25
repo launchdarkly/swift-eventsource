@@ -236,9 +236,8 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
     public func urlSession(_ session: URLSession,
                            task: URLSessionTask,
                            didCompleteWithError error: Error?) {
-        utf8LineParser.closeAndReset().forEach(eventParser.parse)
-        // Send additional empty line to force a last dispatch
-        eventParser.parse(line: "")
+        utf8LineParser.closeAndReset().map(eventParser.parse)
+        eventParser.reset()
 
         if let error = error {
             if readyState != .shutdown && errorHandlerAction != .shutdown {
