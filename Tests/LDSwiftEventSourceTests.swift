@@ -56,7 +56,7 @@ final class LDSwiftEventSourceTests: XCTestCase {
         XCTAssertEqual(defaultSessionConfig.httpAdditionalHeaders?["Accept"] as? String, "text/event-stream")
         XCTAssertEqual(defaultSessionConfig.httpAdditionalHeaders?["Cache-Control"] as? String, "no-cache")
         // Configuration should return a fresh session configuration each retrieval
-        XCTAssertNotIdentical(defaultSessionConfig, config.urlSessionConfiguration)
+        XCTAssertTrue(defaultSessionConfig !== config.urlSessionConfiguration)
         // Updating idleTimeout should effect session config
         config.idleTimeout = 600.0
         XCTAssertEqual(config.urlSessionConfiguration.timeoutIntervalForRequest, 600.0)
@@ -67,7 +67,7 @@ final class LDSwiftEventSourceTests: XCTestCase {
         XCTAssertTrue(config.urlSessionConfiguration.allowsCellularAccess)
         config.urlSessionConfiguration = sessionConfig
         XCTAssertFalse(config.urlSessionConfiguration.allowsCellularAccess)
-        XCTAssertNotIdentical(sessionConfig, config.urlSessionConfiguration)
+        XCTAssertTrue(sessionConfig !== config.urlSessionConfiguration)
     }
 
     func testLastEventIdFromConfig() {
