@@ -17,7 +17,9 @@ class Logs {
         #endif
     }
 
+    #if !os(Linux)
     private let logger: OSLog = OSLog(subsystem: "com.launchdarkly.swift-eventsource", category: "LDEventSource")
+    #endif
 
     func log(_ level: Level, _ staticMsg: StaticString, _ args: CVarArg...) {
         #if !os(Linux)
