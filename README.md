@@ -6,7 +6,7 @@
 [![SwiftPM compatible](https://img.shields.io/badge/SwiftPM-compatible-4BC51D.svg?style=flat)](https://swift.org/package-manager/)
 [![Platform](https://img.shields.io/cocoapods/p/LDSwiftEventSource.svg?style=flat)](https://cocoapods.org/pods/LDSwiftEventSource)
 
-LDSwiftEventSource is a cross platform implementation of the [EventSource specification](https://www.w3.org/TR/eventsource/) written in Swift. It was developed for use in the [LaunchDarkly iOS SDK](https://github.com/launchdarkly/ios-client-sdk). Generated API docs are available on [GitHub Pages](https://launchdarkly.github.io/swift-eventsource/).
+LDSwiftEventSource is a cross platform implementation of the [EventSource specification](https://html.spec.whatwg.org/multipage/server-sent-events.html) written in Swift. It was developed for use in the [LaunchDarkly iOS SDK](https://github.com/launchdarkly/ios-client-sdk). Generated API docs are available on [GitHub Pages](https://launchdarkly.github.io/swift-eventsource/).
 
 ## Requirements
 - iOS 10.0+ / watchOS 3.0+ / tvOS 10.0+ / macOS 10.12+
