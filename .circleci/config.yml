@@ -116,10 +116,17 @@ jobs:
         path: artifacts
 
   build_linux:
+    parameters:
+      docker-image:
+        type: string
+      requires-explicit-test-discovery:
+        type: boolean
+        default: false
+
     shell: /bin/bash --login -eo pipefail
 
     docker:
-      - image: norionomura/swift:latest
+      - image: <<parameters.docker-image>>
 
     steps:
     - checkout
@@ -161,5 +168,16 @@ workflows:
           name: Xcode 11.0 - Swift 5.1
           xcode-version: '11.0.0'
           ios-sim: 'platform=iOS Simulator,name=iPhone 8,OS=12.2'
-      - build_linux
+      - build_linux:
+          name: Linux - Swift 5.4
+          docker-image: norionomura/swift:5.4
+      - build_linux:
+          name: Linux - Swift 5.3
+          docker-image: norionomura/swift:5.3
+      - build_linux:
+          name: Linux - Swift 5.2
+          docker-image: norionomura/swift:5.2
+      - build_linux:
+          name: Linux - Swift 5.1
+          docker-image: norionomura/swift:5.1
       - build_macos_universal
