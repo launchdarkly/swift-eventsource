@@ -1,21 +1,11 @@
 import Foundation
 
-class DataIter: IteratorProtocol {
-    let data: Data
-    var position: Data.Index
+struct DataIter: IteratorProtocol {
+    var data: Data
+    var position: Data.Index { data.startIndex }
 
-    init(_ data: Data) {
-        self.data = data
-        self.position = data.startIndex
-    }
-
-    func next() -> UInt8? {
-        guard position != data.endIndex
-        else { return nil }
-
-        let res = data[position]
-        position = data.index(after: position)
-        return res
+    mutating func next() -> UInt8? {
+        data.popFirst()
     }
 }
 
@@ -31,7 +21,7 @@ class UTF8LineParser {
 
     func append(_ body: Data) -> [String] {
         let data = remainder + body
-        var dataIter = DataIter(data)
+        var dataIter = DataIter(data: data)
         var remainderPos = data.endIndex
         var lines: [String] = []
 
