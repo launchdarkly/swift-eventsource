@@ -236,7 +236,7 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
     public func urlSession(_ session: URLSession,
                            task: URLSessionTask,
                            didCompleteWithError error: Error?) {
-        utf8LineParser.closeAndReset().map(eventParser.parse)
+        utf8LineParser.closeAndReset()
         eventParser.reset()
 
         if let error = error {

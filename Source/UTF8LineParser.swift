@@ -29,17 +29,14 @@ class UTF8LineParser {
             switch utf8Parser.parseScalar(from: &dataIter) {
             case .valid(let scalarResult):
                 let scalar = Unicode.UTF8.decode(scalarResult)
-                if seenCr {
-                    lines.append(currentString)
-                    currentString = ""
+
+                if seenCr && scalar == lf {
                     seenCr = false
-                    if scalar == lf {
-                        continue
-                    }
+                    continue
                 }
-                if scalar == cr {
-                    seenCr = true
-                } else if scalar == lf {
+
+                seenCr = scalar == cr
+                if scalar == cr || scalar == lf {
                     lines.append(currentString)
                     currentString = ""
                 } else {
@@ -48,12 +45,7 @@ class UTF8LineParser {
             case .emptyInput:
                 break Decode
             case .error(let len):
-                // Since a line feed cannot be split between chunks we can flush on return here
-                if seenCr {
-                    lines.append(currentString)
-                    currentString = ""
-                    seenCr = false
-                }
+                seenCr = false
                 if dataIter.position == data.endIndex {
                     // Error at end of block, carry over in case of split code point
                     remainderPos = data.index(data.endIndex, offsetBy: -len)
@@ -70,11 +62,9 @@ class UTF8LineParser {
         return lines
     }
 
-    func closeAndReset() -> String? {
-        let last = seenCr ? currentString : nil
+    func closeAndReset() {
         seenCr = false
         currentString = ""
         remainder = Data()
-        return last
     }
 }
