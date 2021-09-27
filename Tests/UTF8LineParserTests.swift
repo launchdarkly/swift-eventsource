@@ -60,6 +60,11 @@ final class UTF8LineParserTests: XCTestCase {
         XCTAssertEqual(parser.append(Data((line + "\n").utf8)), [line])
     }
 
+    func testNullCodePoint() {
+        let line = "\u{0000}"
+        XCTAssertEqual(parser.append(Data((line + "\n").utf8)), [line])
+    }
+
     func testInvalidCharacterReplaced() {
         let line = "test✨string"
         var data = Data((line + "\n").utf8)
