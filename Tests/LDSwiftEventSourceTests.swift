@@ -123,7 +123,7 @@ final class LDSwiftEventSourceTests: XCTestCase {
         var connectionErrorHandlerCallCount = 0
         var connectionErrorAction: ConnectionErrorAction = .proceed
         var config = EventSource.Config(handler: handler, url: URL(string: "abc")!)
-        config.connectionErrorHandler = { error in
+        config.connectionErrorHandler = { _ in
             connectionErrorHandlerCallCount += 1
             return connectionErrorAction
         }
