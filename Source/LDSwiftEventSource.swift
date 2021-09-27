@@ -4,10 +4,6 @@ import Foundation
 import FoundationNetworking
 #endif
 
-#if !os(Linux)
-import os.log
-#endif
-
 /**
  Provides an EventSource client for consuming Server-Sent Events.
 
@@ -87,19 +83,14 @@ public class EventSource {
 }
 
 class EventSourceDelegate: NSObject, URLSessionDataDelegate {
-    #if !os(Linux)
-    private let logger: OSLog = OSLog(subsystem: "com.launchdarkly.swift-eventsource", category: "LDEventSource")
-    #endif
+    private let delegateQueue: DispatchQueue = DispatchQueue(label: "ESDelegateQueue")
+    private let logger = Logs()
 
     private let config: EventSource.Config
 
-    private let delegateQueue: DispatchQueue = DispatchQueue(label: "ESDelegateQueue")
-
     private var readyState: ReadyState = .raw {
         didSet {
-            #if !os(Linux)
-            os_log("State: %@ -> %@", log: logger, type: .debug, oldValue.rawValue, readyState.rawValue)
-            #endif
+            logger.log(.debug, "State: %@ -> %@", oldValue.rawValue, readyState.rawValue)
         }
     }
 
@@ -125,9 +116,7 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
         delegateQueue.async {
             guard self.readyState == .raw
             else {
-                #if !os(Linux)
-                os_log("start() called on already-started EventSource object. Returning", log: self.logger, type: .info)
-                #endif
+                self.logger.log(.info, "start() called on already-started EventSource object. Returning")
                 return
             }
             self.urlSession = self.createSession()
@@ -167,9 +156,7 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
     }
 
     private func connect() {
-        #if !os(Linux)
-        os_log("Starting EventSource client", log: logger, type: .info)
-        #endif
+        logger.log(.info, "Starting EventSource client")
         let connectionHandler: ConnectionHandler = (
             setReconnectionTime: { reconnectionTime in self.reconnectTime = reconnectionTime },
             setLastEventId: { eventId in self.lastEventId = eventId }
@@ -195,9 +182,7 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
         var nextState: ReadyState = .closed
         let currentState: ReadyState = readyState
         if errorHandlerAction == .shutdown {
-            #if !os(Linux)
-            os_log("Connection has been explicitly shut down by error handler", log: logger, type: .info)
-            #endif
+            logger.log(.info, "Connection has been explicitly shut down by error handler")
             nextState = .shutdown
         }
         readyState = nextState
@@ -222,9 +207,7 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
         let maxSleep = min(config.maxReconnectTime, reconnectTime * pow(2.0, Double(reconnectionAttempts)))
         let sleep = maxSleep / 2 + Double.random(in: 0...(maxSleep / 2))
 
-        #if !os(Linux)
-        os_log("Waiting %.3f seconds before reconnecting...", log: logger, type: .info, sleep)
-        #endif
+        logger.log(.info, "Waiting %.3f seconds before reconnecting...", sleep)
         delegateQueue.asyncAfter(deadline: .now() + sleep) {
             self.connect()
         }
@@ -242,17 +225,13 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
 
         if let error = error {
             if readyState != .shutdown && errorHandlerAction != .shutdown {
-                #if !os(Linux)
-                os_log("Connection error: %@", log: logger, type: .info, error.localizedDescription)
-                #endif
+                logger.log(.info, "Connection error: %@", error.localizedDescription)
                 errorHandlerAction = dispatchError(error: error)
             } else {
                 errorHandlerAction = .shutdown
             }
         } else {
-            #if !os(Linux)
-            os_log("Connection unexpectedly closed.", log: logger, type: .info)
-            #endif
+            logger.log(.info, "Connection unexpectedly closed.")
         }
 
         afterComplete()
@@ -263,9 +242,7 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
                            dataTask: URLSessionDataTask,
                            didReceive response: URLResponse,
                            completionHandler: @escaping (URLSession.ResponseDisposition) -> Void) {
-        #if !os(Linux)
-        os_log("initial reply received", log: logger, type: .debug)
-        #endif
+        logger.log(.debug, "Initial reply received")
 
         guard readyState != .shutdown
         else {
@@ -281,9 +258,7 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
             config.handler.onOpened()
             completionHandler(.allow)
         } else {
-            #if !os(Linux)
-            os_log("Unsuccessful response: %d", log: logger, type: .info, httpResponse.statusCode)
-            #endif
+            logger.log(.info, "Unsuccessful response: %d", httpResponse.statusCode)
             errorHandlerAction = dispatchError(error: UnsuccessfulResponseError(responseCode: httpResponse.statusCode))
             completionHandler(.cancel)
         }
