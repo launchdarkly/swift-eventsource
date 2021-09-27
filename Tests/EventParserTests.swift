@@ -37,10 +37,32 @@ final class EventParserTests: XCTestCase {
 
     override func setUp() {
         super.setUp()
+        resetMocks()
+        parser = EventParser(handler: eventHandler, connectionHandler: connectionHandler)
+    }
+
+    override func tearDown() {
+        super.tearDown()
+        // Validate that `reset` completely resets the parser
+        resetMocks()
+        parser.reset()
+        parser.parse(line: "data: hello")
+        parser.parse(line: "")
+        XCTAssertEqual(eventHandler.received.count, 1)
+        guard case let .message(eventType, event) = eventHandler.received[0]
+        else {
+            XCTFail("Unexpectedly received comment event")
+            return
+        }
+        XCTAssertEqual(eventType, "message")
+        XCTAssertEqual(event.data, "hello")
+        XCTAssertNil(receivedReconnectionTime)
+    }
+
+    func resetMocks() {
         receivedReconnectionTime = nil
         receivedLastEventId = nil
         eventHandler.reset()
-        parser = EventParser(handler: eventHandler, connectionHandler: connectionHandler)
     }
 
     func testDispatchesSingleLineMessage() {
@@ -56,6 +78,8 @@ final class EventParserTests: XCTestCase {
         parser.parse(line: "")
         parser.parse(line: "")
         XCTAssertEqual(eventHandler.received, [.message("message", MessageEvent(data: "hello", lastEventId: nil))])
+        XCTAssertEqual(receivedReconnectionTime, nil)
+        XCTAssertEqual(receivedLastEventId, nil)
     }
 
     func testDispatchesSingleLineMessageWIthId() {
@@ -63,6 +87,17 @@ final class EventParserTests: XCTestCase {
         parser.parse(line: "id: 1")
         parser.parse(line: "")
         XCTAssertEqual(eventHandler.received, [.message("message", MessageEvent(data: "hello", lastEventId: "1"))])
+        XCTAssertEqual(receivedReconnectionTime, nil)
+        XCTAssertEqual(receivedLastEventId, "1")
+    }
+
+    func testResetDoesNotResetlLastEventId() {
+        parser.parse(line: "id: 1")
+        parser.reset()
+        parser.parse(line: "data: hello")
+        parser.parse(line: "")
+        XCTAssertEqual(eventHandler.received, [.message("message", MessageEvent(data: "hello", lastEventId: "1"))])
+        XCTAssertEqual(receivedReconnectionTime, nil)
         XCTAssertEqual(receivedLastEventId, "1")
     }
 
