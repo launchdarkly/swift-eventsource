@@ -34,6 +34,11 @@ extension LDSwiftEventSourceTests {
     static let __allTests__LDSwiftEventSourceTests = [
         ("testConfigDefaults", testConfigDefaults),
         ("testConfigModification", testConfigModification),
+        ("testConfigUrlSession", testConfigUrlSession),
+        ("testCreatedSession", testCreatedSession),
+        ("testCreateRequest", testCreateRequest),
+        ("testDispatchError", testDispatchError),
+        ("testLastEventIdFromConfig", testLastEventIdFromConfig),
     ]
 }
 
