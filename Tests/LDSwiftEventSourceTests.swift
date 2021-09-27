@@ -49,6 +49,27 @@ final class LDSwiftEventSourceTests: XCTestCase {
         XCTAssertEqual(config.connectionErrorHandler(DummyError()), .shutdown)
     }
 
+    func testConfigUrlSession() {
+        var config = EventSource.Config(handler: MockHandler(), url: URL(string: "abc")!)
+        let defaultSessionConfig = config.urlSessionConfiguration
+        XCTAssertEqual(defaultSessionConfig.timeoutIntervalForRequest, 300.0)
+        XCTAssertEqual(defaultSessionConfig.httpAdditionalHeaders?["Accept"] as? String, "text/event-stream")
+        XCTAssertEqual(defaultSessionConfig.httpAdditionalHeaders?["Cache-Control"] as? String, "no-cache")
+        // Configuration should return a fresh session configuration each retrieval
+        XCTAssertTrue(defaultSessionConfig !== config.urlSessionConfiguration)
+        // Updating idleTimeout should effect session config
+        config.idleTimeout = 600.0
+        XCTAssertEqual(config.urlSessionConfiguration.timeoutIntervalForRequest, 600.0)
+        XCTAssertEqual(defaultSessionConfig.timeoutIntervalForRequest, 300.0)
+        // Updating returned urlSessionConfiguration without setting should not update the Config until set
+        let sessionConfig = config.urlSessionConfiguration
+        sessionConfig.allowsCellularAccess = false
+        XCTAssertTrue(config.urlSessionConfiguration.allowsCellularAccess)
+        config.urlSessionConfiguration = sessionConfig
+        XCTAssertFalse(config.urlSessionConfiguration.allowsCellularAccess)
+        XCTAssertTrue(sessionConfig !== config.urlSessionConfiguration)
+    }
+
     func testLastEventIdFromConfig() {
         var config = EventSource.Config(handler: MockHandler(), url: URL(string: "abc")!)
         var es = EventSource(config: config)
@@ -86,7 +107,7 @@ final class LDSwiftEventSourceTests: XCTestCase {
         config.headers = testHeaders
         config.idleTimeout = 180.0
         config.headerTransform = { provided in
-            XCTAssertEqual(provided, ["removing": "a", "updating": "b", "Last-Event-ID": "eventId"])
+            XCTAssertEqual(provided, ["removing": "a", "updating": "b", "Last-Event-Id": "eventId"])
             return overrideHeaders
         }
         request = EventSourceDelegate(config: config).createRequest()
@@ -102,7 +123,7 @@ final class LDSwiftEventSourceTests: XCTestCase {
         var connectionErrorHandlerCallCount = 0
         var connectionErrorAction: ConnectionErrorAction = .proceed
         var config = EventSource.Config(handler: handler, url: URL(string: "abc")!)
-        config.connectionErrorHandler = { error in
+        config.connectionErrorHandler = { _ in
             connectionErrorHandlerCallCount += 1
             return connectionErrorAction
         }

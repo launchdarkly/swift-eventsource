@@ -12,11 +12,11 @@
 		B49B5E4C24667F62008BF867 /* EventParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49B5E4624667F43008BF867 /* EventParser.swift */; };
 		B49B5E4D24667F62008BF867 /* LDSwiftEventSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49B5E4724667F43008BF867 /* LDSwiftEventSource.swift */; };
 		B49B5E5824668031008BF867 /* EventParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49B5E4024667F43008BF867 /* EventParserTests.swift */; };
-		B49B5E5924668031008BF867 /* XCTestManifests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49B5E4124667F43008BF867 /* XCTestManifests.swift */; };
 		B49B5E5A24668031008BF867 /* UTF8LineParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49B5E4224667F43008BF867 /* UTF8LineParserTests.swift */; };
 		B49B5E5B24668031008BF867 /* LDSwiftEventSourceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49B5E4324667F43008BF867 /* LDSwiftEventSourceTests.swift */; };
 		B49B5E67246684B9008BF867 /* LDSwiftEventSource.h in Headers */ = {isa = PBXBuildFile; fileRef = B49B5E65246684B9008BF867 /* LDSwiftEventSource.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B49B5E72246C4796008BF867 /* LDSwiftEventSource.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B49B5DFC24667D41008BF867 /* LDSwiftEventSource.framework */; };
+		B4C29CC826FF743D008B6DE2 /* Logs.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4C29CC726FF743C008B6DE2 /* Logs.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -35,7 +35,6 @@
 		B49B5DFC24667D41008BF867 /* LDSwiftEventSource.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = LDSwiftEventSource.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		B49B5E0424667D42008BF867 /* LDSwiftEventSource Tests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "LDSwiftEventSource Tests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		B49B5E4024667F43008BF867 /* EventParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventParserTests.swift; sourceTree = "<group>"; };
-		B49B5E4124667F43008BF867 /* XCTestManifests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XCTestManifests.swift; sourceTree = "<group>"; };
 		B49B5E4224667F43008BF867 /* UTF8LineParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UTF8LineParserTests.swift; sourceTree = "<group>"; };
 		B49B5E4324667F43008BF867 /* LDSwiftEventSourceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LDSwiftEventSourceTests.swift; sourceTree = "<group>"; };
 		B49B5E4524667F43008BF867 /* UTF8LineParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UTF8LineParser.swift; sourceTree = "<group>"; };
@@ -48,6 +47,7 @@
 		B49B5E6E2466875F008BF867 /* LICENSE.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE.txt; sourceTree = "<group>"; };
 		B49B5E6F2466875F008BF867 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		B49B5E702466875F008BF867 /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Package.swift; sourceTree = "<group>"; };
+		B4C29CC726FF743C008B6DE2 /* Logs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Logs.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -92,7 +92,6 @@
 			isa = PBXGroup;
 			children = (
 				B49B5E4024667F43008BF867 /* EventParserTests.swift */,
-				B49B5E4124667F43008BF867 /* XCTestManifests.swift */,
 				B49B5E4224667F43008BF867 /* UTF8LineParserTests.swift */,
 				B49B5E4324667F43008BF867 /* LDSwiftEventSourceTests.swift */,
 			);
@@ -108,6 +107,7 @@
 				B49B5E4724667F43008BF867 /* LDSwiftEventSource.swift */,
 				B49B5E65246684B9008BF867 /* LDSwiftEventSource.h */,
 				B495D4A7248652DF00AE9233 /* Types.swift */,
+				B4C29CC726FF743C008B6DE2 /* Logs.swift */,
 			);
 			path = Source;
 			sourceTree = "<group>";
@@ -258,6 +258,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				B49B5E4B24667F62008BF867 /* UTF8LineParser.swift in Sources */,
+				B4C29CC826FF743D008B6DE2 /* Logs.swift in Sources */,
 				B495D4A9248652DF00AE9233 /* Types.swift in Sources */,
 				B49B5E4C24667F62008BF867 /* EventParser.swift in Sources */,
 				B49B5E4D24667F62008BF867 /* LDSwiftEventSource.swift in Sources */,
@@ -269,7 +270,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				B49B5E5824668031008BF867 /* EventParserTests.swift in Sources */,
-				B49B5E5924668031008BF867 /* XCTestManifests.swift in Sources */,
 				B49B5E5A24668031008BF867 /* UTF8LineParserTests.swift in Sources */,
 				B49B5E5B24668031008BF867 /* LDSwiftEventSourceTests.swift in Sources */,
 			);
