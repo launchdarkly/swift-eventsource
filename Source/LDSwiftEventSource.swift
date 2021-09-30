@@ -144,6 +144,7 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
             config.handler.onClosed()
         }
         urlSession?.invalidateAndCancel()
+        urlSession = nil
     }
 
     func getLastEventId() -> String? { lastEventId }
