@@ -8,22 +8,23 @@ class Logs {
     enum Level {
         case debug, info, warn, error
 
-        #if !os(Linux)
+#if !os(Linux)
         private static let osLogTypes = [ Level.debug: OSLogType.debug,
                                           Level.info: OSLogType.info,
                                           Level.warn: OSLogType.default,
                                           Level.error: OSLogType.error]
         var osLogType: OSLogType { Level.osLogTypes[self]! }
-        #endif
+#endif
     }
 
-    #if !os(Linux)
+#if !os(Linux)
     private let logger: OSLog = OSLog(subsystem: "com.launchdarkly.swift-eventsource", category: "LDEventSource")
-    #endif
 
     func log(_ level: Level, _ staticMsg: StaticString, _ args: CVarArg...) {
-        #if !os(Linux)
         os_log(staticMsg, log: logger, type: level.osLogType, args)
-        #endif
     }
+#else
+    // We use Any over CVarArg here, because on Linux prior to Swift 5.4 String does not conform to CVarArg
+    func log(_ level: Level, _ staticMsg: StaticString, _ args: Any...) { }
+#endif
 }

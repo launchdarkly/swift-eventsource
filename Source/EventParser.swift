@@ -8,7 +8,6 @@ class EventParser {
         static let idLabel: Substring = "id"
         static let eventLabel: Substring = "event"
         static let retryLabel: Substring = "retry"
-        static let defaultEventType = "message"
     }
 
     private let handler: EventHandler
@@ -16,7 +15,7 @@ class EventParser {
 
     private var data: String = ""
     private var lastEventId: String?
-    private var eventType: String = Constants.defaultEventType
+    private var eventType: String = ""
 
     init(handler: EventHandler, connectionHandler: ConnectionHandler) {
         self.handler = handler
@@ -36,6 +35,11 @@ class EventParser {
         }
     }
 
+    func reset() {
+        data = ""
+        eventType = ""
+    }
+
     private func dropLeadingSpace(str: Substring) -> Substring {
         if str.first == " " {
             return str[str.index(after: str.startIndex)...]
@@ -46,12 +50,14 @@ class EventParser {
     private func processField(field: Substring, value: Substring) {
         switch field {
         case Constants.dataLabel:
-            if !data.isEmpty {
-                data.append(contentsOf: "\n")
-            }
             data.append(contentsOf: value)
+            data.append(contentsOf: "\n")
         case Constants.idLabel:
-            lastEventId = String(value)
+            // See https://github.com/whatwg/html/issues/689 for reasoning on not setting lastEventId if the value
+            // contains a null code point.
+            if !value.contains("\u{0000}") {
+                lastEventId = String(value)
+            }
         case Constants.eventLabel:
             eventType = String(value)
         case Constants.retryLabel:
@@ -64,15 +70,20 @@ class EventParser {
     }
 
     private func dispatchEvent() {
-        guard !data.isEmpty
-        else { return }
-        let messageEvent = MessageEvent(data: data, lastEventId: lastEventId)
         if let lastEventId = lastEventId {
             connectionHandler.setLastEventId(lastEventId)
         }
-        handler.onMessage(eventType: eventType, messageEvent: messageEvent)
+        guard !data.isEmpty
+        else {
+            eventType = ""
+            return
+        }
+        // remove the last LF
+        _ = data.popLast()
+        let messageEvent = MessageEvent(data: data, lastEventId: lastEventId)
+        handler.onMessage(eventType: eventType.isEmpty ? "message" : eventType, messageEvent: messageEvent)
         data = ""
-        eventType = Constants.defaultEventType
+        eventType = ""
     }
 }
 

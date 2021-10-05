@@ -1,21 +1,11 @@
 import Foundation
 
-class DataIter: IteratorProtocol {
-    let data: Data
-    var position: Data.Index
+struct DataIter: IteratorProtocol {
+    var data: Data
+    var position: Data.Index { data.startIndex }
 
-    init(_ data: Data) {
-        self.data = data
-        self.position = data.startIndex
-    }
-
-    func next() -> UInt8? {
-        guard position != data.endIndex
-        else { return nil }
-
-        let res = data[position]
-        position = data.index(after: position)
-        return res
+    mutating func next() -> UInt8? {
+        data.popFirst()
     }
 }
 
@@ -31,7 +21,7 @@ class UTF8LineParser {
 
     func append(_ body: Data) -> [String] {
         let data = remainder + body
-        var dataIter = DataIter(data)
+        var dataIter = DataIter(data: data)
         var remainderPos = data.endIndex
         var lines: [String] = []
 
@@ -39,17 +29,14 @@ class UTF8LineParser {
             switch utf8Parser.parseScalar(from: &dataIter) {
             case .valid(let scalarResult):
                 let scalar = Unicode.UTF8.decode(scalarResult)
-                if seenCr {
-                    lines.append(currentString)
-                    currentString = ""
+
+                if seenCr && scalar == lf {
                     seenCr = false
-                    if scalar == lf {
-                        continue
-                    }
+                    continue
                 }
-                if scalar == cr {
-                    seenCr = true
-                } else if scalar == lf {
+
+                seenCr = scalar == cr
+                if scalar == cr || scalar == lf {
                     lines.append(currentString)
                     currentString = ""
                 } else {
@@ -58,16 +45,14 @@ class UTF8LineParser {
             case .emptyInput:
                 break Decode
             case .error(let len):
+                seenCr = false
                 if dataIter.position == data.endIndex {
                     // Error at end of block, carry over in case of split code point
                     remainderPos = data.index(data.endIndex, offsetBy: -len)
+                    // May as well break here as next will be .emptyInput
+                    break Decode
                 } else {
                     // Invalid character, replace with replacement character
-                    if seenCr {
-                        lines.append(currentString)
-                        currentString = ""
-                        seenCr = false
-                    }
                     currentString.append(replacement)
                 }
             }
@@ -77,26 +62,9 @@ class UTF8LineParser {
         return lines
     }
 
-    func closeAndReset() -> [String] {
-        var lines: [String] = []
-
-        if seenCr {
-            lines.append(currentString)
-            currentString = ""
-        }
-
-        if !remainder.isEmpty {
-            currentString.append(replacement)
-            remainder = Data()
-        }
-
-        if !currentString.isEmpty {
-            lines.append(currentString)
-        }
-
-        currentString = ""
+    func closeAndReset() {
         seenCr = false
-
-        return lines
+        currentString = ""
+        remainder = Data()
     }
 }
