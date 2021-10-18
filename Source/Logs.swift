@@ -20,8 +20,16 @@ class Logs {
 #if !os(Linux)
     private let logger: OSLog = OSLog(subsystem: "com.launchdarkly.swift-eventsource", category: "LDEventSource")
 
-    func log(_ level: Level, _ staticMsg: StaticString, _ args: CVarArg...) {
-        os_log(staticMsg, log: logger, type: level.osLogType, args)
+    func log(_ level: Level, _ staticMsg: StaticString) {
+        os_log(staticMsg, log: logger, type: level.osLogType)
+    }
+
+    func log(_ level: Level, _ staticMsg: StaticString, _ arg: CVarArg) {
+        os_log(staticMsg, log: logger, type: level.osLogType, arg)
+    }
+
+    func log(_ level: Level, _ staticMsg: StaticString, _ arg1: CVarArg, _ arg2: CVarArg) {
+        os_log(staticMsg, log: logger, type: level.osLogType, arg1, arg2)
     }
 #else
     // We use Any over CVarArg here, because on Linux prior to Swift 5.4 String does not conform to CVarArg
