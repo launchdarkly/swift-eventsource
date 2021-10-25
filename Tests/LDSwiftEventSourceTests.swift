@@ -1,6 +1,10 @@
 import XCTest
 @testable import LDSwiftEventSource
 
+#if os(Linux)
+import FoundationNetworking
+#endif
+
 final class LDSwiftEventSourceTests: XCTestCase {
     private var mockHandler: MockHandler!
 

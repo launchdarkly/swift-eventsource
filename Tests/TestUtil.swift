@@ -1,5 +1,9 @@
 import XCTest
 
+#if os(Linux)
+import FoundationNetworking
+#endif
+
 struct EventSink<T> {
     private let semaphore = DispatchSemaphore(value: 0)
     private let queue = DispatchQueue(label: "EventSinkQueue." + UUID().uuidString)
