@@ -169,6 +169,7 @@ final class LDSwiftEventSourceTests: XCTestCase {
         return sessionConfig
     }
 
+#if !os(Linux)
     func testStartDefaultRequest() {
         var config = EventSource.Config(handler: mockHandler, url: URL(string: "http://example.com")!)
         config.urlSessionConfiguration = sessionWithMockProtocol()
@@ -337,6 +338,7 @@ final class LDSwiftEventSourceTests: XCTestCase {
         // Error should not have been given to the handler
         mockHandler.events.expectNoEvent()
     }
+#endif
 }
 
 private enum ReceivedEvent: Equatable {
