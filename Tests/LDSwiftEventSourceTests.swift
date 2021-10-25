@@ -2,9 +2,28 @@ import XCTest
 @testable import LDSwiftEventSource
 
 final class LDSwiftEventSourceTests: XCTestCase {
+    private var mockHandler: MockHandler!
+
+    override func setUp() {
+        super.setUp()
+        mockHandler = MockHandler()
+        XCTAssertTrue(URLProtocol.registerClass(MockingProtocol.self))
+    }
+
+    override func tearDown() {
+        super.tearDown()
+        URLProtocol.unregisterClass(MockingProtocol.self)
+        // Enforce that tests consume all mocked network requests
+        MockingProtocol.requested.expectNoEvent(within: 0.01)
+        MockingProtocol.resetRequested()
+        // Enforce that tests consume all calls to the mock handler
+        mockHandler.events.expectNoEvent(within: 0.01)
+        mockHandler = nil
+    }
+
     func testConfigDefaults() {
         let url = URL(string: "abc")!
-        let config = EventSource.Config(handler: MockHandler(), url: url)
+        let config = EventSource.Config(handler: mockHandler, url: url)
         XCTAssertEqual(config.url, url)
         XCTAssertEqual(config.method, "GET")
         XCTAssertEqual(config.body, nil)
@@ -20,7 +39,7 @@ final class LDSwiftEventSourceTests: XCTestCase {
 
     func testConfigModification() {
         let url = URL(string: "abc")!
-        var config = EventSource.Config(handler: MockHandler(), url: url)
+        var config = EventSource.Config(handler: mockHandler, url: url)
 
         let testBody = "test data".data(using: .utf8)
         let testHeaders = ["Authorization": "basic abc"]
@@ -50,7 +69,7 @@ final class LDSwiftEventSourceTests: XCTestCase {
     }
 
     func testConfigUrlSession() {
-        var config = EventSource.Config(handler: MockHandler(), url: URL(string: "abc")!)
+        var config = EventSource.Config(handler: mockHandler, url: URL(string: "abc")!)
         let defaultSessionConfig = config.urlSessionConfiguration
         XCTAssertEqual(defaultSessionConfig.timeoutIntervalForRequest, 300.0)
         XCTAssertEqual(defaultSessionConfig.httpAdditionalHeaders?["Accept"] as? String, "text/event-stream")
@@ -71,7 +90,7 @@ final class LDSwiftEventSourceTests: XCTestCase {
     }
 
     func testLastEventIdFromConfig() {
-        var config = EventSource.Config(handler: MockHandler(), url: URL(string: "abc")!)
+        var config = EventSource.Config(handler: mockHandler, url: URL(string: "abc")!)
         var es = EventSource(config: config)
         XCTAssertEqual(es.getLastEventId(), nil)
         config.lastEventId = "def"
@@ -80,7 +99,7 @@ final class LDSwiftEventSourceTests: XCTestCase {
     }
 
     func testCreatedSession() {
-        let config = EventSource.Config(handler: MockHandler(), url: URL(string: "abc")!)
+        let config = EventSource.Config(handler: mockHandler, url: URL(string: "abc")!)
         let session = EventSourceDelegate(config: config).createSession()
         XCTAssertEqual(session.configuration.timeoutIntervalForRequest, config.idleTimeout)
         XCTAssertEqual(session.configuration.httpAdditionalHeaders?["Accept"] as? String, "text/event-stream")
@@ -89,7 +108,7 @@ final class LDSwiftEventSourceTests: XCTestCase {
 
     func testCreateRequest() {
         // 192.0.2.1 is assigned as TEST-NET-1 reserved usage.
-        var config = EventSource.Config(handler: MockHandler(), url: URL(string: "http://192.0.2.1")!)
+        var config = EventSource.Config(handler: mockHandler, url: URL(string: "http://192.0.2.1")!)
         // Testing default configs
         var request = EventSourceDelegate(config: config).createRequest()
         XCTAssertEqual(request.url, config.url)
@@ -119,10 +138,9 @@ final class LDSwiftEventSourceTests: XCTestCase {
     }
 
     func testDispatchError() {
-        let handler = MockHandler()
         var connectionErrorHandlerCallCount = 0
         var connectionErrorAction: ConnectionErrorAction = .proceed
-        var config = EventSource.Config(handler: handler, url: URL(string: "abc")!)
+        var config = EventSource.Config(handler: mockHandler, url: URL(string: "abc")!)
         config.connectionErrorHandler = { _ in
             connectionErrorHandlerCallCount += 1
             return connectionErrorAction
@@ -130,16 +148,190 @@ final class LDSwiftEventSourceTests: XCTestCase {
         let es = EventSourceDelegate(config: config)
         XCTAssertEqual(es.dispatchError(error: DummyError()), .proceed)
         XCTAssertEqual(connectionErrorHandlerCallCount, 1)
-        guard case .error(let err) = handler.takeEvent(), err is DummyError
+        guard case .error(let err) = mockHandler.events.expectEvent(), err is DummyError
         else {
             XCTFail("handler should receive error if EventSource is not shutting down")
             return
         }
-        XCTAssertTrue(handler.receivedEvents.isEmpty)
+        mockHandler.events.expectNoEvent()
         connectionErrorAction = .shutdown
         XCTAssertEqual(es.dispatchError(error: DummyError()), .shutdown)
         XCTAssertEqual(connectionErrorHandlerCallCount, 2)
-        XCTAssertTrue(handler.receivedEvents.isEmpty)
+    }
+
+    func sessionWithMockProtocol() -> URLSessionConfiguration {
+        let sessionConfig = URLSessionConfiguration.default
+        sessionConfig.protocolClasses = [MockingProtocol.self] + (sessionConfig.protocolClasses ?? [])
+        return sessionConfig
+    }
+
+    func testStartDefaultRequest() {
+        var config = EventSource.Config(handler: mockHandler, url: URL(string: "http://example.com")!)
+        config.urlSessionConfiguration = sessionWithMockProtocol()
+        let es = EventSource(config: config)
+        es.start()
+        let handler = MockingProtocol.requested.expectEvent()
+        XCTAssertEqual(handler.request.url, config.url)
+        XCTAssertEqual(handler.request.httpMethod, config.method)
+        XCTAssertEqual(handler.request.httpBody, config.body)
+        XCTAssertEqual(handler.request.timeoutInterval, config.idleTimeout)
+        XCTAssertEqual(handler.request.allHTTPHeaderFields?["Accept"], "text/event-stream")
+        XCTAssertEqual(handler.request.allHTTPHeaderFields?["Cache-Control"], "no-cache")
+        XCTAssertNil(handler.request.allHTTPHeaderFields?["Last-Event-Id"])
+        es.stop()
+    }
+
+    func testStartRequestWithConfiguration() {
+        var config = EventSource.Config(handler: mockHandler, url: URL(string: "http://example.com")!)
+        config.urlSessionConfiguration = sessionWithMockProtocol()
+        config.method = "REPORT"
+        config.body = Data("test body".utf8)
+        config.idleTimeout = 500.0
+        config.lastEventId = "abc"
+        config.headers = ["X-LD-Header": "def"]
+        let es = EventSource(config: config)
+        es.start()
+        let handler = MockingProtocol.requested.expectEvent()
+        XCTAssertEqual(handler.request.url, config.url)
+        XCTAssertEqual(handler.request.httpMethod, config.method)
+        XCTAssertEqual(handler.request.bodyStreamAsData(), config.body)
+        XCTAssertEqual(handler.request.timeoutInterval, config.idleTimeout)
+        XCTAssertEqual(handler.request.allHTTPHeaderFields?["Accept"], "text/event-stream")
+        XCTAssertEqual(handler.request.allHTTPHeaderFields?["Cache-Control"], "no-cache")
+        XCTAssertEqual(handler.request.allHTTPHeaderFields?["Last-Event-Id"], config.lastEventId)
+        XCTAssertEqual(handler.request.allHTTPHeaderFields?["X-LD-Header"], "def")
+        es.stop()
+    }
+
+    func testSuccessfulResponseOpens() {
+        var config = EventSource.Config(handler: mockHandler, url: URL(string: "http://example.com")!)
+        config.urlSessionConfiguration = sessionWithMockProtocol()
+        let es = EventSource(config: config)
+        es.start()
+        let handler = MockingProtocol.requested.expectEvent()
+        handler.respond(statusCode: 200)
+        XCTAssertEqual(mockHandler.events.expectEvent(), .opened)
+        es.stop()
+        XCTAssertEqual(mockHandler.events.expectEvent(), .closed)
+    }
+
+    func testLastEventIdUpdatedByEvents() {
+        var config = EventSource.Config(handler: mockHandler, url: URL(string: "http://example.com")!)
+        config.urlSessionConfiguration = sessionWithMockProtocol()
+        config.reconnectTime = 0.1
+        let es = EventSource(config: config)
+        es.start()
+        let handler = MockingProtocol.requested.expectEvent()
+        handler.respond(statusCode: 200)
+        XCTAssertEqual(mockHandler.events.expectEvent(), .opened)
+        XCTAssertNil(es.getLastEventId())
+        handler.respond(didLoad: "id: abc\n\n")
+        // Comment used for synchronization
+        handler.respond(didLoad: ":comment\n")
+        XCTAssertEqual(mockHandler.events.expectEvent(), .comment("comment"))
+        XCTAssertEqual(es.getLastEventId(), "abc")
+        handler.finish()
+        XCTAssertEqual(mockHandler.events.expectEvent(), .closed)
+        // Expect to reconnect and include new event id
+        let reconnectHandler = MockingProtocol.requested.expectEvent()
+        XCTAssertEqual(reconnectHandler.request.allHTTPHeaderFields?["Last-Event-Id"], "abc")
+        es.stop()
+    }
+
+    func testUsesRetryTime() {
+        var config = EventSource.Config(handler: mockHandler, url: URL(string: "http://example.com")!)
+        config.urlSessionConfiguration = sessionWithMockProtocol()
+        // Long enough to cause a timeout if the retry time is not updated
+        config.reconnectTime = 5
+        let es = EventSource(config: config)
+        es.start()
+        let handler = MockingProtocol.requested.expectEvent()
+        handler.respond(statusCode: 200)
+        XCTAssertEqual(mockHandler.events.expectEvent(), .opened)
+        handler.respond(didLoad: "retry: 100\n\n")
+        handler.finish()
+        XCTAssertEqual(mockHandler.events.expectEvent(), .closed)
+        // Expect to reconnect before this times out
+        _ = MockingProtocol.requested.expectEvent()
+        es.stop()
+    }
+
+    func testCallsHandlerWithMessage() {
+        var config = EventSource.Config(handler: mockHandler, url: URL(string: "http://example.com")!)
+        config.urlSessionConfiguration = sessionWithMockProtocol()
+        let es = EventSource(config: config)
+        es.start()
+        let handler = MockingProtocol.requested.expectEvent()
+        handler.respond(statusCode: 200)
+        XCTAssertEqual(mockHandler.events.expectEvent(), .opened)
+        handler.respond(didLoad: "event: custom\ndata: {}\n\n")
+        XCTAssertEqual(mockHandler.events.expectEvent(), .message("custom", MessageEvent(data: "{}", lastEventId: nil)))
+        es.stop()
+        XCTAssertEqual(mockHandler.events.expectEvent(), .closed)
+    }
+
+    func testRetryOnInvalidResponseCode() {
+        var config = EventSource.Config(handler: mockHandler, url: URL(string: "http://example.com")!)
+        config.urlSessionConfiguration = sessionWithMockProtocol()
+        config.reconnectTime = 0.1
+        let es = EventSource(config: config)
+        es.start()
+        let handler = MockingProtocol.requested.expectEvent()
+        handler.respond(statusCode: 400)
+        guard case let .error(err) = mockHandler.events.expectEvent(),
+              let responseErr = err as? UnsuccessfulResponseError
+        else {
+            XCTFail("Expected UnsuccessfulResponseError to be given to handler")
+            return
+        }
+        XCTAssertEqual(responseErr.responseCode, 400)
+        // Expect the client to reconnect
+        _ = MockingProtocol.requested.expectEvent()
+        es.stop()
+    }
+
+    func testShutdownByErrorHandlerOnInitialErrorResponse() {
+        var config = EventSource.Config(handler: mockHandler, url: URL(string: "http://example.com")!)
+        config.urlSessionConfiguration = sessionWithMockProtocol()
+        config.reconnectTime = 0.1
+        config.connectionErrorHandler = { err in
+            if let responseErr = err as? UnsuccessfulResponseError {
+                XCTAssertEqual(responseErr.responseCode, 400)
+            } else {
+                XCTFail("Expected UnsuccessfulResponseError to be given to handler")
+            }
+            return .shutdown
+        }
+        let es = EventSource(config: config)
+        es.start()
+        let handler = MockingProtocol.requested.expectEvent()
+        handler.respond(statusCode: 400)
+        // Expect the client not to reconnect
+        MockingProtocol.requested.expectNoEvent(within: 1.0)
+        es.stop()
+        // Error should not have been given to the handler
+        mockHandler.events.expectNoEvent()
+    }
+
+    func testShutdownByErrorHandlerOnResponseCompletionError() {
+        var config = EventSource.Config(handler: mockHandler, url: URL(string: "http://example.com")!)
+        config.urlSessionConfiguration = sessionWithMockProtocol()
+        config.reconnectTime = 0.1
+        config.connectionErrorHandler = { _ in
+            return .shutdown
+        }
+        let es = EventSource(config: config)
+        es.start()
+        let handler = MockingProtocol.requested.expectEvent()
+        handler.respond(statusCode: 200)
+        XCTAssertEqual(mockHandler.events.expectEvent(), .opened)
+        handler.finishWith(error: DummyError())
+        XCTAssertEqual(mockHandler.events.expectEvent(), .closed)
+        // Expect the client not to reconnect
+        MockingProtocol.requested.expectNoEvent(within: 1.0)
+        es.stop()
+        // Error should not have been given to the handler
+        mockHandler.events.expectNoEvent()
     }
 }
 
@@ -165,31 +357,13 @@ private enum ReceivedEvent: Equatable {
 }
 
 private class MockHandler: EventHandler {
-    var receivedEvents: [ReceivedEvent] = []
+    var events = EventSink<ReceivedEvent>()
 
-    func onOpened() {
-        receivedEvents.append(.opened)
-    }
-
-    func onClosed() {
-        receivedEvents.append(.closed)
-    }
-
-    func onMessage(eventType: String, messageEvent: MessageEvent) {
-        receivedEvents.append(.message(eventType, messageEvent))
-    }
-
-    func onComment(comment: String) {
-        receivedEvents.append(.comment(comment))
-    }
-
-    func onError(error: Error) {
-        receivedEvents.append(.error(error))
-    }
-
-    func takeEvent() -> ReceivedEvent {
-        receivedEvents.remove(at: 0)
-    }
+    func onOpened() { events.record(.opened) }
+    func onClosed() { events.record(.closed) }
+    func onMessage(eventType: String, messageEvent: MessageEvent) { events.record(.message(eventType, messageEvent)) }
+    func onComment(comment: String) { events.record(.comment(comment)) }
+    func onError(error: Error) { events.record(.error(error)) }
 }
 
 private class DummyError: Error { }

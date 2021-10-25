@@ -16,6 +16,7 @@
 		B49B5E5B24668031008BF867 /* LDSwiftEventSourceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49B5E4324667F43008BF867 /* LDSwiftEventSourceTests.swift */; };
 		B49B5E67246684B9008BF867 /* LDSwiftEventSource.h in Headers */ = {isa = PBXBuildFile; fileRef = B49B5E65246684B9008BF867 /* LDSwiftEventSource.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B49B5E72246C4796008BF867 /* LDSwiftEventSource.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B49B5DFC24667D41008BF867 /* LDSwiftEventSource.framework */; };
+		B4BCAE6E272753FA000EBD43 /* TestUtil.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4BCAE6D272753FA000EBD43 /* TestUtil.swift */; };
 		B4C29CC826FF743D008B6DE2 /* Logs.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4C29CC726FF743C008B6DE2 /* Logs.swift */; };
 /* End PBXBuildFile section */
 
@@ -47,6 +48,7 @@
 		B49B5E6E2466875F008BF867 /* LICENSE.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE.txt; sourceTree = "<group>"; };
 		B49B5E6F2466875F008BF867 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		B49B5E702466875F008BF867 /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Package.swift; sourceTree = "<group>"; };
+		B4BCAE6D272753FA000EBD43 /* TestUtil.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestUtil.swift; sourceTree = "<group>"; };
 		B4C29CC726FF743C008B6DE2 /* Logs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Logs.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -94,6 +96,7 @@
 				B49B5E4024667F43008BF867 /* EventParserTests.swift */,
 				B49B5E4224667F43008BF867 /* UTF8LineParserTests.swift */,
 				B49B5E4324667F43008BF867 /* LDSwiftEventSourceTests.swift */,
+				B4BCAE6D272753FA000EBD43 /* TestUtil.swift */,
 			);
 			path = Tests;
 			sourceTree = "<group>";
@@ -272,6 +275,7 @@
 				B49B5E5824668031008BF867 /* EventParserTests.swift in Sources */,
 				B49B5E5A24668031008BF867 /* UTF8LineParserTests.swift in Sources */,
 				B49B5E5B24668031008BF867 /* LDSwiftEventSourceTests.swift in Sources */,
+				B4BCAE6E272753FA000EBD43 /* TestUtil.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
