@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		B426585E272849AF007B711A /* MockHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = B426585D272849AF007B711A /* MockHandler.swift */; };
 		B495D4A9248652DF00AE9233 /* Types.swift in Sources */ = {isa = PBXBuildFile; fileRef = B495D4A7248652DF00AE9233 /* Types.swift */; };
 		B49B5E4B24667F62008BF867 /* UTF8LineParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49B5E4524667F43008BF867 /* UTF8LineParser.swift */; };
 		B49B5E4C24667F62008BF867 /* EventParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49B5E4624667F43008BF867 /* EventParser.swift */; };
@@ -31,6 +32,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		B426585D272849AF007B711A /* MockHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockHandler.swift; sourceTree = "<group>"; };
 		B495D4A7248652DF00AE9233 /* Types.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Types.swift; sourceTree = "<group>"; };
 		B49B5DE324667D06008BF867 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		B49B5DFC24667D41008BF867 /* LDSwiftEventSource.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = LDSwiftEventSource.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -97,6 +99,7 @@
 				B49B5E4224667F43008BF867 /* UTF8LineParserTests.swift */,
 				B49B5E4324667F43008BF867 /* LDSwiftEventSourceTests.swift */,
 				B4BCAE6D272753FA000EBD43 /* TestUtil.swift */,
+				B426585D272849AF007B711A /* MockHandler.swift */,
 			);
 			path = Tests;
 			sourceTree = "<group>";
@@ -274,6 +277,7 @@
 			files = (
 				B49B5E5824668031008BF867 /* EventParserTests.swift in Sources */,
 				B49B5E5A24668031008BF867 /* UTF8LineParserTests.swift in Sources */,
+				B426585E272849AF007B711A /* MockHandler.swift in Sources */,
 				B49B5E5B24668031008BF867 /* LDSwiftEventSourceTests.swift in Sources */,
 				B4BCAE6E272753FA000EBD43 /* TestUtil.swift in Sources */,
 			);
