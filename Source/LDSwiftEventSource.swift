@@ -246,7 +246,9 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
         eventParser.reset()
 
         if let error = error {
-            if readyState != .shutdown && errorHandlerAction != .shutdown {
+            // Ignore cancelled error
+            if (error as NSError).code == NSURLErrorCancelled {
+            } else if readyState != .shutdown && errorHandlerAction != .shutdown {
                 logger.log(.info, "Connection error: %@", error.localizedDescription)
                 errorHandlerAction = dispatchError(error: error)
             } else {
