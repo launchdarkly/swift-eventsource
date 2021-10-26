@@ -25,6 +25,15 @@ struct EventSink<T> {
         }
     }
 
+    mutating func maybeEvent() -> T? {
+        switch semaphore.wait(timeout: DispatchTime.now()) {
+        case .success:
+            return queue.sync { receivedEvents.remove(at: 0) }
+        case .timedOut:
+            return nil
+        }
+    }
+
     func expectNoEvent(within: TimeInterval = 0.1) {
         if case .success = semaphore.wait(timeout: DispatchTime.now() + within) {
             XCTFail("Expected no events in sink, found \(String(describing: receivedEvents.first))")
