@@ -139,7 +139,9 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
     }
 
     func start() {
-        delegateQueue.async {
+        delegateQueue.async { [weak self] in
+            guard let self = self
+            else { return }
             guard self.readyState == .raw
             else {
                 self.logger.log(.info, "start() called on already-started EventSource object. Returning")
@@ -157,6 +159,7 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
         if previousState == .open {
             config.handler.onClosed()
         }
+        urlSession?.invalidateAndCancel()
     }
 
     func getLastEventId() -> String? { lastEventId }
@@ -181,8 +184,8 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
     private func connect() {
         logger.log(.info, "Starting EventSource client")
         let connectionHandler: ConnectionHandler = (
-            setReconnectionTime: { reconnectionTime in self.reconnectTime = reconnectionTime },
-            setLastEventId: { eventId in self.lastEventId = eventId }
+            setReconnectionTime: { [weak self] reconnectionTime in self?.reconnectTime = reconnectionTime },
+            setLastEventId: { [weak self] eventId in self?.lastEventId = eventId }
         )
         self.eventParser = EventParser(handler: self.config.handler, connectionHandler: connectionHandler)
         let task = urlSession?.dataTask(with: createRequest())
@@ -231,8 +234,8 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
         let sleep = maxSleep / 2 + Double.random(in: 0...(maxSleep / 2))
 
         logger.log(.info, "Waiting %.3f seconds before reconnecting...", sleep)
-        delegateQueue.asyncAfter(deadline: .now() + sleep) {
-            self.connect()
+        delegateQueue.asyncAfter(deadline: .now() + sleep) { [weak self] in
+            self?.connect()
         }
     }
 
