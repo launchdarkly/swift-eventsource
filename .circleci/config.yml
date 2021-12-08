@@ -93,6 +93,8 @@ jobs:
 
           - save_cache:
               key: v1-gem-cache-<<parameters.xcode-version>>-{{ checksum "/tmp/cache-key.txt" }}
+              paths:
+                - ~/.gem
 
           - run:
               name: Build Documentation
