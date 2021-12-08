@@ -81,7 +81,7 @@ jobs:
         condition: <<parameters.build-doc>>
         steps:
           - restore_cache:
-              key: v1-gem-cache-<<parameters.xcode-version>>
+              key: v1-gem-cache-<<parameters.xcode-version>>-
 
           - run:
               name: Install jazzy gem
