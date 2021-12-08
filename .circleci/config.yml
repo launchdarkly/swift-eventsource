@@ -80,11 +80,24 @@ jobs:
     - when:
         condition: <<parameters.build-doc>>
         steps:
+          - restore_cache:
+              key: v1-gem-cache-<<parameters.xcode-version>>
+
+          - run:
+              name: Install jazzy gem
+              command: |
+                gem install jazzy
+                gem cleanup
+                # Used as cache key to prevent storing redundant caches
+                gem list > /tmp/cache_key.txt
+
+          - save_cache:
+              key: v1-gem-cache-<<parameters.xcode-version>>-{{ checksum "/tmp/cache-key.txt" }}
+
           - run:
               name: Build Documentation
-              command: |
-                sudo gem install jazzy
-                jazzy -o artifacts/docs
+              command: jazzy -o artifacts/docs
+
           - run:
               name: Validate coverage
               command: |
