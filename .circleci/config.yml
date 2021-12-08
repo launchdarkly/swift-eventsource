@@ -89,7 +89,7 @@ jobs:
                 gem install jazzy
                 gem cleanup
                 # Used as cache key to prevent storing redundant caches
-                gem list > /tmp/cache_key.txt
+                gem list > /tmp/cache-key.txt
 
           - save_cache:
               key: v1-gem-cache-<<parameters.xcode-version>>-{{ checksum "/tmp/cache-key.txt" }}
