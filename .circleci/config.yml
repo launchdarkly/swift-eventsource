@@ -168,11 +168,6 @@ workflows:
           xcode-version: '11.4.1'
           ios-sim: 'platform=iOS Simulator,name=iPhone 8,OS=12.2'
           build-universal: false
-      - build:
-          name: Xcode 11.0 - Swift 5.1
-          xcode-version: '11.0.0'
-          ios-sim: 'platform=iOS Simulator,name=iPhone 8,OS=12.2'
-          build-universal: false
       - build_linux:
           name: Linux - Swift 5.4
           docker-image: norionomura/swift:5.4
