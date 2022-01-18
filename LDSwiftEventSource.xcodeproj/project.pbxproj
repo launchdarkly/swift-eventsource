@@ -458,7 +458,7 @@
 					"@executable_path/../Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.2.1;
+				MARKETING_VERSION = 1.3.0;
 				SKIP_INSTALL = YES;
 				"TARGETED_DEVICE_FAMILY[sdk=appletvos*]" = 3;
 				"TARGETED_DEVICE_FAMILY[sdk=appletvsimulator*]" = 3;
@@ -492,7 +492,7 @@
 					"@executable_path/../Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.2.1;
+				MARKETING_VERSION = 1.3.0;
 				SKIP_INSTALL = YES;
 				"TARGETED_DEVICE_FAMILY[sdk=appletvos*]" = 3;
 				"TARGETED_DEVICE_FAMILY[sdk=appletvsimulator*]" = 3;

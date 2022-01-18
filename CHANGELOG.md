@@ -2,6 +2,18 @@
 
 All notable changes to the LaunchDarkly Swift EventSource library will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [1.3.0] - 2022-01-18
+### Added
+- Added the configuration option `urlSessionConfiguration` to `EventSource.Config` which allows setting the `URLSessionConfiguration` used by the `EventSource` to create `URLSession` instances.
+
+### Fixed
+- Fixed a retain cycle issue when the stream connection is ended.
+- Removed deprecated `VALID_ARCHS` build setting from Xcode project.
+- Unterminated events will no longer be dispatched when the stream connection is dropped.
+- Stream events that set the `lastEventId` will now record the updated `lastEventId` even if the event does not generate a `MessageEvent`.
+- Empty stream "data" fields will now always record a newline to the resultant `MessageEvent` data.
+- Empty stream "event" fields will result in now result in the default "message" event type rather than an event type of "".
+
 ## [1.2.1] - 2021-02-10
 ### Added
 - [SwiftLint](https://github.com/realm/SwiftLint) configuration. Linting will be automatically run as part of the build if [Mint](https://github.com/yonaskolb/Mint) is installed.
