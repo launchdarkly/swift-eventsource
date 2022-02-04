@@ -17,6 +17,7 @@ jobs:
 
     macos:
       xcode: <<parameters.xcode-version>>
+    resource_class: macos.x86.medium.gen2
 
     steps:
     - checkout
