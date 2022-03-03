@@ -147,7 +147,6 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
     private var lastEventId: String?
     private var reconnectTime: TimeInterval
 
-    private var errorHandlerAction: ConnectionErrorAction = .proceed
     private let utf8LineParser: UTF8LineParser = UTF8LineParser()
     // swiftlint:disable:next implicitly_unwrapped_optional
     private var eventParser: EventParser!
@@ -225,33 +224,6 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
         return action
     }
 
-    private func afterComplete() {
-        guard readyState != .shutdown
-        else { return }
-
-        var nextState: ReadyState = .closed
-        let currentState: ReadyState = readyState
-        if errorHandlerAction == .shutdown {
-            logger.log(.info, "Connection has been explicitly shut down by error handler")
-            nextState = .shutdown
-        }
-        readyState = nextState
-
-        if currentState == .open {
-            config.handler.onClosed()
-        }
-
-        if nextState == .shutdown {
-            return
-        }
-
-        let sleep = reconnectionTimer.reconnectDelay(baseDelay: reconnectTime)
-        logger.log(.info, "Waiting %.3f seconds before reconnecting...", sleep)
-        delegateQueue.asyncAfter(deadline: .now() + sleep) { [weak self] in
-            self?.connect()
-        }
-    }
-
     // MARK: URLSession Delegates
 
     // Tells the delegate that the task finished transferring data.
@@ -261,20 +233,35 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
         utf8LineParser.closeAndReset()
         eventParser.reset()
 
+        guard readyState != .shutdown
+        else { return }
+
         if let error = error {
-            // Ignore cancelled error
-            if (error as NSError).code == NSURLErrorCancelled {
-            } else if readyState != .shutdown && errorHandlerAction != .shutdown {
+            if (error as NSError).code != NSURLErrorCancelled {
                 logger.log(.info, "Connection error: %@", error.localizedDescription)
-                errorHandlerAction = dispatchError(error: error)
-            } else {
-                errorHandlerAction = .shutdown
+                if dispatchError(error: error) == .shutdown {
+                    logger.log(.info, "Connection has been explicitly shut down by error handler")
+                    if readyState == .open {
+                        config.handler.onClosed()
+                    }
+                    readyState = .shutdown
+                    return
+                }
             }
         } else {
             logger.log(.info, "Connection unexpectedly closed.")
         }
 
-        afterComplete()
+        if readyState == .open {
+            config.handler.onClosed()
+        }
+
+        readyState = .closed
+        let sleep = reconnectionTimer.reconnectDelay(baseDelay: reconnectTime)
+        logger.log(.info, "Waiting %.3f seconds before reconnecting...", sleep)
+        delegateQueue.asyncAfter(deadline: .now() + sleep) { [weak self] in
+            self?.connect()
+        }
     }
 
     // Tells the delegate that the data task received the initial reply (headers) from the server.
@@ -299,7 +286,10 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
             completionHandler(.allow)
         } else {
             logger.log(.info, "Unsuccessful response: %d", httpResponse.statusCode)
-            errorHandlerAction = dispatchError(error: UnsuccessfulResponseError(responseCode: httpResponse.statusCode))
+            if dispatchError(error: UnsuccessfulResponseError(responseCode: httpResponse.statusCode)) == .shutdown {
+                logger.log(.info, "Connection has been explicitly shut down by error handler")
+                readyState = .shutdown
+            }
             completionHandler(.cancel)
         }
     }
