@@ -108,6 +108,30 @@ public class EventSource {
     }
 }
 
+class ReconnectionTimer {
+    private let maxDelay: TimeInterval
+    private let backoffResetInterval: TimeInterval
+    private var backoffCount: Int = 0
+
+    var connectedTime: Date?
+
+    init(_ config: EventSource.Config) {
+        self.maxDelay = config.maxReconnectTime
+        self.backoffResetInterval = config.backoffResetThreshold
+    }
+
+    func reconnectDelay(baseDelay: TimeInterval) -> TimeInterval {
+        backoffCount += 1
+        if let connectedTime = connectedTime, Date().timeIntervalSince(connectedTime) >= backoffResetInterval {
+            backoffCount = 0
+        }
+        self.connectedTime = nil
+        let maxSleep = min(maxDelay, baseDelay * pow(2.0, Double(backoffCount)))
+        return maxSleep / 2 + Double.random(in: 0...(maxSleep / 2))
+    }
+}
+
+// MARK: EventSourceDelegate
 class EventSourceDelegate: NSObject, URLSessionDataDelegate {
     private let delegateQueue: DispatchQueue = DispatchQueue(label: "ESDelegateQueue")
     private let logger = Logs()
@@ -122,13 +146,12 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
 
     private var lastEventId: String?
     private var reconnectTime: TimeInterval
-    private var connectedTime: Date?
 
-    private var reconnectionAttempts: Int = 0
     private var errorHandlerAction: ConnectionErrorAction = .proceed
     private let utf8LineParser: UTF8LineParser = UTF8LineParser()
     // swiftlint:disable:next implicitly_unwrapped_optional
     private var eventParser: EventParser!
+    private let reconnectionTimer: ReconnectionTimer
     private var urlSession: URLSession?
     private var sessionTask: URLSessionDataTask?
 
@@ -136,6 +159,7 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
         self.config = config
         self.lastEventId = config.lastEventId
         self.reconnectTime = config.reconnectTime
+        self.reconnectionTimer = ReconnectionTimer(config)
     }
 
     func start() {
@@ -217,22 +241,11 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
             config.handler.onClosed()
         }
 
-        if nextState != .shutdown {
-            reconnect()
+        if nextState == .shutdown {
+            return
         }
-    }
 
-    private func reconnect() {
-        reconnectionAttempts += 1
-
-        if let connectedTime = connectedTime, Date().timeIntervalSince(connectedTime) >= config.backoffResetThreshold {
-            reconnectionAttempts = 0
-        }
-        self.connectedTime = nil
-
-        let maxSleep = min(config.maxReconnectTime, reconnectTime * pow(2.0, Double(reconnectionAttempts)))
-        let sleep = maxSleep / 2 + Double.random(in: 0...(maxSleep / 2))
-
+        let sleep = reconnectionTimer.reconnectDelay(baseDelay: reconnectTime)
         logger.log(.info, "Waiting %.3f seconds before reconnecting...", sleep)
         delegateQueue.asyncAfter(deadline: .now() + sleep) { [weak self] in
             self?.connect()
@@ -280,7 +293,7 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
         // swiftlint:disable:next force_cast
         let httpResponse = response as! HTTPURLResponse
         if (200..<300).contains(httpResponse.statusCode) {
-            connectedTime = Date()
+            reconnectionTimer.connectedTime = Date()
             readyState = .open
             config.handler.onOpened()
             completionHandler(.allow)
