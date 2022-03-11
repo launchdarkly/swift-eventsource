@@ -110,19 +110,19 @@ public class EventSource {
 
 class ReconnectionTimer {
     private let maxDelay: TimeInterval
-    private let backoffResetInterval: TimeInterval
-    private var backoffCount: Int = 0
+    private let resetInterval: TimeInterval
 
+    var backoffCount: Int = 0
     var connectedTime: Date?
 
-    init(_ config: EventSource.Config) {
-        self.maxDelay = config.maxReconnectTime
-        self.backoffResetInterval = config.backoffResetThreshold
+    init(maxDelay: TimeInterval, resetInterval: TimeInterval) {
+        self.maxDelay = maxDelay
+        self.resetInterval = resetInterval
     }
 
     func reconnectDelay(baseDelay: TimeInterval) -> TimeInterval {
         backoffCount += 1
-        if let connectedTime = connectedTime, Date().timeIntervalSince(connectedTime) >= backoffResetInterval {
+        if let connectedTime = connectedTime, Date().timeIntervalSince(connectedTime) >= resetInterval {
             backoffCount = 0
         }
         self.connectedTime = nil
@@ -144,21 +144,19 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
         }
     }
 
-    private var lastEventId: String?
-    private var reconnectTime: TimeInterval
-
     private let utf8LineParser: UTF8LineParser = UTF8LineParser()
-    // swiftlint:disable:next implicitly_unwrapped_optional
-    private var eventParser: EventParser!
+    private let eventParser: EventParser
     private let reconnectionTimer: ReconnectionTimer
     private var urlSession: URLSession?
     private var sessionTask: URLSessionDataTask?
 
     init(config: EventSource.Config) {
         self.config = config
-        self.lastEventId = config.lastEventId
-        self.reconnectTime = config.reconnectTime
-        self.reconnectionTimer = ReconnectionTimer(config)
+        self.eventParser = EventParser(handler: config.handler,
+                                       initialEventId: config.lastEventId,
+                                       initialRetry: config.reconnectTime)
+        self.reconnectionTimer = ReconnectionTimer(maxDelay: config.maxReconnectTime,
+                                                   resetInterval: config.backoffResetThreshold)
     }
 
     func start() {
@@ -176,19 +174,24 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
     }
 
     func stop() {
-        let previousState = readyState
-        readyState = .shutdown
-        sessionTask?.cancel()
-        if previousState == .open {
-            config.handler.onClosed()
+        delegateQueue.async {
+            let previousState = self.readyState
+            self.readyState = .shutdown
+            self.sessionTask?.cancel()
+            if previousState == .open {
+                self.config.handler.onClosed()
+            }
+            self.urlSession?.invalidateAndCancel()
+            self.urlSession = nil
         }
-        urlSession?.invalidateAndCancel()
     }
 
-    func getLastEventId() -> String? { lastEventId }
+    func getLastEventId() -> String? { eventParser.getLastEventId() }
 
     func createSession() -> URLSession {
-        URLSession(configuration: config.urlSessionConfiguration, delegate: self, delegateQueue: nil)
+        let opQueue = OperationQueue()
+        opQueue.underlyingQueue = self.delegateQueue
+        return URLSession(configuration: config.urlSessionConfiguration, delegate: self, delegateQueue: opQueue)
     }
 
     func createRequest() -> URLRequest {
@@ -197,7 +200,7 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
                                     timeoutInterval: self.config.idleTimeout)
         urlRequest.httpMethod = self.config.method
         urlRequest.httpBody = self.config.body
-        urlRequest.setValue(self.lastEventId, forHTTPHeaderField: "Last-Event-Id")
+        urlRequest.setValue(eventParser.getLastEventId(), forHTTPHeaderField: "Last-Event-Id")
         urlRequest.allHTTPHeaderFields = self.config.headerTransform(
             urlRequest.allHTTPHeaderFields?.merging(self.config.headers) { $1 } ?? self.config.headers
         )
@@ -206,11 +209,6 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
 
     private func connect() {
         logger.log(.info, "Starting EventSource client")
-        let connectionHandler: ConnectionHandler = (
-            setReconnectionTime: { [weak self] reconnectionTime in self?.reconnectTime = reconnectionTime },
-            setLastEventId: { [weak self] eventId in self?.lastEventId = eventId }
-        )
-        self.eventParser = EventParser(handler: self.config.handler, connectionHandler: connectionHandler)
         let task = urlSession?.dataTask(with: createRequest())
         task?.resume()
         sessionTask = task
@@ -231,7 +229,7 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
                            task: URLSessionTask,
                            didCompleteWithError error: Error?) {
         utf8LineParser.closeAndReset()
-        eventParser.reset()
+        let currentRetry = eventParser.reset()
 
         guard readyState != .shutdown
         else { return }
@@ -257,7 +255,7 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
         }
 
         readyState = .closed
-        let sleep = reconnectionTimer.reconnectDelay(baseDelay: reconnectTime)
+        let sleep = reconnectionTimer.reconnectDelay(baseDelay: currentRetry)
         logger.log(.info, "Waiting %.3f seconds before reconnecting...", sleep)
         delegateQueue.asyncAfter(deadline: .now() + sleep) { [weak self] in
             self?.connect()
