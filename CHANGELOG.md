@@ -2,6 +2,10 @@
 
 All notable changes to the LaunchDarkly Swift EventSource library will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [1.3.1] - 2022-03-11
+### Fixed
+- Fixed a race condition that could cause a crash when `stop()` is called when there is a pending reconnection attempt.
+
 ## [1.3.0] - 2022-01-18
 ### Added
 - Added the configuration option `urlSessionConfiguration` to `EventSource.Config` which allows setting the `URLSessionConfiguration` used by the `EventSource` to create `URLSession` instances.
