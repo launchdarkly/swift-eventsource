@@ -1,7 +1,5 @@
 import Foundation
 
-typealias ConnectionHandler = (setReconnectionTime: (TimeInterval) -> Void, setLastEventId: (String) -> Void)
-
 class EventParser {
     private struct Constants {
         static let dataLabel: Substring = "data"
@@ -11,15 +9,17 @@ class EventParser {
     }
 
     private let handler: EventHandler
-    private let connectionHandler: ConnectionHandler
 
     private var data: String = ""
-    private var lastEventId: String?
     private var eventType: String = ""
+    private var lastEventIdBuffer: String?
+    private var lastEventId: String?
+    private var currentRetry: TimeInterval
 
-    init(handler: EventHandler, connectionHandler: ConnectionHandler) {
+    init(handler: EventHandler, initialEventId: String?, initialRetry: TimeInterval) {
         self.handler = handler
-        self.connectionHandler = connectionHandler
+        self.lastEventId = initialEventId
+        self.currentRetry = initialRetry
     }
 
     func parse(line: String) {
@@ -35,9 +35,13 @@ class EventParser {
         }
     }
 
-    func reset() {
+    func getLastEventId() -> String? { lastEventId }
+
+    func reset() -> TimeInterval {
         data = ""
         eventType = ""
+        lastEventIdBuffer = nil
+        return currentRetry
     }
 
     private func dropLeadingSpace(str: Substring) -> Substring {
@@ -56,13 +60,13 @@ class EventParser {
             // See https://github.com/whatwg/html/issues/689 for reasoning on not setting lastEventId if the value
             // contains a null code point.
             if !value.contains("\u{0000}") {
-                lastEventId = String(value)
+                lastEventIdBuffer = String(value)
             }
         case Constants.eventLabel:
             eventType = String(value)
         case Constants.retryLabel:
             if value.allSatisfy(("0"..."9").contains), let reconnectionTime = Int64(value) {
-                connectionHandler.setReconnectionTime(Double(reconnectionTime) * 0.001)
+                currentRetry = Double(reconnectionTime) * 0.001
             }
         default:
             break
@@ -70,9 +74,8 @@ class EventParser {
     }
 
     private func dispatchEvent() {
-        if let lastEventId = lastEventId {
-            connectionHandler.setLastEventId(lastEventId)
-        }
+        lastEventId = lastEventIdBuffer ?? lastEventId
+        lastEventIdBuffer = nil
         guard !data.isEmpty
         else {
             eventType = ""
