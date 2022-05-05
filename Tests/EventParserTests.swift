@@ -2,94 +2,87 @@ import XCTest
 @testable import LDSwiftEventSource
 
 final class EventParserTests: XCTestCase {
-    var receivedReconnectionTime: TimeInterval?
-    var receivedLastEventId: String?
-    lazy var connectionHandler: ConnectionHandler = { (setReconnectionTime: { self.receivedReconnectionTime = $0 },
-                                                       setLastEventId: { self.receivedLastEventId = $0 }) }()
     var handler: MockHandler!
     var parser: EventParser!
 
     override func setUp() {
         super.setUp()
-        resetMocks()
-        parser = EventParser(handler: handler, connectionHandler: connectionHandler)
+        handler = MockHandler()
+        parser = EventParser(handler: handler, initialEventId: nil, initialRetry: 1.0)
     }
 
     override func tearDown() {
         super.tearDown()
         XCTAssertNil(handler.events.maybeEvent())
-        // Validate that `reset` completely resets the parser
-        receivedReconnectionTime = nil
-        parser.reset()
-        parser.parse(line: "data: hello")
-        parser.parse(line: "")
-        guard case let .message(eventType, event) = handler.events.maybeEvent()
-        else {
-            XCTFail("Unexpectedly received comment event")
-            return
-        }
-        XCTAssertEqual(eventType, "message")
-        XCTAssertEqual(event.data, "hello")
-        XCTAssertNil(handler.events.maybeEvent())
-        XCTAssertNil(receivedReconnectionTime)
-    }
-
-    func resetMocks() {
-        receivedReconnectionTime = nil
-        receivedLastEventId = nil
-        handler = MockHandler()
-    }
-
-    func expectNoConnectionHandlerCalls() {
-        XCTAssertNil(receivedReconnectionTime)
-        XCTAssertNil(receivedLastEventId)
     }
 
     // MARK: Retry time tests
+    func testUnsetRetryReturnsConfigured() {
+        parser = EventParser(handler: handler, initialEventId: nil, initialRetry: 5.0)
+        XCTAssertEqual(parser.reset(), 5.0)
+    }
+
     func testSetsRetryTimeToSevenSeconds() {
         parser.parse(line: "retry: 7000")
-        XCTAssertEqual(receivedReconnectionTime, 7.0)
-        XCTAssertNil(receivedLastEventId)
+        XCTAssertEqual(parser.reset(), 7.0)
+        XCTAssertNil(parser.getLastEventId())
     }
 
     func testRetryWithNoSpace() {
         parser.parse(line: "retry:7000")
-        XCTAssertEqual(receivedReconnectionTime, 7.0)
-        XCTAssertNil(receivedLastEventId)
+        XCTAssertEqual(parser.reset(), 7.0)
+        XCTAssertNil(parser.getLastEventId())
     }
 
     func testDoesNotSetRetryTimeUnlessEntireValueIsNumeric() {
         parser.parse(line: "retry: 7000L")
-        expectNoConnectionHandlerCalls()
+        XCTAssertEqual(parser.reset(), 1.0)
     }
 
     func testSafeToUseEmptyRetryTime() {
         parser.parse(line: "retry")
-        expectNoConnectionHandlerCalls()
+        XCTAssertEqual(parser.reset(), 1.0)
     }
 
     func testSafeToAttemptToSetRetryToOutOfBoundsValue() {
         parser.parse(line: "retry: 10000000000000000000000000")
-        expectNoConnectionHandlerCalls()
+        XCTAssertEqual(parser.reset(), 1.0)
+    }
+
+    func testResetDoesNotResetRetry() {
+        parser.parse(line: "retry: 7000")
+        XCTAssertEqual(parser.reset(), 7.0)
+        XCTAssertEqual(parser.reset(), 7.0)
+    }
+
+    func testRetryNotChangedDuringOtherMessages() {
+        parser.parse(line: "retry: 7000")
+        parser.parse(line: "")
+        parser.parse(line: ":123")
+        parser.parse(line: "event: 123")
+        parser.parse(line: "data: 123")
+        parser.parse(line: "id: 123")
+        parser.parse(line: "none: 123")
+        parser.parse(line: "")
+        XCTAssertEqual(parser.reset(), 7.0)
+        _ = handler.events.maybeEvent()
+        _ = handler.events.maybeEvent()
     }
 
     // MARK: Comment tests
     func testEmptyComment() {
         parser.parse(line: ":")
         XCTAssertEqual(handler.events.maybeEvent(), .comment(""))
-        expectNoConnectionHandlerCalls()
     }
 
     func testCommentBody() {
         parser.parse(line: ": comment")
         XCTAssertEqual(handler.events.maybeEvent(), .comment(" comment"))
-        expectNoConnectionHandlerCalls()
     }
 
     func testCommentCanContainColon() {
         parser.parse(line: ":comment:line")
         XCTAssertEqual(handler.events.maybeEvent(), .comment("comment:line"))
-        expectNoConnectionHandlerCalls()
     }
 
     // MARK: Message data tests
@@ -103,14 +96,12 @@ final class EventParserTests: XCTestCase {
         XCTAssertEqual(handler.events.maybeEvent(), .message("message", MessageEvent(data: "", lastEventId: nil)))
         XCTAssertEqual(handler.events.maybeEvent(), .message("message", MessageEvent(data: "", lastEventId: nil)))
         XCTAssertEqual(handler.events.maybeEvent(), .message("message", MessageEvent(data: "", lastEventId: nil)))
-        expectNoConnectionHandlerCalls()
     }
 
     func testDoesNotRemoveTrailingSpaceWhenColonNotPresent() {
         parser.parse(line: "data ")
         parser.parse(line: "")
         XCTAssertNil(handler.events.maybeEvent())
-        expectNoConnectionHandlerCalls()
     }
 
     func testEmptyFirstDataAppendsNewline() {
@@ -118,14 +109,12 @@ final class EventParserTests: XCTestCase {
         parser.parse(line: "data:")
         parser.parse(line: "")
         XCTAssertEqual(handler.events.maybeEvent(), .message("message", MessageEvent(data: "\n", lastEventId: nil)))
-        expectNoConnectionHandlerCalls()
     }
 
     func testDispatchesSingleLineMessage() {
         parser.parse(line: "data: hello")
         parser.parse(line: "")
         XCTAssertEqual(handler.events.maybeEvent(), .message("message", MessageEvent(data: "hello", lastEventId: nil)))
-        expectNoConnectionHandlerCalls()
     }
 
     func testEmptyDataWithBufferedDataAppendsNewline() {
@@ -140,7 +129,6 @@ final class EventParserTests: XCTestCase {
         parser.parse(line: "")
         parser.parse(line: "")
         XCTAssertEqual(handler.events.maybeEvent(), .message("message", MessageEvent(data: "hello", lastEventId: nil)))
-        expectNoConnectionHandlerCalls()
     }
 
     func testRemovesOnlyFirstSpace() {
@@ -220,14 +208,18 @@ final class EventParserTests: XCTestCase {
     }
 
     // MARK: Last event ID tests
+    func testLastEventIdNotReturnedUntilDispatch() {
+        XCTAssertNil(parser.getLastEventId())
+        parser.parse(line: "id: 1")
+        XCTAssertNil(handler.events.maybeEvent())
+        XCTAssertNil(parser.getLastEventId())
+    }
+
     func testRecordsLastEventIdWithoutData() {
         parser.parse(line: "id: 1")
-        // Should not have set until we dispatch with an empty line
-        expectNoConnectionHandlerCalls()
         parser.parse(line: "")
         XCTAssertNil(handler.events.maybeEvent())
-        XCTAssertEqual(receivedLastEventId, "1")
-        XCTAssertNil(receivedReconnectionTime)
+        XCTAssertEqual(parser.getLastEventId(), "1")
     }
 
     func testEventIdIncludedInMessageEvent() {
@@ -235,8 +227,6 @@ final class EventParserTests: XCTestCase {
         parser.parse(line: "id: 1")
         parser.parse(line: "")
         XCTAssertEqual(handler.events.maybeEvent(), .message("message", MessageEvent(data: "hello", lastEventId: "1")))
-        XCTAssertEqual(receivedLastEventId, "1")
-        XCTAssertNil(receivedReconnectionTime)
     }
 
     func testReusesEventIdIfNotSet() {
@@ -247,21 +237,17 @@ final class EventParserTests: XCTestCase {
         parser.parse(line: "")
         XCTAssertEqual(handler.events.maybeEvent(), .message("message", MessageEvent(data: "hello", lastEventId: "reused")))
         XCTAssertEqual(handler.events.maybeEvent(), .message("message", MessageEvent(data: "world", lastEventId: "reused")))
-        XCTAssertEqual(receivedLastEventId, "reused")
-        XCTAssertNil(receivedReconnectionTime)
+        XCTAssertEqual(parser.getLastEventId(), "reused")
     }
 
     func testEventIdSetTwiceInEvent() {
         parser.parse(line: "id: abc")
-        // We want to only dispatch the ID when the event is completed
-        XCTAssertNil(receivedLastEventId)
         parser.parse(line: "id: def")
         parser.parse(line: "data")
-        XCTAssertNil(receivedLastEventId)
+        XCTAssertNil(parser.getLastEventId())
         parser.parse(line: "")
         XCTAssertEqual(handler.events.maybeEvent(), .message("message", MessageEvent(data: "", lastEventId: "def")))
-        XCTAssertEqual(receivedLastEventId, "def")
-        XCTAssertNil(receivedReconnectionTime)
+        XCTAssertEqual(parser.getLastEventId(), "def")
     }
 
     func testEventIdContainingNullIgnored() {
@@ -270,18 +256,26 @@ final class EventParserTests: XCTestCase {
         parser.parse(line: "data")
         parser.parse(line: "")
         XCTAssertEqual(handler.events.maybeEvent(), .message("message", MessageEvent(data: "", lastEventId: "reused")))
-        XCTAssertEqual(receivedLastEventId, "reused")
-        XCTAssertNil(receivedReconnectionTime)
+        XCTAssertEqual(parser.getLastEventId(), "reused")
+    }
+
+    func testResetDoesResetLastEventIdBuffer() {
+        parser.parse(line: "id: 1")
+        _ = parser.reset()
+        parser.parse(line: "data: hello")
+        parser.parse(line: "")
+        XCTAssertEqual(handler.events.maybeEvent(), .message("message", MessageEvent(data: "hello", lastEventId: nil)))
+        XCTAssertNil(parser.getLastEventId())
     }
 
     func testResetDoesNotResetLastEventId() {
         parser.parse(line: "id: 1")
-        parser.reset()
+        parser.parse(line: "")
+        _ = parser.reset()
         parser.parse(line: "data: hello")
         parser.parse(line: "")
         XCTAssertEqual(handler.events.maybeEvent(), .message("message", MessageEvent(data: "hello", lastEventId: "1")))
-        XCTAssertEqual(receivedLastEventId, "1")
-        XCTAssertNil(receivedReconnectionTime)
+        XCTAssertEqual(parser.getLastEventId(), "1")
     }
 
     // MARK: Mixed and other tests
@@ -290,13 +284,11 @@ final class EventParserTests: XCTestCase {
         parser.parse(line: "")
         parser.parse(line: "")
         XCTAssertNil(handler.events.maybeEvent())
-        expectNoConnectionHandlerCalls()
     }
 
     func testNothingDoneForInvalidFieldName() {
         parser.parse(line: "invalid: bar")
         XCTAssertNil(handler.events.maybeEvent())
-        expectNoConnectionHandlerCalls()
     }
 
     func testInvalidFieldNameIgnoredInEvent() {

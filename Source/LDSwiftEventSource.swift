@@ -108,6 +108,30 @@ public class EventSource {
     }
 }
 
+class ReconnectionTimer {
+    private let maxDelay: TimeInterval
+    private let resetInterval: TimeInterval
+
+    var backoffCount: Int = 0
+    var connectedTime: Date?
+
+    init(maxDelay: TimeInterval, resetInterval: TimeInterval) {
+        self.maxDelay = maxDelay
+        self.resetInterval = resetInterval
+    }
+
+    func reconnectDelay(baseDelay: TimeInterval) -> TimeInterval {
+        backoffCount += 1
+        if let connectedTime = connectedTime, Date().timeIntervalSince(connectedTime) >= resetInterval {
+            backoffCount = 0
+        }
+        self.connectedTime = nil
+        let maxSleep = min(maxDelay, baseDelay * pow(2.0, Double(backoffCount)))
+        return maxSleep / 2 + Double.random(in: 0...(maxSleep / 2))
+    }
+}
+
+// MARK: EventSourceDelegate
 class EventSourceDelegate: NSObject, URLSessionDataDelegate {
     private let delegateQueue: DispatchQueue = DispatchQueue(label: "ESDelegateQueue")
     private let logger = Logs()
@@ -120,22 +144,19 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
         }
     }
 
-    private var lastEventId: String?
-    private var reconnectTime: TimeInterval
-    private var connectedTime: Date?
-
-    private var reconnectionAttempts: Int = 0
-    private var errorHandlerAction: ConnectionErrorAction = .proceed
     private let utf8LineParser: UTF8LineParser = UTF8LineParser()
-    // swiftlint:disable:next implicitly_unwrapped_optional
-    private var eventParser: EventParser!
+    private let eventParser: EventParser
+    private let reconnectionTimer: ReconnectionTimer
     private var urlSession: URLSession?
     private var sessionTask: URLSessionDataTask?
 
     init(config: EventSource.Config) {
         self.config = config
-        self.lastEventId = config.lastEventId
-        self.reconnectTime = config.reconnectTime
+        self.eventParser = EventParser(handler: config.handler,
+                                       initialEventId: config.lastEventId,
+                                       initialRetry: config.reconnectTime)
+        self.reconnectionTimer = ReconnectionTimer(maxDelay: config.maxReconnectTime,
+                                                   resetInterval: config.backoffResetThreshold)
     }
 
     func start() {
@@ -153,19 +174,24 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
     }
 
     func stop() {
-        let previousState = readyState
-        readyState = .shutdown
-        sessionTask?.cancel()
-        if previousState == .open {
-            config.handler.onClosed()
+        delegateQueue.async {
+            let previousState = self.readyState
+            self.readyState = .shutdown
+            self.sessionTask?.cancel()
+            if previousState == .open {
+                self.config.handler.onClosed()
+            }
+            self.urlSession?.invalidateAndCancel()
+            self.urlSession = nil
         }
-        urlSession?.invalidateAndCancel()
     }
 
-    func getLastEventId() -> String? { lastEventId }
+    func getLastEventId() -> String? { eventParser.getLastEventId() }
 
     func createSession() -> URLSession {
-        URLSession(configuration: config.urlSessionConfiguration, delegate: self, delegateQueue: nil)
+        let opQueue = OperationQueue()
+        opQueue.underlyingQueue = self.delegateQueue
+        return URLSession(configuration: config.urlSessionConfiguration, delegate: self, delegateQueue: opQueue)
     }
 
     func createRequest() -> URLRequest {
@@ -174,7 +200,7 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
                                     timeoutInterval: self.config.idleTimeout)
         urlRequest.httpMethod = self.config.method
         urlRequest.httpBody = self.config.body
-        urlRequest.setValue(self.lastEventId, forHTTPHeaderField: "Last-Event-Id")
+        urlRequest.setValue(eventParser.getLastEventId(), forHTTPHeaderField: "Last-Event-Id")
         urlRequest.allHTTPHeaderFields = self.config.headerTransform(
             urlRequest.allHTTPHeaderFields?.merging(self.config.headers) { $1 } ?? self.config.headers
         )
@@ -183,11 +209,6 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
 
     private func connect() {
         logger.log(.info, "Starting EventSource client")
-        let connectionHandler: ConnectionHandler = (
-            setReconnectionTime: { [weak self] reconnectionTime in self?.reconnectTime = reconnectionTime },
-            setLastEventId: { [weak self] eventId in self?.lastEventId = eventId }
-        )
-        self.eventParser = EventParser(handler: self.config.handler, connectionHandler: connectionHandler)
         let task = urlSession?.dataTask(with: createRequest())
         task?.resume()
         sessionTask = task
@@ -201,44 +222,6 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
         return action
     }
 
-    private func afterComplete() {
-        guard readyState != .shutdown
-        else { return }
-
-        var nextState: ReadyState = .closed
-        let currentState: ReadyState = readyState
-        if errorHandlerAction == .shutdown {
-            logger.log(.info, "Connection has been explicitly shut down by error handler")
-            nextState = .shutdown
-        }
-        readyState = nextState
-
-        if currentState == .open {
-            config.handler.onClosed()
-        }
-
-        if nextState != .shutdown {
-            reconnect()
-        }
-    }
-
-    private func reconnect() {
-        reconnectionAttempts += 1
-
-        if let connectedTime = connectedTime, Date().timeIntervalSince(connectedTime) >= config.backoffResetThreshold {
-            reconnectionAttempts = 0
-        }
-        self.connectedTime = nil
-
-        let maxSleep = min(config.maxReconnectTime, reconnectTime * pow(2.0, Double(reconnectionAttempts)))
-        let sleep = maxSleep / 2 + Double.random(in: 0...(maxSleep / 2))
-
-        logger.log(.info, "Waiting %.3f seconds before reconnecting...", sleep)
-        delegateQueue.asyncAfter(deadline: .now() + sleep) { [weak self] in
-            self?.connect()
-        }
-    }
-
     // MARK: URLSession Delegates
 
     // Tells the delegate that the task finished transferring data.
@@ -246,22 +229,37 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
                            task: URLSessionTask,
                            didCompleteWithError error: Error?) {
         utf8LineParser.closeAndReset()
-        eventParser.reset()
+        let currentRetry = eventParser.reset()
+
+        guard readyState != .shutdown
+        else { return }
 
         if let error = error {
-            // Ignore cancelled error
-            if (error as NSError).code == NSURLErrorCancelled {
-            } else if readyState != .shutdown && errorHandlerAction != .shutdown {
+            if (error as NSError).code != NSURLErrorCancelled {
                 logger.log(.info, "Connection error: %@", error.localizedDescription)
-                errorHandlerAction = dispatchError(error: error)
-            } else {
-                errorHandlerAction = .shutdown
+                if dispatchError(error: error) == .shutdown {
+                    logger.log(.info, "Connection has been explicitly shut down by error handler")
+                    if readyState == .open {
+                        config.handler.onClosed()
+                    }
+                    readyState = .shutdown
+                    return
+                }
             }
         } else {
             logger.log(.info, "Connection unexpectedly closed.")
         }
 
-        afterComplete()
+        if readyState == .open {
+            config.handler.onClosed()
+        }
+
+        readyState = .closed
+        let sleep = reconnectionTimer.reconnectDelay(baseDelay: currentRetry)
+        logger.log(.info, "Waiting %.3f seconds before reconnecting...", sleep)
+        delegateQueue.asyncAfter(deadline: .now() + sleep) { [weak self] in
+            self?.connect()
+        }
     }
 
     // Tells the delegate that the data task received the initial reply (headers) from the server.
@@ -280,13 +278,16 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
         // swiftlint:disable:next force_cast
         let httpResponse = response as! HTTPURLResponse
         if (200..<300).contains(httpResponse.statusCode) {
-            connectedTime = Date()
+            reconnectionTimer.connectedTime = Date()
             readyState = .open
             config.handler.onOpened()
             completionHandler(.allow)
         } else {
             logger.log(.info, "Unsuccessful response: %d", httpResponse.statusCode)
-            errorHandlerAction = dispatchError(error: UnsuccessfulResponseError(responseCode: httpResponse.statusCode))
+            if dispatchError(error: UnsuccessfulResponseError(responseCode: httpResponse.statusCode)) == .shutdown {
+                logger.log(.info, "Connection has been explicitly shut down by error handler")
+                readyState = .shutdown
+            }
             completionHandler(.cancel)
         }
     }
