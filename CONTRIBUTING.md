@@ -39,6 +39,6 @@ make contract-tests
 
 ### Generating API documentation
 
-Docs are built with [jazzy](https://github.com/realm/jazzy), which is configured [here](https://github.com/launchdarkly/swift-eventsource/blob/master/.jazzy.yaml). To build them, simply run `jazzy`. Pull requests should keep our documentation coverage at 100%.
+Docs are built with [jazzy](https://github.com/realm/jazzy), which is configured [here](https://github.com/launchdarkly/swift-eventsource/blob/main/.jazzy.yaml). To build them, simply run `jazzy`. Pull requests should keep our documentation coverage at 100%.
 
-[ci-config]: https://github.com/launchdarkly/swift-eventsource/blob/master/.circleci/config.yml
+[ci-config]: https://github.com/launchdarkly/swift-eventsource/blob/main/.circleci/config.yml
