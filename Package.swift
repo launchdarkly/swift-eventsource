@@ -11,14 +11,7 @@ let package = Package(
         .tvOS(.v10)
     ],
     products: [
-        .library(
-            name: "LDSwiftEventSource",
-            type: .dynamic,
-            targets: ["LDSwiftEventSource"]),
-        .library(
-            name: "LDSwiftEventSourceStatic",
-            type: .static,
-            targets: ["LDSwiftEventSource"]),
+        .library(name: "LDSwiftEventSource", targets: ["LDSwiftEventSource"]),
     ],
     dependencies: [],
     targets: [
