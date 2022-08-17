@@ -165,10 +165,6 @@ workflows:
           xcode-version: '12.5.1'
           ios-sim: 'platform=iOS Simulator,name=iPhone 8,OS=14.5'
       - build:
-          name: Xcode 12.0 - Swift 5.3
-          xcode-version: '12.0.1'
-          ios-sim: 'platform=iOS Simulator,name=iPhone 8,OS=14.0'
-      - build:
           name: Xcode 11.7 - Swift 5.2
           xcode-version: '11.7.0'
           ios-sim: 'platform=iOS Simulator,name=iPhone 8,OS=12.4'
