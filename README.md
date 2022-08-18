@@ -46,7 +46,7 @@ dependencies: [
 
 ## Contributing
 
-We encourage pull requests and other contributions from the community. Check out our [contributing guidelines](https://github.com/LaunchDarkly/swift-eventsource/blob/master/CONTRIBUTING.md) for instructions on how to contribute to this SDK.
+We encourage pull requests and other contributions from the community. Check out our [contributing guidelines](https://github.com/LaunchDarkly/swift-eventsource/blob/main/CONTRIBUTING.md) for instructions on how to contribute to this SDK.
 
 ## About LaunchDarkly
 

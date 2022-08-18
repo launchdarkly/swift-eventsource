@@ -31,7 +31,7 @@ final class LDSwiftEventSourceTests: XCTestCase {
         XCTAssertEqual(config.url, url)
         XCTAssertEqual(config.method, "GET")
         XCTAssertEqual(config.body, nil)
-        XCTAssertEqual(config.lastEventId, nil)
+        XCTAssertEqual(config.lastEventId, "")
         XCTAssertEqual(config.headers, [:])
         XCTAssertEqual(config.reconnectTime, 1.0)
         XCTAssertEqual(config.maxReconnectTime, 30.0)
@@ -96,7 +96,7 @@ final class LDSwiftEventSourceTests: XCTestCase {
     func testLastEventIdFromConfig() {
         var config = EventSource.Config(handler: mockHandler, url: URL(string: "abc")!)
         var es = EventSource(config: config)
-        XCTAssertEqual(es.getLastEventId(), nil)
+        XCTAssertEqual(es.getLastEventId(), "")
         config.lastEventId = "def"
         es = EventSource(config: config)
         XCTAssertEqual(es.getLastEventId(), "def")
@@ -229,7 +229,7 @@ final class LDSwiftEventSourceTests: XCTestCase {
         let handler = MockingProtocol.requested.expectEvent()
         handler.respond(statusCode: 200)
         XCTAssertEqual(mockHandler.events.expectEvent(), .opened)
-        XCTAssertNil(es.getLastEventId())
+        XCTAssertEqual(es.getLastEventId(), "")
         handler.respond(didLoad: "id: abc\n\n")
         // Comment used for synchronization
         handler.respond(didLoad: ":comment\n")
@@ -270,7 +270,7 @@ final class LDSwiftEventSourceTests: XCTestCase {
         handler.respond(statusCode: 200)
         XCTAssertEqual(mockHandler.events.expectEvent(), .opened)
         handler.respond(didLoad: "event: custom\ndata: {}\n\n")
-        XCTAssertEqual(mockHandler.events.expectEvent(), .message("custom", MessageEvent(data: "{}", lastEventId: nil)))
+        XCTAssertEqual(mockHandler.events.expectEvent(), .message("custom", MessageEvent(data: "{}")))
         es.stop()
         XCTAssertEqual(mockHandler.events.expectEvent(), .closed)
     }

@@ -52,7 +52,7 @@ public class EventSource {
         /// Optional HTTP body to be included in the API request.
         public var body: Data?
         /// An initial value for the last-event-id header to be sent on the initial request
-        public var lastEventId: String?
+        public var lastEventId: String = ""
         /// Additional HTTP headers to be set on the request
         public var headers: [String: String] = [:]
         /// Transform function to allow dynamically configuring the headers on each API request.
@@ -186,7 +186,7 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
         }
     }
 
-    func getLastEventId() -> String? { eventParser.getLastEventId() }
+    func getLastEventId() -> String { eventParser.getLastEventId() }
 
     func createSession() -> URLSession {
         let opQueue = OperationQueue()
@@ -200,7 +200,9 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
                                     timeoutInterval: self.config.idleTimeout)
         urlRequest.httpMethod = self.config.method
         urlRequest.httpBody = self.config.body
-        urlRequest.setValue(eventParser.getLastEventId(), forHTTPHeaderField: "Last-Event-Id")
+        if !eventParser.getLastEventId().isEmpty {
+            urlRequest.setValue(eventParser.getLastEventId(), forHTTPHeaderField: "Last-Event-Id")
+        }
         urlRequest.allHTTPHeaderFields = self.config.headerTransform(
             urlRequest.allHTTPHeaderFields?.merging(self.config.headers) { $1 } ?? self.config.headers
         )

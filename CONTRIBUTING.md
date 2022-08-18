@@ -30,8 +30,15 @@ Or in XCode, simply select the desired target and select `Product -> Test`.
 
 For building on the command line with `xcodebuild`, see the [continuous integration build configuration][ci-config] for examples on building and running tests.
 
+### Running contract tests
+
+To run the standardized contract tests that are run against all LaunchDarkly SSE client implementations:
+```
+make contract-tests
+```
+
 ### Generating API documentation
 
-Docs are built with [jazzy](https://github.com/realm/jazzy), which is configured [here](https://github.com/launchdarkly/swift-eventsource/blob/master/.jazzy.yaml). To build them, simply run `jazzy`. Pull requests should keep our documentation coverage at 100%.
+Docs are built with [jazzy](https://github.com/realm/jazzy), which is configured [here](https://github.com/launchdarkly/swift-eventsource/blob/main/.jazzy.yaml). To build them, simply run `jazzy`. Pull requests should keep our documentation coverage at 100%.
 
-[ci-config]: https://github.com/launchdarkly/swift-eventsource/blob/master/.circleci/config.yml
+[ci-config]: https://github.com/launchdarkly/swift-eventsource/blob/main/.circleci/config.yml

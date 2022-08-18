@@ -13,10 +13,10 @@ class EventParser {
     private var data: String = ""
     private var eventType: String = ""
     private var lastEventIdBuffer: String?
-    private var lastEventId: String?
+    private var lastEventId: String
     private var currentRetry: TimeInterval
 
-    init(handler: EventHandler, initialEventId: String?, initialRetry: TimeInterval) {
+    init(handler: EventHandler, initialEventId: String, initialRetry: TimeInterval) {
         self.handler = handler
         self.lastEventId = initialEventId
         self.currentRetry = initialRetry
@@ -35,7 +35,7 @@ class EventParser {
         }
     }
 
-    func getLastEventId() -> String? { lastEventId }
+    func getLastEventId() -> String { lastEventId }
 
     func reset() -> TimeInterval {
         data = ""

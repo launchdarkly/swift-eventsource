@@ -33,7 +33,7 @@ public struct MessageEvent: Equatable, Hashable {
     /// The event data of the event.
     public let data: String
     /// The last seen event id, or the event id set in the Config if none have been received.
-    public let lastEventId: String?
+    public let lastEventId: String
 
     /**
      Constructor for a `MessageEvent`
@@ -41,7 +41,7 @@ public struct MessageEvent: Equatable, Hashable {
      - Parameter data: The `data` field of the `MessageEvent`.
      - Parameter eventType: The `lastEventId` field of the `MessageEvent`.
      */
-    public init(data: String, lastEventId: String? = nil) {
+    public init(data: String, lastEventId: String = "") {
         self.data = data
         self.lastEventId = lastEventId
     }
