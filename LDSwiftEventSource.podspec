@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name         = "LDSwiftEventSource"
-  s.version      = "1.3.1"
+  s.version      = "2.0.0"
   s.summary      = "Swift EventSource library"
   s.homepage     = "https://github.com/launchdarkly/swift-eventsource"
   s.license      = { :type => "Apache License, Version 2.0", :file => "LICENSE.txt" }

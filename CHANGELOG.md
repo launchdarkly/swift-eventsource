@@ -2,6 +2,11 @@
 
 All notable changes to the LaunchDarkly Swift EventSource library will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [2.0.0] - 2022-08-29
+### Changed
+- The CI build now incorporates the cross-platform contract tests defined in https://github.com/launchdarkly/sse-contract-tests to ensure consistent test coverage across different LaunchDarkly SSE implementations.
+- Removed explicit typed package products. Thanks to @simba909 for the PR ([#48](https://github.com/launchdarkly/swift-eventsource/pull/48)).
+
 ## [1.3.1] - 2022-03-11
 ### Fixed
 - Fixed a race condition that could cause a crash when `stop()` is called when there is a pending reconnection attempt.
