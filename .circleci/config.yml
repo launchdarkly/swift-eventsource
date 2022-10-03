@@ -156,6 +156,11 @@ workflows:
   build:
     jobs:
       - build:
+          name: Xcode 14.0 - Swift 5.7
+          xcode-version: '14.0.1'
+          ios-sim: 'platform=iOS Simulator,name=iPhone 11,OS=16.0'
+          build-doc: true
+      - build:
           name: Xcode 13.1 - Swift 5.5
           xcode-version: '13.1.0'
           ios-sim: 'platform=iOS Simulator,name=iPhone 11,OS=15.0'
@@ -169,6 +174,9 @@ workflows:
           xcode-version: '11.7.0'
           ios-sim: 'platform=iOS Simulator,name=iPhone 8,OS=12.4'
           build-universal: false
+      - build_linux:
+          name: Linux - Swift 5.5
+          docker-image: norionomura/swift:5.5
       - build_linux:
           name: Linux - Swift 5.4
           docker-image: norionomura/swift:5.4
