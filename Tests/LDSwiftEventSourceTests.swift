@@ -323,7 +323,7 @@ final class LDSwiftEventSourceTests: XCTestCase {
         config.urlSessionConfiguration = sessionWithMockProtocol()
         config.reconnectTime = 0.1
         config.connectionErrorHandler = { _ in
-            return .shutdown
+            .shutdown
         }
         let es = EventSource(config: config)
         es.start()
