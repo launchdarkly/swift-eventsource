@@ -2,6 +2,10 @@
 
 All notable changes to the LaunchDarkly Swift EventSource library will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [3.0.0] - 2022-10-06
+### Changed
+- Dropped support for older versions in accordance with the new [Xcode 14 release](https://developer.apple.com/documentation/xcode-release-notes/xcode-14-release-notes).
+
 ## [2.0.0] - 2022-08-29
 ### Changed
 - The CI build now incorporates the cross-platform contract tests defined in https://github.com/launchdarkly/sse-contract-tests to ensure consistent test coverage across different LaunchDarkly SSE implementations.
