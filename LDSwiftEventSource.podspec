@@ -6,10 +6,10 @@ Pod::Spec.new do |s|
   s.license      = { :type => "Apache License, Version 2.0", :file => "LICENSE.txt" }
   s.author       = { "LaunchDarkly" => "sdks@launchdarkly.com" }
 
-  s.ios.deployment_target     = "10.0"
-  s.watchos.deployment_target = "3.0"
-  s.tvos.deployment_target    = "10.0"
-  s.osx.deployment_target     = "10.12"
+  s.ios.deployment_target     = "11.0"
+  s.watchos.deployment_target = "4.0"
+  s.tvos.deployment_target    = "11.0"
+  s.osx.deployment_target     = "10.13"
 
   s.source       = { :git => s.homepage + '.git', :tag => s.version}
   s.source_files = "Source/**/*.swift"
