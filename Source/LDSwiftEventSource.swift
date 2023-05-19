@@ -168,6 +168,7 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
                 self.logger.log(.info, "start() called on already-started EventSource object. Returning")
                 return
             }
+            self.readyState = .connecting
             self.urlSession = self.createSession()
             self.connect()
         }
