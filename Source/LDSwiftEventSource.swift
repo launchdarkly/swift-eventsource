@@ -85,6 +85,12 @@ public class EventSource {
                 let sessionConfig = _urlSessionConfiguration.copy() as! URLSessionConfiguration
                 sessionConfig.httpAdditionalHeaders = ["Accept": "text/event-stream", "Cache-Control": "no-cache"]
                 sessionConfig.timeoutIntervalForRequest = idleTimeout
+
+                if #available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *) {
+                    sessionConfig.tlsMinimumSupportedProtocolVersion = .TLSv12
+                } else {
+                    sessionConfig.tlsMinimumSupportedProtocol = .tlsProtocol12
+                }
                 return sessionConfig
             }
             set {
