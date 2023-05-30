@@ -207,6 +207,17 @@ final class LDSwiftEventSourceTests: XCTestCase {
         XCTAssertEqual(handler.request.allHTTPHeaderFields?["X-LD-Header"], "def")
         es.stop()
     }
+    
+    func testStartRequestIsNotReentrant() {
+        var config = EventSource.Config(handler: mockHandler, url: URL(string: "http://example.com")!)
+        config.urlSessionConfiguration = sessionWithMockProtocol()
+        let es = EventSource(config: config)
+        es.start()
+        es.start()
+        _ = MockingProtocol.requested.expectEvent()
+        MockingProtocol.requested.expectNoEvent()
+        es.stop()
+    }
 
     func testSuccessfulResponseOpens() {
         var config = EventSource.Config(handler: mockHandler, url: URL(string: "http://example.com")!)
