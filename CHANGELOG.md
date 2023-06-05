@@ -2,6 +2,13 @@
 
 All notable changes to the LaunchDarkly Swift EventSource library will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [3.1.0] - 2023-06-05
+### Changed:
+- Enforce TLS v1.2 as a required minimum.
+
+### Fixed:
+- Fix re-entrancy issue with `start` command. (Thanks, [g-mark](https://github.com/launchdarkly/swift-eventsource/pull/56)!)
+
 ## [3.0.0] - 2022-10-06
 ### Changed
 - Dropped support for older versions in accordance with the new [Xcode 14 release](https://developer.apple.com/documentation/xcode-release-notes/xcode-14-release-notes).
