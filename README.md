@@ -19,7 +19,7 @@ LDSwiftEventSource is a cross platform implementation of the [EventSource specif
 To use the [CocoaPods](https://cocoapods.org) dependency manager to integrate LDSwiftEventSource into your Xcode project, specify it in your `Podfile`:
 
 ```ruby
-pod 'LDSwiftEventSource', '~> 3.0'
+pod 'LDSwiftEventSource', '~> 3.1'
 ```
 
 ### Carthage
@@ -27,7 +27,7 @@ pod 'LDSwiftEventSource', '~> 3.0'
 To use the [Carthage](https://github.com/Carthage/Carthage) dependency manager to integrate LDSwiftEventSource into your Xcode project, specify it in your `Cartfile`:
 
 ```ogdl
-github "LaunchDarkly/swift-eventsource" ~> 3.0
+github "LaunchDarkly/swift-eventsource" ~> 3.1
 ```
 
 ### Swift Package Manager
@@ -40,7 +40,7 @@ To include LDSwiftEventSource in a Swift package, simply add it to the dependenc
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/LaunchDarkly/swift-eventsource.git", .upToNextMajor(from: "3.0.0"))
+    .package(url: "https://github.com/LaunchDarkly/swift-eventsource.git", .upToNextMajor(from: "3.1.0"))
 ]
 ```
 
