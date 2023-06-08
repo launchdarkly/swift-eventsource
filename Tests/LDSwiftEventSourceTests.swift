@@ -349,6 +349,24 @@ final class LDSwiftEventSourceTests: XCTestCase {
         // Error should not have been given to the handler
         mockHandler.events.expectNoEvent()
     }
+
+    func testShutdownBy204Response() {
+        var config = EventSource.Config(handler: mockHandler, url: URL(string: "http://example.com")!)
+        config.urlSessionConfiguration = sessionWithMockProtocol()
+        config.reconnectTime = 0.1
+
+        let es = EventSource(config: config)
+        es.start()
+
+        let handler = MockingProtocol.requested.expectEvent()
+        handler.respond(statusCode: 204)
+
+        MockingProtocol.requested.expectNoEvent(within: 1.0)
+
+        es.stop()
+        // Error should not have been given to the handler
+        mockHandler.events.expectNoEvent()
+    }
 #endif
 }
 

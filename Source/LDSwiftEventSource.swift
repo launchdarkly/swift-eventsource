@@ -288,14 +288,19 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
 
         // swiftlint:disable:next force_cast
         let httpResponse = response as! HTTPURLResponse
-        if (200..<300).contains(httpResponse.statusCode) {
+        let statusCode = httpResponse.statusCode
+        if statusCode == 204 {
+            logger.log(.info, "Server requesting no further retries: %d", statusCode)
+            readyState = .shutdown
+            completionHandler(.cancel)
+        } else if (200..<300).contains(statusCode) {
             reconnectionTimer.connectedTime = Date()
             readyState = .open
             config.handler.onOpened()
             completionHandler(.allow)
         } else {
-            logger.log(.info, "Unsuccessful response: %d", httpResponse.statusCode)
-            if dispatchError(error: UnsuccessfulResponseError(responseCode: httpResponse.statusCode)) == .shutdown {
+            logger.log(.info, "Unsuccessful response: %d", statusCode)
+            if dispatchError(error: UnsuccessfulResponseError(responseCode: statusCode)) == .shutdown {
                 logger.log(.info, "Connection has been explicitly shut down by error handler")
                 readyState = .shutdown
             }
