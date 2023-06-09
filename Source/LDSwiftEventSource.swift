@@ -104,7 +104,8 @@ public class EventSource {
         /**
          An error handler that is called when an error occurs and can shut down the client in response.
 
-         The default error handler will always attempt to reconnect on an error, unless `EventSource.stop()` is called.
+         The default error handler will always attempt to reconnect on an
+         error, unless `EventSource.stop()` is called or the error code is 204.
          */
         public var connectionErrorHandler: ConnectionErrorHandler = { error in
             guard let unsuccessfulResponseError = error as? UnsuccessfulResponseError
