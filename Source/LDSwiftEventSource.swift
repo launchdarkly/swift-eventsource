@@ -106,7 +106,16 @@ public class EventSource {
 
          The default error handler will always attempt to reconnect on an error, unless `EventSource.stop()` is called.
          */
-        public var connectionErrorHandler: ConnectionErrorHandler = { _ in .proceed }
+        public var connectionErrorHandler: ConnectionErrorHandler = { error in
+            guard let unsuccessfulResponseError = error as? UnsuccessfulResponseError
+            else { return .proceed }
+
+            let responseCode: Int = unsuccessfulResponseError.responseCode
+            if 204 == responseCode {
+                return .shutdown
+            }
+            return .proceed
+        }
 
         /// Create a new configuration with an `EventHandler` and a `URL`
         public init(handler: EventHandler, url: URL) {
@@ -289,11 +298,7 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
         // swiftlint:disable:next force_cast
         let httpResponse = response as! HTTPURLResponse
         let statusCode = httpResponse.statusCode
-        if statusCode == 204 {
-            logger.log(.info, "Server requesting no further retries: %d", statusCode)
-            readyState = .shutdown
-            completionHandler(.cancel)
-        } else if (200..<300).contains(statusCode) {
+        if (200..<300).contains(statusCode) && statusCode != 204 {
             reconnectionTimer.connectedTime = Date()
             readyState = .open
             config.handler.onOpened()
