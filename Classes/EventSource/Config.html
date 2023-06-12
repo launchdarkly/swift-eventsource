@@ -17,7 +17,7 @@
     <a title="Config Structure Reference"></a>
     <header>
       <div class="content-wrapper">
-        <p><a href="../../index.html">LDSwiftEventSource 3.1.0 Docs</a> (100% documented)</p>
+        <p><a href="../../index.html">LDSwiftEventSource 3.1.1 Docs</a> (100% documented)</p>
         <p class="header-right"><a href="https://github.com/launchdarkly/swift-eventsource"><img src="../../img/gh.png" alt="GitHub"/>View on GitHub</a></p>
         <div class="header-right">
           <form role="search" action="../../search.json">
@@ -473,7 +473,8 @@ from updating any properties of the given <code>URLSessionConfiguration</code>.<
                       <div class="abstract">
                         <p>An error handler that is called when an error occurs and can shut down the client in response.</p>
 
-<p>The default error handler will always attempt to reconnect on an error, unless <code><a href="../../Classes/EventSource.html#/s:18LDSwiftEventSource0bC0C4stopyyF">EventSource.stop()</a></code> is called.</p>
+<p>The default error handler will always attempt to reconnect on an
+error, unless <code><a href="../../Classes/EventSource.html#/s:18LDSwiftEventSource0bC0C4stopyyF">EventSource.stop()</a></code> is called or the error code is 204.</p>
 
                       </div>
                       <div class="declaration">
