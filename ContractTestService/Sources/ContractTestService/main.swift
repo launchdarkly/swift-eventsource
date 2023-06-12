@@ -5,7 +5,7 @@ import LDSwiftEventSource
 
 struct StatusResp: Encodable {
     let name = "swift-eventsource"
-    let capabilities = ["204", "comments", "headers", "last-event-id", "post", "read-timeout", "report"]
+    let capabilities = ["server-directed-shutdown-request", "comments", "headers", "last-event-id", "post", "read-timeout", "report"]
 }
 
 struct CreateStreamReq: Decodable {
