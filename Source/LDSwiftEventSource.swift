@@ -104,9 +104,19 @@ public class EventSource {
         /**
          An error handler that is called when an error occurs and can shut down the client in response.
 
-         The default error handler will always attempt to reconnect on an error, unless `EventSource.stop()` is called.
+         The default error handler will always attempt to reconnect on an
+         error, unless `EventSource.stop()` is called or the error code is 204.
          */
-        public var connectionErrorHandler: ConnectionErrorHandler = { _ in .proceed }
+        public var connectionErrorHandler: ConnectionErrorHandler = { error in
+            guard let unsuccessfulResponseError = error as? UnsuccessfulResponseError
+            else { return .proceed }
+
+            let responseCode: Int = unsuccessfulResponseError.responseCode
+            if 204 == responseCode {
+                return .shutdown
+            }
+            return .proceed
+        }
 
         /// Create a new configuration with an `EventHandler` and a `URL`
         public init(handler: EventHandler, url: URL) {
@@ -288,14 +298,15 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
 
         // swiftlint:disable:next force_cast
         let httpResponse = response as! HTTPURLResponse
-        if (200..<300).contains(httpResponse.statusCode) {
+        let statusCode = httpResponse.statusCode
+        if (200..<300).contains(statusCode) && statusCode != 204 {
             reconnectionTimer.connectedTime = Date()
             readyState = .open
             config.handler.onOpened()
             completionHandler(.allow)
         } else {
-            logger.log(.info, "Unsuccessful response: %d", httpResponse.statusCode)
-            if dispatchError(error: UnsuccessfulResponseError(responseCode: httpResponse.statusCode)) == .shutdown {
+            logger.log(.info, "Unsuccessful response: %d", statusCode)
+            if dispatchError(error: UnsuccessfulResponseError(responseCode: statusCode)) == .shutdown {
                 logger.log(.info, "Connection has been explicitly shut down by error handler")
                 readyState = .shutdown
             }

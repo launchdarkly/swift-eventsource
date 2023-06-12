@@ -207,7 +207,7 @@ final class LDSwiftEventSourceTests: XCTestCase {
         XCTAssertEqual(handler.request.allHTTPHeaderFields?["X-LD-Header"], "def")
         es.stop()
     }
-    
+
     func testStartRequestIsNotReentrant() {
         var config = EventSource.Config(handler: mockHandler, url: URL(string: "http://example.com")!)
         config.urlSessionConfiguration = sessionWithMockProtocol()
@@ -343,6 +343,47 @@ final class LDSwiftEventSourceTests: XCTestCase {
         XCTAssertEqual(mockHandler.events.expectEvent(), .opened)
         handler.finishWith(error: DummyError())
         XCTAssertEqual(mockHandler.events.expectEvent(), .closed)
+        // Expect the client not to reconnect
+        MockingProtocol.requested.expectNoEvent(within: 1.0)
+        es.stop()
+        // Error should not have been given to the handler
+        mockHandler.events.expectNoEvent()
+    }
+
+    func testShutdownBy204Response() {
+        var config = EventSource.Config(handler: mockHandler, url: URL(string: "http://example.com")!)
+        config.urlSessionConfiguration = sessionWithMockProtocol()
+        config.reconnectTime = 0.1
+
+        let es = EventSource(config: config)
+        es.start()
+
+        let handler = MockingProtocol.requested.expectEvent()
+        handler.respond(statusCode: 204)
+
+        MockingProtocol.requested.expectNoEvent(within: 1.0)
+
+        es.stop()
+        // Error should not have been given to the handler
+        mockHandler.events.expectNoEvent()
+    }
+
+    func testCanOverride204DefaultBehavior() {
+        var config = EventSource.Config(handler: mockHandler, url: URL(string: "http://example.com")!)
+        config.urlSessionConfiguration = sessionWithMockProtocol()
+        config.reconnectTime = 0.1
+        config.connectionErrorHandler = { err in
+            if let responseErr = err as? UnsuccessfulResponseError {
+                XCTAssertEqual(responseErr.responseCode, 204)
+            } else {
+                XCTFail("Expected UnsuccessfulResponseError to be given to handler")
+            }
+            return .shutdown
+        }
+        let es = EventSource(config: config)
+        es.start()
+        let handler = MockingProtocol.requested.expectEvent()
+        handler.respond(statusCode: 204)
         // Expect the client not to reconnect
         MockingProtocol.requested.expectNoEvent(within: 1.0)
         es.stop()
