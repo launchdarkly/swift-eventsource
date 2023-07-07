@@ -1,4 +1,4 @@
-#Reporting and Fixing Security Issues
+# Reporting and Fixing Security Issues
 
 Please report all security issues to the LaunchDarkly security team by submitting a bug bounty report to our [HackerOne program](https://hackerone.com/launchdarkly?type=team). LaunchDarkly will triage and address all valid security issues following the response targets defined in our program policy. Valid security issues may be eligible for a bounty.
 
