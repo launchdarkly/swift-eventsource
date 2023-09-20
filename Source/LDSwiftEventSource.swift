@@ -117,6 +117,11 @@ public class EventSource {
             }
             return .proceed
         }
+        
+        
+        public var dataTaskCompletionHandler: (Data?, URLResponse?, Error?) -> Void = { (data, response, error) in
+            //
+        }
 
         /// Create a new configuration with an `EventHandler` and a `URL`
         public init(handler: EventHandler, url: URL) {
@@ -230,7 +235,7 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
 
     private func connect() {
         logger.log(.info, "Starting EventSource client")
-        let task = urlSession?.dataTask(with: createRequest())
+        let task = urlSession?.dataTask(with: createRequest(), completionHandler: self.config.dataTaskCompletionHandler)
         task?.resume()
         sessionTask = task
     }
