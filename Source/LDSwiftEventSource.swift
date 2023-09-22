@@ -1,6 +1,6 @@
 import Foundation
 
-#if os(Linux)
+#if os(Linux) || os(Windows)
 import FoundationNetworking
 #endif
 
@@ -86,7 +86,7 @@ public class EventSource {
                 sessionConfig.httpAdditionalHeaders = ["Accept": "text/event-stream", "Cache-Control": "no-cache"]
                 sessionConfig.timeoutIntervalForRequest = idleTimeout
 
-                #if !os(Linux)
+                #if !os(Linux) && !os(Windows)
                 if #available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *) {
                     sessionConfig.tlsMinimumSupportedProtocolVersion = .TLSv12
                 } else {

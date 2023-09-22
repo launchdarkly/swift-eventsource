@@ -1,7 +1,7 @@
 import XCTest
 @testable import LDSwiftEventSource
 
-#if os(Linux)
+#if os(Linux) || os(Windows)
 import FoundationNetworking
 #endif
 
@@ -169,7 +169,7 @@ final class LDSwiftEventSourceTests: XCTestCase {
         return sessionConfig
     }
 
-#if !os(Linux)
+#if !os(Linux) && !os(Windows)
     func testStartDefaultRequest() {
         var config = EventSource.Config(handler: mockHandler, url: URL(string: "http://example.com")!)
         config.urlSessionConfiguration = sessionWithMockProtocol()
