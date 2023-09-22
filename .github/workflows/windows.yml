@@ -1,0 +1,19 @@
+name: Windows CI
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  library-windows:
+    name: Windows - Swift 5.9
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install Swift
+        uses: compnerd/gha-setup-swift@main
+        with:
+          branch: swift-5.9-release
+          tag: 5.9-RELEASE
+      - name: Build and test
+        run: swift test
