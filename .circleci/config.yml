@@ -17,7 +17,7 @@ jobs:
 
     macos:
       xcode: <<parameters.xcode-version>>
-    resource_class: macos.x86.medium.gen2
+    resource_class: macos.m1.medium.gen1
 
     steps:
     - checkout
@@ -161,9 +161,22 @@ workflows:
           ios-sim: 'platform=iOS Simulator,name=iPhone 14,OS=16.0'
           build-doc: true
       - build:
-          name: Xcode 12.5 - Swift 5.4
-          xcode-version: '12.5.1'
-          ios-sim: 'platform=iOS Simulator,name=iPhone 8,OS=14.5'
+          name: Xcode 13.4 - Swift 5.5
+          xcode-version: '13.4.1'
+          ios-sim: 'platform=iOS Simulator,name=iPhone 11,OS=15.5'
+          build-doc: true
+      - build_linux:
+          name: Linux - Swift 5.9
+          docker-image: swift:5.9
+      - build_linux:
+          name: Linux - Swift 5.8
+          docker-image: swift:5.8
+      - build_linux:
+          name: Linux - Swift 5.7
+          docker-image: swift:5.7
+      - build_linux:
+          name: Linux - Swift 5.6
+          docker-image: swift:5.6
       - build_linux:
           name: Linux - Swift 5.5
           docker-image: swift:5.5
