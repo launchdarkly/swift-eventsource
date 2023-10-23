@@ -1,6 +1,6 @@
 import Foundation
 
-#if !os(Linux)
+#if !os(Linux) && !os(Windows)
 import os.log
 #endif
 
@@ -8,7 +8,7 @@ class Logs {
     enum Level {
         case debug, info, warn, error
 
-#if !os(Linux)
+#if !os(Linux) && !os(Windows)
         private static let osLogTypes = [ Level.debug: OSLogType.debug,
                                           Level.info: OSLogType.info,
                                           Level.warn: OSLogType.default,
@@ -17,7 +17,7 @@ class Logs {
 #endif
     }
 
-#if !os(Linux)
+#if !os(Linux) && !os(Windows)
     private let logger: OSLog = OSLog(subsystem: "com.launchdarkly.swift-eventsource", category: "LDEventSource")
 
     func log(_ level: Level, _ staticMsg: StaticString) {
