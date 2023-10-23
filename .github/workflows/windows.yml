@@ -11,7 +11,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Install Swift
-        uses: compnerd/gha-setup-swift@main
+        uses: compnerd/gha-setup-swift@325a5c6b81322f9b7497530aef08119d238ddfa8
         with:
           branch: swift-5.9-release
           tag: 5.9-RELEASE
