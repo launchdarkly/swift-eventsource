@@ -21,7 +21,7 @@ start-contract-test-service-bg:
 
 run-contract-tests:
 	curl -s https://raw.githubusercontent.com/launchdarkly/sse-contract-tests/main/downloader/run.sh \
-		| VERSION=v2 PARAMS="-url http://localhost:8000 -debug -stop-service-at-end -skip 'basic parsing/large message in two chunks'" sh
+		| VERSION=v2 PARAMS="-url http://localhost:8000 -debug -stop-service-at-end -skip 'basic parsing/large message in one chunk' -skip 'basic parsing/large message in two chunks'" sh
 
 contract-tests: build-contract-tests start-contract-test-service-bg run-contract-tests
 

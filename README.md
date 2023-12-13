@@ -1,6 +1,6 @@
 # LDSwiftEventSource
 
-[![CircleCI](https://circleci.com/gh/launchdarkly/swift-eventsource.svg?style=shield)](https://circleci.com/gh/launchdarkly/swift-eventsource)
+[![Run CI](https://github.com/launchdarkly/swift-eventsource/actions/workflows/ci.yml/badge.svg)](https://github.com/launchdarkly/swift-eventsource/actions/workflows/ci.yml)
 [![CocoaPods](https://img.shields.io/cocoapods/v/LDSwiftEventSource.svg)](https://cocoapods.org/pods/LDSwiftEventSource)
 [![Carthage compatible](https://img.shields.io/badge/Carthage-compatible-4BC51D.svg?style=flat)](https://github.com/Carthage/Carthage)
 [![SwiftPM compatible](https://img.shields.io/badge/SwiftPM-compatible-4BC51D.svg?style=flat)](https://swift.org/package-manager/)

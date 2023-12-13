@@ -1,0 +1,117 @@
+name: Run CI
+on:
+  push:
+    branches: [ main ]
+    paths-ignore:
+      - '**.md' # Do not need to run CI for markdown changes.
+  pull_request:
+    branches: [ main ]
+    paths-ignore:
+      - '**.md'
+
+jobs:
+  macos-build:
+    runs-on: macos-latest
+
+    strategy:
+      matrix:
+        include:
+          - xcode-version: 15.0.0
+            ios-sim: 'platform=iOS Simulator,name=iPhone 15,OS=17.0.1'
+          - xcode-version: 14.0.1
+            ios-sim: 'platform=iOS Simulator,name=iPhone 14,OS=16.0'
+          - xcode-version: 13.4.1
+            ios-sim: 'platform=iOS Simulator,name=iPhone 11,OS=15.5'
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # If you only need the current version keep this.
+
+      - uses: maxim-lobanov/setup-xcode@60606e260d2fc5762a71e64e74b2174e8ea3c8bd
+        if: ${{ matrix.xcode-version != '15.0.0' }}
+        with:
+          xcode-version: ${{ matrix.xcode-version }}
+
+      - name: Build & Test on macOS Simulator
+        run: xcodebuild test -scheme 'LDSwiftEventSource' -sdk macosx -destination 'platform=macOS' | xcpretty
+
+      - name: Build for ARM64 macOS
+        run: xcodebuild build -scheme 'LDSwiftEventSource' -arch arm64e -sdk macosx | xcpretty
+
+      - name: Build Tests for iOS device
+        run: xcodebuild build-for-testing -scheme 'LDSwiftEventSource' -sdk iphoneos CODE_SIGN_IDENTITY= | xcpretty
+
+      - name: Build & Test on iOS Simulator
+        run: xcodebuild test -scheme 'LDSwiftEventSource' -sdk iphonesimulator -destination '${{ matrix.ios-sim }}' CODE_SIGN_IDENTITY= | xcpretty
+
+      - name: Build Tests for tvOS device
+        run: xcodebuild build-for-testing -scheme 'LDSwiftEventSource' -sdk appletvos CODE_SIGN_IDENTITY= | xcpretty
+
+      - name: Build & Test on tvOS Simulator
+        run: xcodebuild test -scheme 'LDSwiftEventSource' -sdk appletvsimulator -destination 'platform=tvOS Simulator,name=Apple TV' | xcpretty
+
+      - name: Build for watchOS simulator # No XCTest testing on watchOS
+        run: xcodebuild build -scheme 'LDSwiftEventSource' -sdk watchsimulator | xcpretty
+
+      - name: Build for watchOS device # No XCTest testing on watchOS
+        run: xcodebuild build -scheme 'LDSwiftEventSource' -sdk watchos | xcpretty
+
+      - name: Build & Test with swiftpm
+        run: swift test -v 2>&1 | xcpretty
+
+      - name: Run contract tests
+        run: make contract-tests
+
+      - name: Install jazzy gem
+        run: |
+          gem install jazzy
+          gem cleanup
+
+      - name: Build Documentation
+        run: jazzy -o artifacts/docs
+
+      - name: Validate coverage
+        run: |
+          FULLDOC=`jq '.warnings | length == 0' artifacts/docs/undocumented.json`
+          [ $FULLDOC == "true" ]
+
+
+  linux-build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        swift-version:
+          - 5.1
+          - 5.2
+          - 5.3
+          - 5.4
+          - 5.5
+          - 5.6
+          - 5.7
+          - 5.8
+          - 5.9
+
+    container: swift:${{ matrix.swift-version }}
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # If you only need the current version keep this.
+
+      - name: Build and test
+        run: swift test --enable-test-discovery
+
+  windows-build:
+    name: Windows - Swift 5.9
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install Swift
+        uses: compnerd/gha-setup-swift@cd348eb89f2f450b0664c07fb1cb66880addf17d
+        with:
+          branch: swift-5.9-release
+          tag: 5.9-RELEASE
+      - name: Build and test
+        run: swift test
