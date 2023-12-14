@@ -1,0 +1,26 @@
+on:
+  workflow_dispatch:
+
+name: Publish Documentation
+jobs:
+  build-publish:
+    runs-on: macos-latest
+
+    permissions:
+      id-token: write # Needed if using OIDC to get release secrets.
+      contents: write # Needed in this case to write github pages.
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build and Test
+        uses: ./.github/actions/ci
+        with:
+          xcode-version: 14.0.1
+          ios-sim: 'platform=iOS Simulator,name=iPhone 14,OS=16.0'
+
+      - uses: ./.github/actions/build-docs
+
+      - uses: ./.github/actions/publish-docs
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}

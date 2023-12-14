@@ -1,0 +1,15 @@
+name: Publish Documentation
+description: 'Publish the documentation to GitHub pages'
+inputs:
+  token:
+    description: 'Token to use for publishing.'
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - uses: launchdarkly/gh-actions/actions/publish-pages@publish-pages-v1.0.1
+      name: 'Publish to GitHub pages'
+      with:
+        docs_path: docs
+        github_token: ${{ inputs.token }}

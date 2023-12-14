@@ -1,0 +1,35 @@
+name: Publish Package
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Is this a dry run. If so no package will be published.'
+        type: boolean
+        required: true
+
+jobs:
+  build-publish:
+    runs-on: macos-latest
+
+    # Needed to get tokens during publishing.
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: launchdarkly/gh-actions/actions/release-secrets@release-secrets-v1.0.0
+        name: 'Get Cocoapods token'
+        with:
+          aws_assume_role: ${{ vars.AWS_ROLE_ARN }}
+          ssm_parameter_pairs: '/production/common/releasing/cocoapods/token = COCOAPODS_TRUNK_TOKEN'
+
+      - uses: ./.github/actions/ci
+        with:
+          xcode-version: 14.0.1
+          ios-sim: 'platform=iOS Simulator,name=iPhone 14,OS=16.0'
+
+      - uses: ./.github/actions/publish
+        with:
+          dry_run: ${{ inputs.dry_run }}

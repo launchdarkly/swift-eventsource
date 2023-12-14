@@ -1,0 +1,74 @@
+# This is a composite to allow sharing these steps into other workflows.
+# For instance it could be used by regular CI as well as the release process.
+
+name: CI Workflow
+description: 'Shared CI workflow.'
+inputs:
+  xcode-version:
+    description: 'Which version of xcode should be installed'
+    required: true
+  ios-sim:
+    description: 'iOS Simulator to use for testing'
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - uses: maxim-lobanov/setup-xcode@60606e260d2fc5762a71e64e74b2174e8ea3c8bd
+      if: ${{ inputs.xcode-version != '15.0.0' }}
+      with:
+        xcode-version: ${{ inputs.xcode-version }}
+
+    - name: Install mint
+      shell: bash
+      run: |
+        brew tap mint-lang/mint-lang
+        brew install mint-lang
+
+    - name: Install cocoapods
+      shell: bash
+      run: gem install cocoapods
+
+    - name: Lint the podspec
+      shell: bash
+      run: pod spec lint LDSwiftEventSource.podspec
+
+    - name: Build & Test on macOS Simulator
+      shell: bash
+      run: xcodebuild test -scheme 'LDSwiftEventSource' -sdk macosx -destination 'platform=macOS' | xcpretty
+
+    - name: Build for ARM64 macOS
+      shell: bash
+      run: xcodebuild build -scheme 'LDSwiftEventSource' -arch arm64e -sdk macosx | xcpretty
+
+    - name: Build Tests for iOS device
+      shell: bash
+      run: xcodebuild build-for-testing -scheme 'LDSwiftEventSource' -sdk iphoneos CODE_SIGN_IDENTITY= | xcpretty
+
+    - name: Build & Test on iOS Simulator
+      shell: bash
+      run: xcodebuild test -scheme 'LDSwiftEventSource' -sdk iphonesimulator -destination '${{ inputs.ios-sim }}' CODE_SIGN_IDENTITY= | xcpretty
+
+    - name: Build Tests for tvOS device
+      shell: bash
+      run: xcodebuild build-for-testing -scheme 'LDSwiftEventSource' -sdk appletvos CODE_SIGN_IDENTITY= | xcpretty
+
+    - name: Build & Test on tvOS Simulator
+      shell: bash
+      run: xcodebuild test -scheme 'LDSwiftEventSource' -sdk appletvsimulator -destination 'platform=tvOS Simulator,name=Apple TV' | xcpretty
+
+    - name: Build for watchOS simulator # No XCTest testing on watchOS
+      shell: bash
+      run: xcodebuild build -scheme 'LDSwiftEventSource' -sdk watchsimulator | xcpretty
+
+    - name: Build for watchOS device # No XCTest testing on watchOS
+      shell: bash
+      run: xcodebuild build -scheme 'LDSwiftEventSource' -sdk watchos | xcpretty
+
+    - name: Build & Test with swiftpm
+      shell: bash
+      run: swift test -v 2>&1 | xcpretty
+
+    - name: Run contract tests
+      shell: bash
+      run: make contract-tests
