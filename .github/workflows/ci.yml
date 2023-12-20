@@ -11,17 +11,20 @@ on:
 
 jobs:
   macos-build:
-    runs-on: macos-latest
+    runs-on: ${{ matrix.os }}
 
     strategy:
       matrix:
         include:
-          - xcode-version: 15.0.0
-            ios-sim: 'platform=iOS Simulator,name=iPhone 14,OS=16.2'
-          - xcode-version: 14.0.1
-            ios-sim: 'platform=iOS Simulator,name=iPhone 14,OS=16.0'
+          - xcode-version: 15.0.1
+            ios-sim: 'platform=iOS Simulator,name=iPhone 17,OS=17.0'
+            os: macos-13
+          - xcode-version: 14.3.1
+            ios-sim: 'platform=iOS Simulator,name=iPhone 16,OS=16.4'
+            os: macos-13
           - xcode-version: 13.4.1
             ios-sim: 'platform=iOS Simulator,name=iPhone 11,OS=15.5'
+            os: macos-12
 
     steps:
       - uses: actions/checkout@v4

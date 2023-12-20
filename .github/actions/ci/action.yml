@@ -15,7 +15,6 @@ runs:
   using: composite
   steps:
     - uses: maxim-lobanov/setup-xcode@60606e260d2fc5762a71e64e74b2174e8ea3c8bd
-      if: ${{ inputs.xcode-version != '15.0.0' }}
       with:
         xcode-version: ${{ inputs.xcode-version }}
 
