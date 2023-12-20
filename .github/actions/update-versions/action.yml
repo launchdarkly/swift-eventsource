@@ -1,5 +1,5 @@
 name: Update xcode project version numbers
-description: 'Used to update the cabal file after updating package.yaml'
+description: 'Update xcode project version numbers'
 inputs:
   branch:
     description: 'The branch to checkout and push updates to'
