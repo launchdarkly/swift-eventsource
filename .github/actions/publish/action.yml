@@ -1,0 +1,14 @@
+name: Publish Package
+description: 'Publish the package to Cocoapods'
+inputs:
+  dry_run:
+    description: 'Is this a dry run. If so no package will be published.'
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Push to cocoapods
+      if: ${{ inputs.dry_run == 'false' }}
+      shell: bash
+      run: pod trunk push LDSwiftEventSource.podspec --allow-warnings --verbose

@@ -16,7 +16,7 @@ Build instructions
 
 ### Prerequisites
 
-This library is built with [XCode](https://developer.apple.com/xcode/) or [SwiftPM](https://swift.org/package-manager/). The [CI build](https://circleci.com/gh/launchdarkly/swift-eventsource) builds and tests various configurations of the library on various systems, platforms, and devices. For details, see [the CircleCI configuration][ci-config].
+This library is built with [XCode](https://developer.apple.com/xcode/) or [SwiftPM](https://swift.org/package-manager/). The [CI build](https://github.com/launchdarkly/swift-eventsource/actions/workflows/ci.yml) builds and tests various configurations of the library on various systems, platforms, and devices. For details, see [the GitHub action CI configuration][ci-config].
 
 ### Building And Testing
 
@@ -41,4 +41,4 @@ make contract-tests
 
 Docs are built with [jazzy](https://github.com/realm/jazzy), which is configured [here](https://github.com/launchdarkly/swift-eventsource/blob/main/.jazzy.yaml). To build them, simply run `jazzy`. Pull requests should keep our documentation coverage at 100%.
 
-[ci-config]: https://github.com/launchdarkly/swift-eventsource/blob/main/.circleci/config.yml
+[ci-config]: https://github.com/launchdarkly/swift-eventsource/blob/main/.github/workflows/ci.yml

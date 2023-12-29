@@ -1,0 +1,64 @@
+name: Run Release Please
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  release-package:
+    runs-on: macos-13
+
+    permissions:
+      id-token: write # Needed if using OIDC to get release secrets.
+      contents: write # Contents and pull-requests are for release-please to make releases.
+      pull-requests: write
+
+    steps:
+      - uses: google-github-actions/release-please-action@v4
+        id: release
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          target-branch: ${{ github.ref_name }}
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # If you only need the current version keep this.
+
+      #
+      # This step runs and updates an existing PR
+      #
+      - uses: ./.github/actions/update-versions
+        if: ${{ steps.release.outputs.prs_created == 'true' }}
+        with:
+          branch: ${{ fromJSON(steps.release.outputs.pr).headBranchName }}
+
+      #
+      # These remaining steps are ONLY run if a release was actually created
+      #
+      - uses: launchdarkly/gh-actions/actions/release-secrets@release-secrets-v1.0.0
+        if: ${{ steps.release.outputs.releases_created == 'true' }}
+        name: 'Get Cocoapods token'
+        with:
+          aws_assume_role: ${{ vars.AWS_ROLE_ARN }}
+          ssm_parameter_pairs: '/production/common/releasing/cocoapods/token = COCOAPODS_TRUNK_TOKEN'
+
+      - uses: ./.github/actions/ci
+        if: ${{ steps.release.outputs.releases_created == 'true' }}
+        with:
+          xcode-version: 14.3.1
+          ios-sim: 'platform=iOS Simulator,name=iPhone 16,OS=16.4'
+
+      - uses: ./.github/actions/build-docs
+        if: ${{ steps.release.outputs.releases_created == 'true' }}
+
+      - uses: ./.github/actions/publish
+        if: ${{ steps.release.outputs.releases_created == 'true' }}
+        with:
+          token: ${{secrets.GITHUB_TOKEN}}
+          dry_run: false
+
+      - uses: ./.github/actions/publish-docs
+        if: ${{ steps.release.outputs.releases_created == 'true' }}
+        with:
+          token: ${{secrets.GITHUB_TOKEN}}

@@ -1,0 +1,55 @@
+name: Update xcode project version numbers
+description: 'Update xcode project version numbers'
+inputs:
+  branch:
+    description: 'The branch to checkout and push updates to'
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/checkout@v4
+      with:
+        ref: ${{ inputs.branch }}
+
+    - name: Calculate version numbers
+      id: version
+      shell: bash
+      run: |
+        version=$(jq -r '."."' .release-please-manifest.json)
+        major=$(echo "$version" | cut -f1 -d.)
+        minor=$(echo "$version" | cut -f2 -d.)
+        patch=$(echo "$version" | cut -f3 -d.)
+        # 64 + version gives us a letter offset for the framework version.
+        framework=$(echo $((major + 64)) | awk '{ printf("%c", $1) }')
+
+        echo "major=${major}" >> "$GITHUB_OUTPUT"
+        echo "minor=${minor}" >> "$GITHUB_OUTPUT"
+        echo "patch=${patch}" >> "$GITHUB_OUTPUT"
+        echo "framework=${framework}" >> "$GITHUB_OUTPUT"
+
+    - name: Update other version numbers
+      shell: bash
+      run: |
+        sed -i .bak -E \
+            -e 's/MARKETING_VERSION = [^;]+/MARKETING_VERSION = ${{ steps.version.outputs.major }}.${{ steps.version.outputs.minor }}.${{ steps.version.outputs.patch }}/' \
+            -e 's/DYLIB_CURRENT_VERSION = [^;]+/DYLIB_CURRENT_VERSION = ${{ steps.version.outputs.major }}.${{ steps.version.outputs.minor }}.${{ steps.version.outputs.patch }}/' \
+            -e 's/DYLIB_COMPATIBILITY_VERSION = [^;]+/DYLIB_COMPATIBILITY_VERSION = ${{ steps.version.outputs.major }}.0.0/' \
+            -e 's/FRAMEWORK_VERSION = .*/FRAMEWORK_VERSION = ${{ steps.version.outputs.framework }};/' \
+        LDSwiftEventSource.xcodeproj/project.pbxproj
+
+        sed -i .bak -E \
+            -e "s/pod 'LDSwiftEventSource', '~> [0-9]+.[0-9]+'/pod 'LDSwiftEventSource', '~> ${{ steps.version.outputs.major }}.${{ steps.version.outputs.minor }}'/" \
+            -e "s/github \"LaunchDarkly\/swift-eventsource\" ~> [0-9]+.[0-9]+/github \"LaunchDarkly\/swift-eventsource\" ~> ${{ steps.version.outputs.major }}.${{ steps.version.outputs.minor }}/" README.md
+
+        rm -f LDSwiftEventSource.xcodeproj/project.pbxproj.bak README.md.bak
+        if [ $(git status --porcelain | wc -l) -gt 0 ]; then
+          git config --global user.name 'LaunchDarklyReleaseBot'
+          git config --global user.email 'LaunchDarklyReleaseBot@launchdarkly.com'
+
+          git add LDSwiftEventSource.xcodeproj/project.pbxproj
+          git add README.md
+
+          git commit -m 'Updating generated project and readme files'
+          git push
+        fi

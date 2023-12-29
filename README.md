@@ -38,11 +38,13 @@ To integrate LDSwiftEventSource into an Xcode project, go to the project editor,
 
 To include LDSwiftEventSource in a Swift package, simply add it to the dependencies section of your `Package.swift` file. And add the desired product as a dependency for your targets.
 
+<!-- x-release-please-start-version -->
 ```swift
 dependencies: [
     .package(url: "https://github.com/LaunchDarkly/swift-eventsource.git", .upToNextMajor(from: "3.1.1"))
 ]
 ```
+<!-- x-release-please-end -->
 
 ## Contributing
 
