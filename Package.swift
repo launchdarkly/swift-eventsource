@@ -17,7 +17,10 @@ let package = Package(
     targets: [
         .target(
             name: "LDSwiftEventSource",
-            path: "Source"),
+            path: "Source",
+            resources: [
+                .process("PrivacyInfo.xcprivacy")
+            ]),
         .testTarget(
             name: "LDSwiftEventSourceTests",
             dependencies: ["LDSwiftEventSource"],
