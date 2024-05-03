@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>LDSwiftEventSource  Reference</title>
+    <link rel="stylesheet" type="text/css" href="css/jazzy.css" />
+    <link rel="stylesheet" type="text/css" href="css/highlight.css" />
+    <meta charset='utf-8'>
+    <script src="js/jquery.min.js" defer></script>
+    <script src="js/jazzy.js" defer></script>
+    
+    <script src="js/lunr.min.js" defer></script>
+    <script src="js/typeahead.jquery.js" defer></script>
+    <script src="js/jazzy.search.js" defer></script>
+  </head>
+  <body>
+    <a title="LDSwiftEventSource  Reference"></a>
+    <header>
+      <div class="content-wrapper">
+        <p><a href="index.html">LDSwiftEventSource 3.2.0 Docs</a> (100% documented)</p>
+        <p class="header-right"><a href="https://github.com/launchdarkly/swift-eventsource"><img src="img/gh.png" alt="GitHub"/>View on GitHub</a></p>
+        <div class="header-right">
+          <form role="search" action="search.json">
+            <input type="text" placeholder="Search documentation" data-typeahead>
+          </form>
+        </div>
+      </div>
+    </header>
+    <div class="content-wrapper">
+      <p id="breadcrumbs">
+        <a href="index.html">LDSwiftEventSource Reference</a>
+        <img id="carat" src="img/carat.png" alt=""/>
+        LDSwiftEventSource  Reference
+      </p>
+    </div>
+    <div class="content-wrapper">
+      <nav class="sidebar">
+        <ul class="nav-groups">
+          <li class="nav-group-name">
+            <a href="Guides.html">Guides</a>
+            <ul class="nav-group-tasks">
+              <li class="nav-group-task">
+                <a href="changelog.html">CHANGELOG</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="contributing.html">CONTRIBUTING</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="licensetxt.html">LICENSE.txt</a>
+              </li>
+            </ul>
+          </li>
+          <li class="nav-group-name">
+            <a href="Classes.html">Classes</a>
+            <ul class="nav-group-tasks">
+              <li class="nav-group-task">
+                <a href="Classes/EventSource.html">EventSource</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="Classes/EventSource/Config.html">– Config</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="Classes/UnsuccessfulResponseError.html">UnsuccessfulResponseError</a>
+              </li>
+            </ul>
+          </li>
+          <li class="nav-group-name">
+            <a href="Enums.html">Enumerations</a>
+            <ul class="nav-group-tasks">
+              <li class="nav-group-task">
+                <a href="Enums/ConnectionErrorAction.html">ConnectionErrorAction</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="Enums/ReadyState.html">ReadyState</a>
+              </li>
+            </ul>
+          </li>
+          <li class="nav-group-name">
+            <a href="Protocols.html">Protocols</a>
+            <ul class="nav-group-tasks">
+              <li class="nav-group-task">
+                <a href="Protocols/EventHandler.html">EventHandler</a>
+              </li>
+            </ul>
+          </li>
+          <li class="nav-group-name">
+            <a href="Structs.html">Structures</a>
+            <ul class="nav-group-tasks">
+              <li class="nav-group-task">
+                <a href="Structs/MessageEvent.html">MessageEvent</a>
+              </li>
+            </ul>
+          </li>
+          <li class="nav-group-name">
+            <a href="Typealiases.html">Type Aliases</a>
+            <ul class="nav-group-tasks">
+              <li class="nav-group-task">
+                <a href="Typealiases.html#/s:18LDSwiftEventSource22ConnectionErrorHandlera">ConnectionErrorHandler</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="Typealiases.html#/s:18LDSwiftEventSource15HeaderTransforma">HeaderTransform</a>
+              </li>
+            </ul>
+          </li>
+        </ul>
+      </nav>
+      <article class="main-content">
+        <section>
+          <section class="section">
+            
+            <h1 id='ldswifteventsource' class='heading'>LDSwiftEventSource</h1>
+
+<p><a href="https://github.com/launchdarkly/swift-eventsource/actions/workflows/ci.yml"><img src="https://github.com/launchdarkly/swift-eventsource/actions/workflows/ci.yml/badge.svg" alt="Run CI"></a>
+<a href="https://cocoapods.org/pods/LDSwiftEventSource"><img src="https://img.shields.io/cocoapods/v/LDSwiftEventSource.svg" alt="CocoaPods"></a>
+<a href="https://github.com/Carthage/Carthage"><img src="https://img.shields.io/badge/Carthage-compatible-4BC51D.svg?style=flat" alt="Carthage compatible"></a>
+<a href="https://swift.org/package-manager/"><img src="https://img.shields.io/badge/SwiftPM-compatible-4BC51D.svg?style=flat" alt="SwiftPM compatible"></a>
+<a href="https://cocoapods.org/pods/LDSwiftEventSource"><img src="https://img.shields.io/cocoapods/p/LDSwiftEventSource.svg?style=flat" alt="Platform"></a></p>
+
+<p>LDSwiftEventSource is a cross platform implementation of the <a href="https://html.spec.whatwg.org/multipage/server-sent-events.html">EventSource specification</a> written in Swift. It was developed for use in the <a href="https://github.com/launchdarkly/ios-client-sdk">LaunchDarkly iOS SDK</a>. Generated API docs are available on <a href="https://launchdarkly.github.io/swift-eventsource/">GitHub Pages</a>.</p>
+<h2 id='requirements' class='heading'>Requirements</h2>
+
+<ul>
+<li>iOS 11.0+ / watchOS 4.0+ / tvOS 11.0+ / macOS 10.13+</li>
+<li>Swift 5.1+</li>
+</ul>
+<h2 id='installation' class='heading'>Installation</h2>
+<h3 id='cocoapods' class='heading'>CocoaPods</h3>
+
+<p>To use the <a href="https://cocoapods.org">CocoaPods</a> dependency manager to integrate LDSwiftEventSource into your Xcode project, specify it in your <code>Podfile</code>:</p>
+<pre class="highlight ruby"><code><span class="n">pod</span> <span class="s1">'LDSwiftEventSource'</span><span class="p">,</span> <span class="s1">'~&gt; 3.2'</span>
+</code></pre>
+<h3 id='carthage' class='heading'>Carthage</h3>
+
+<p>To use the <a href="https://github.com/Carthage/Carthage">Carthage</a> dependency manager to integrate LDSwiftEventSource into your Xcode project, specify it in your <code>Cartfile</code>:</p>
+<pre class="highlight plaintext"><code>github "LaunchDarkly/swift-eventsource" ~&gt; 3.2
+</code></pre>
+<h3 id='swift-package-manager' class='heading'>Swift Package Manager</h3>
+
+<p>The <a href="https://swift.org/package-manager/">Swift Package Manager</a> is a dependency manager integrated into the <code>swift</code> compiler and Xcode. Note that the LDSwiftEventSource Swift package provides both a <code>LDSwiftEventSource</code> product, which is explicitly dynamic, and a <code>LDSwiftEventSourceStatic</code> product which is explicitly static.</p>
+
+<p>To integrate LDSwiftEventSource into an Xcode project, go to the project editor, and select <code>Swift Packages</code>. From here hit the <code>+</code> button and follow the prompts using  <code>https://github.com/LaunchDarkly/swift-eventsource.git</code> as the URL.</p>
+
+<p>To include LDSwiftEventSource in a Swift package, simply add it to the dependencies section of your <code>Package.swift</code> file. And add the desired product as a dependency for your targets.</p>
+
+<!-- x-release-please-start-version -->
+<pre class="highlight swift"><code><span class="nv">dependencies</span><span class="p">:</span> <span class="p">[</span>
+    <span class="o">.</span><span class="nf">package</span><span class="p">(</span><span class="nv">url</span><span class="p">:</span> <span class="s">"https://github.com/LaunchDarkly/swift-eventsource.git"</span><span class="p">,</span> <span class="o">.</span><span class="nf">upToNextMajor</span><span class="p">(</span><span class="nv">from</span><span class="p">:</span> <span class="s">"3.2.0"</span><span class="p">))</span>
+<span class="p">]</span>
+</code></pre>
+
+<!-- x-release-please-end -->
+<h2 id='contributing' class='heading'>Contributing</h2>
+
+<p>We encourage pull requests and other contributions from the community. Check out our <a href="https://github.com/LaunchDarkly/swift-eventsource/blob/main/CONTRIBUTING.md">contributing guidelines</a> for instructions on how to contribute to this SDK.</p>
+<h2 id='about-launchdarkly' class='heading'>About LaunchDarkly</h2>
+
+<ul>
+<li>LaunchDarkly is a continuous delivery platform that provides feature flags as a service and allows developers to iterate quickly and safely. We allow you to easily flag your features and manage them from the LaunchDarkly dashboard.  With LaunchDarkly, you can:
+
+<ul>
+<li>Roll out a new feature to a subset of your users (like a group of users who opt-in to a beta tester group), gathering feedback and bug reports from real-world use cases.</li>
+<li>Gradually roll out a feature to an increasing percentage of users, and track the effect that the feature has on key metrics (for instance, how likely is a user to complete a purchase if they have feature A versus feature B?).</li>
+<li>Turn off a feature that you realize is causing performance problems in production, without needing to re-deploy, or even restart the application with a changed configuration file.</li>
+<li>Grant access to certain features based on user attributes, like payment plan (eg: users on the ‘gold’ plan get access to more features than users in the ‘silver’ plan). Disable parts of your application to facilitate maintenance, without taking everything offline.</li>
+</ul></li>
+<li>LaunchDarkly provides feature flag SDKs for a wide variety of languages and technologies. Check out <a href="https://docs.launchdarkly.com/sdk">our documentation</a> for a complete list.</li>
+<li>Explore LaunchDarkly
+
+<ul>
+<li><a href="https://www.launchdarkly.com/" title="LaunchDarkly Main Website">launchdarkly.com</a> for more information</li>
+<li><a href="https://docs.launchdarkly.com/" title="LaunchDarkly Documentation">docs.launchdarkly.com</a> for our documentation and SDK reference guides</li>
+<li><a href="https://apidocs.launchdarkly.com/" title="LaunchDarkly API Documentation">apidocs.launchdarkly.com</a> for our API documentation</li>
+<li><a href="https://blog.launchdarkly.com/" title="LaunchDarkly Blog Documentation">blog.launchdarkly.com</a> for the latest product updates</li>
+</ul></li>
+</ul>
+
+          </section>
+        </section>
+        <section id="footer">
+          <p>Copyright © 2020 Catamorphic Co.</p>
+          <p>Generated by <a class="link" href="https://github.com/realm/jazzy" target="_blank" rel="external noopener">jazzy ♪♫ v0.14.4</a>, a <a class="link" href="https://realm.io" target="_blank" rel="external noopener">Realm</a> project.</p>
+        </section>
+      </article>
+    </div>
+  </body>
+</html>
