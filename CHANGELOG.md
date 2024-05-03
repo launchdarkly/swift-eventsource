@@ -2,6 +2,13 @@
 
 All notable changes to the LaunchDarkly Swift EventSource library will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [3.2.0](https://github.com/launchdarkly/swift-eventsource/compare/3.1.1...3.2.0) (2023-12-29)
+
+
+### Features
+
+* Add Compilation & Testing On Windows ([#68](https://github.com/launchdarkly/swift-eventsource/issues/68)) ([ac5f18c](https://github.com/launchdarkly/swift-eventsource/commit/ac5f18ccb5b197bbc9f37f9f799017a397eee43e))
+
 ## [3.1.1] - 2023-06-12
 ### Fixed:
 - Per the SSE spec, an HTTP 204 will now halt retry attempts by default.
