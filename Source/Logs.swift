@@ -1,38 +1,52 @@
 import Foundation
 
-#if !os(Linux) && !os(Windows)
+#if canImport(os)
 import os.log
 #endif
 
-class Logs {
-    enum Level {
-        case debug, info, warn, error
+protocol InternalLogging {
+    func log(_ level: Level, _ staticMsg: StaticString)
+    func log(_ level: Level, _ staticMsg: StaticString, _ arg: CVarArg)
+    func log(_ level: Level, _ staticMsg: StaticString, _ arg1: CVarArg, _ arg2: CVarArg)
+}
 
-#if !os(Linux) && !os(Windows)
-        private static let osLogTypes = [ Level.debug: OSLogType.debug,
-                                          Level.info: OSLogType.info,
-                                          Level.warn: OSLogType.default,
-                                          Level.error: OSLogType.error]
-        var osLogType: OSLogType { Level.osLogTypes[self]! }
+enum Level {
+    case debug, info, warn, error
+
+#if canImport(os)
+    private static let osLogTypes = [ Level.debug: OSLogType.debug,
+                                      Level.info: OSLogType.info,
+                                      Level.warn: OSLogType.default,
+                                      Level.error: OSLogType.error]
+    var osLogType: OSLogType { Level.osLogTypes[self]! }
 #endif
+}
+
+#if canImport(os)
+class OSLogAdapter: InternalLogging {
+    
+    private let osLog: OSLog
+    
+    init(osLog: OSLog) {
+        self.osLog = osLog
     }
-
-#if !os(Linux) && !os(Windows)
-    private let logger: OSLog = OSLog(subsystem: "com.launchdarkly.swift-eventsource", category: "LDEventSource")
-
+    
     func log(_ level: Level, _ staticMsg: StaticString) {
-        os_log(staticMsg, log: logger, type: level.osLogType)
+        os_log(staticMsg, log: self.osLog, type: level.osLogType)
     }
-
+    
     func log(_ level: Level, _ staticMsg: StaticString, _ arg: CVarArg) {
-        os_log(staticMsg, log: logger, type: level.osLogType, arg)
+        os_log(staticMsg, log: self.osLog, type: level.osLogType, arg)
     }
-
+    
     func log(_ level: Level, _ staticMsg: StaticString, _ arg1: CVarArg, _ arg2: CVarArg) {
-        os_log(staticMsg, log: logger, type: level.osLogType, arg1, arg2)
+        os_log(staticMsg, log: self.osLog, type: level.osLogType, arg1, arg2)
     }
-#else
-    // We use Any over CVarArg here, because on Linux prior to Swift 5.4 String does not conform to CVarArg
-    func log(_ level: Level, _ staticMsg: StaticString, _ args: Any...) { }
+}
 #endif
+
+class NoOpLogging: InternalLogging {
+    func log(_ level: Level, _ staticMsg: StaticString) {}
+    func log(_ level: Level, _ staticMsg: StaticString, _ arg: CVarArg) {}
+    func log(_ level: Level, _ staticMsg: StaticString, _ arg1: CVarArg, _ arg2: CVarArg) {}
 }
