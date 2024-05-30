@@ -298,7 +298,8 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
 
         readyState = .closed
         let sleep = reconnectionTimer.reconnectDelay(baseDelay: currentRetry)
-        logger.log(.info, "Waiting %.3f seconds before reconnecting...", sleep)
+        // this formatting shenanigans is to workaround String not implementing CVarArg on Swift<5.4 on Linux
+        logger.log(.info, "Waiting %@ seconds before reconnecting...", String(format: "%.3f", sleep))
         delegateQueue.asyncAfter(deadline: .now() + sleep) { [weak self] in
             self?.connect()
         }
@@ -326,7 +327,8 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
             config.handler.onOpened()
             completionHandler(.allow)
         } else {
-            logger.log(.info, "Unsuccessful response: %d", statusCode)
+            // this formatting shenanigans is to workaround String not implementing CVarArg on Swift<5.4 on Linux
+            logger.log(.info, "Unsuccessful response: %@", String(format: "%d", statusCode))
             if dispatchError(error: UnsuccessfulResponseError(responseCode: statusCode)) == .shutdown {
                 logger.log(.info, "Connection has been explicitly shut down by error handler")
                 readyState = .shutdown

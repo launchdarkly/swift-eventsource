@@ -6,8 +6,8 @@ import os.log
 
 protocol InternalLogging {
     func log(_ level: Level, _ staticMsg: StaticString)
-    func log(_ level: Level, _ staticMsg: StaticString, _ arg: CVarArg)
-    func log(_ level: Level, _ staticMsg: StaticString, _ arg1: CVarArg, _ arg2: CVarArg)
+    func log(_ level: Level, _ staticMsg: StaticString, _ arg: String)
+    func log(_ level: Level, _ staticMsg: StaticString, _ arg1: String, _ arg2: String)
 }
 
 enum Level {
@@ -35,11 +35,11 @@ class OSLogAdapter: InternalLogging {
         os_log(staticMsg, log: self.osLog, type: level.osLogType)
     }
     
-    func log(_ level: Level, _ staticMsg: StaticString, _ arg: CVarArg) {
+    func log(_ level: Level, _ staticMsg: StaticString, _ arg: String) {
         os_log(staticMsg, log: self.osLog, type: level.osLogType, arg)
     }
     
-    func log(_ level: Level, _ staticMsg: StaticString, _ arg1: CVarArg, _ arg2: CVarArg) {
+    func log(_ level: Level, _ staticMsg: StaticString, _ arg1: String, _ arg2: String) {
         os_log(staticMsg, log: self.osLog, type: level.osLogType, arg1, arg2)
     }
 }
@@ -47,6 +47,6 @@ class OSLogAdapter: InternalLogging {
 
 class NoOpLogging: InternalLogging {
     func log(_ level: Level, _ staticMsg: StaticString) {}
-    func log(_ level: Level, _ staticMsg: StaticString, _ arg: CVarArg) {}
-    func log(_ level: Level, _ staticMsg: StaticString, _ arg1: CVarArg, _ arg2: CVarArg) {}
+    func log(_ level: Level, _ staticMsg: StaticString, _ arg: String) {}
+    func log(_ level: Level, _ staticMsg: StaticString, _ arg1: String, _ arg2: String) {}
 }
