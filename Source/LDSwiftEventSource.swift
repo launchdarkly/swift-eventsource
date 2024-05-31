@@ -4,6 +4,12 @@ import Foundation
 import FoundationNetworking
 #endif
 
+#if canImport(os)
+// os_log is not supported on some platforms, but we want to use it for most of our customer's
+// use cases that use Apple OSs
+import os.log
+#endif
+
 /**
  Provides an EventSource client for consuming Server-Sent Events.
 
@@ -51,12 +57,18 @@ public class EventSource {
         public var method: String = "GET"
         /// Optional HTTP body to be included in the API request.
         public var body: Data?
-        /// An initial value for the last-event-id header to be sent on the initial request
-        public var lastEventId: String = ""
         /// Additional HTTP headers to be set on the request
         public var headers: [String: String] = [:]
         /// Transform function to allow dynamically configuring the headers on each API request.
         public var headerTransform: HeaderTransform = { $0 }
+        /// An initial value for the last-event-id header to be sent on the initial request
+        public var lastEventId: String = ""
+        
+#if canImport(os)
+        /// Configure the logger that will be used.
+        public var logger: OSLog = OSLog(subsystem: "com.launchdarkly.swift-eventsource", category: "LDEventSource")
+#endif
+        
         /// The minimum amount of time to wait before reconnecting after a failure
         public var reconnectTime: TimeInterval = 1.0
         /// The maximum amount of time to wait before reconnecting after a failure
@@ -152,8 +164,9 @@ class ReconnectionTimer {
 // MARK: EventSourceDelegate
 class EventSourceDelegate: NSObject, URLSessionDataDelegate {
     private let delegateQueue: DispatchQueue = DispatchQueue(label: "ESDelegateQueue")
-    private let logger = Logs()
-
+    
+    public var logger: InternalLogging
+    
     private let config: EventSource.Config
 
     private var readyState: ReadyState = .raw {
@@ -170,6 +183,14 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
 
     init(config: EventSource.Config) {
         self.config = config
+        
+#if canImport(os)
+        self.logger = OSLogAdapter(osLog: config.logger)
+#else
+        self.logger = NoOpLogging()
+#endif
+        
+        
         self.eventParser = EventParser(handler: config.handler,
                                        initialEventId: config.lastEventId,
                                        initialRetry: config.reconnectTime)
@@ -277,7 +298,8 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
 
         readyState = .closed
         let sleep = reconnectionTimer.reconnectDelay(baseDelay: currentRetry)
-        logger.log(.info, "Waiting %.3f seconds before reconnecting...", sleep)
+        // this formatting shenanigans is to workaround String not implementing CVarArg on Swift<5.4 on Linux
+        logger.log(.info, "Waiting %@ seconds before reconnecting...", String(format: "%.3f", sleep))
         delegateQueue.asyncAfter(deadline: .now() + sleep) { [weak self] in
             self?.connect()
         }
@@ -305,7 +327,8 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
             config.handler.onOpened()
             completionHandler(.allow)
         } else {
-            logger.log(.info, "Unsuccessful response: %d", statusCode)
+            // this formatting shenanigans is to workaround String not implementing CVarArg on Swift<5.4 on Linux
+            logger.log(.info, "Unsuccessful response: %@", String(format: "%d", statusCode))
             if dispatchError(error: UnsuccessfulResponseError(responseCode: statusCode)) == .shutdown {
                 logger.log(.info, "Connection has been explicitly shut down by error handler")
                 readyState = .shutdown
