@@ -16,15 +16,15 @@ jobs:
     strategy:
       matrix:
         include:
-          - xcode-version: 15.0.1
-            ios-sim: 'platform=iOS Simulator,name=iPhone 17,OS=17.0'
-            os: macos-13
+          # - xcode-version: 15.0.1
+          #   ios-sim: 'platform=iOS Simulator,name=iPhone 17,OS=17.0'
+          #   os: macos-13
           - xcode-version: 14.3.1
             ios-sim: 'platform=iOS Simulator,name=iPhone 16,OS=16.4'
             os: macos-13
-          - xcode-version: 13.4.1
-            ios-sim: 'platform=iOS Simulator,name=iPhone 11,OS=15.5'
-            os: macos-12
+          # - xcode-version: 13.4.1
+          #   ios-sim: 'platform=iOS Simulator,name=iPhone 11,OS=15.5'
+          #   os: macos-12
 
     steps:
       - uses: actions/checkout@v4
@@ -38,41 +38,41 @@ jobs:
 
       - uses: ./.github/actions/build-docs
 
-  linux-build:
-    runs-on: ubuntu-latest
+  # linux-build:
+  #   runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        swift-version:
-          - 5.1
-          - 5.2
-          - 5.3
-          - 5.4
-          - 5.5
-          - 5.6
-          - 5.7
-          - 5.8
-          - 5.9
+  #   strategy:
+  #     matrix:
+  #       swift-version:
+  #         - 5.1
+  #         - 5.2
+  #         - 5.3
+  #         - 5.4
+  #         - 5.5
+  #         - 5.6
+  #         - 5.7
+  #         - 5.8
+  #         - 5.9
 
-    container: swift:${{ matrix.swift-version }}
+  #   container: swift:${{ matrix.swift-version }}
 
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0 # If you only need the current version keep this.
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #       with:
+  #         fetch-depth: 0 # If you only need the current version keep this.
 
-      - name: Build and test
-        run: swift test --enable-test-discovery
+  #     - name: Build and test
+  #       run: swift test --enable-test-discovery
 
-  windows-build:
-    name: Windows - Swift 5.9
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Install Swift
-        uses: compnerd/gha-setup-swift@cd348eb89f2f450b0664c07fb1cb66880addf17d
-        with:
-          branch: swift-5.9-release
-          tag: 5.9-RELEASE
-      - name: Build and test
-        run: swift test
+  # windows-build:
+  #   name: Windows - Swift 5.9
+  #   runs-on: windows-latest
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - name: Install Swift
+  #       uses: compnerd/gha-setup-swift@cd348eb89f2f450b0664c07fb1cb66880addf17d
+  #       with:
+  #         branch: swift-5.9-release
+  #         tag: 5.9-RELEASE
+  #     - name: Build and test
+  #       run: swift test

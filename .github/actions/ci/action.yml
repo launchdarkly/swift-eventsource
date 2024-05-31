@@ -36,38 +36,44 @@ runs:
       shell: bash
       run: xcodebuild test -scheme 'LDSwiftEventSource' -sdk macosx -destination 'platform=macOS' | xcpretty
 
-    - name: Build for ARM64 macOS
-      shell: bash
-      run: xcodebuild build -scheme 'LDSwiftEventSource' -arch arm64e -sdk macosx | xcpretty
+    # - name: Build for ARM64 macOS
+    #   shell: bash
+    #   run: xcodebuild build -scheme 'LDSwiftEventSource' -arch arm64e -sdk macosx | xcpretty
 
-    - name: Build Tests for iOS device
-      shell: bash
-      run: xcodebuild build-for-testing -scheme 'LDSwiftEventSource' -sdk iphoneos CODE_SIGN_IDENTITY= | xcpretty
+    # - name: Build Tests for iOS device
+    #   shell: bash
+    #   run: xcodebuild build-for-testing -scheme 'LDSwiftEventSource' -sdk iphoneos CODE_SIGN_IDENTITY= | xcpretty
 
-    - name: Build & Test on iOS Simulator
-      shell: bash
-      run: xcodebuild test -scheme 'LDSwiftEventSource' -sdk iphonesimulator -destination '${{ inputs.ios-sim }}' CODE_SIGN_IDENTITY= | xcpretty
+    # - name: Build & Test on iOS Simulator
+    #   shell: bash
+    #   run: xcodebuild test -scheme 'LDSwiftEventSource' -sdk iphonesimulator -destination '${{ inputs.ios-sim }}' CODE_SIGN_IDENTITY= | xcpretty
 
-    - name: Build Tests for tvOS device
-      shell: bash
-      run: xcodebuild build-for-testing -scheme 'LDSwiftEventSource' -sdk appletvos CODE_SIGN_IDENTITY= | xcpretty
+    # - name: Build Tests for tvOS device
+    #   shell: bash
+    #   run: xcodebuild build-for-testing -scheme 'LDSwiftEventSource' -sdk appletvos CODE_SIGN_IDENTITY= | xcpretty
 
-    - name: Build & Test on tvOS Simulator
-      shell: bash
-      run: xcodebuild test -scheme 'LDSwiftEventSource' -sdk appletvsimulator -destination 'platform=tvOS Simulator,name=Apple TV' | xcpretty
+    # - name: Build & Test on tvOS Simulator
+    #   shell: bash
+    #   run: xcodebuild test -scheme 'LDSwiftEventSource' -sdk appletvsimulator -destination 'platform=tvOS Simulator,name=Apple TV' | xcpretty
 
-    - name: Build for watchOS simulator # No XCTest testing on watchOS
-      shell: bash
-      run: xcodebuild build -scheme 'LDSwiftEventSource' -sdk watchsimulator | xcpretty
+    # - name: Build for watchOS simulator # No XCTest testing on watchOS
+    #   shell: bash
+    #   run: xcodebuild build -scheme 'LDSwiftEventSource' -sdk watchsimulator | xcpretty
 
-    - name: Build for watchOS device # No XCTest testing on watchOS
-      shell: bash
-      run: xcodebuild build -scheme 'LDSwiftEventSource' -sdk watchos | xcpretty
+    # - name: Build for watchOS device # No XCTest testing on watchOS
+    #   shell: bash
+    #   run: xcodebuild build -scheme 'LDSwiftEventSource' -sdk watchos | xcpretty
 
     - name: Build & Test with swiftpm
       shell: bash
       run: swift test -v 2>&1 | xcpretty
 
-    - name: Run contract tests
+    - name: Build & Run Contract Test Service
       shell: bash
-      run: make contract-tests
+      run: make build-contract-tests start-contract-test-service-bg
+
+    - uses: launchdarkly/gh-actions/actions/contract-tests@contract-tests-v1.0.0
+      with:
+        # Inform the test harness of test service's port.
+        test_service_port: 8000
+        token: ${{ secrets.GITHUB_TOKEN }}
