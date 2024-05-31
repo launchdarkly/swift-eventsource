@@ -35,6 +35,7 @@ jobs:
         with:
           xcode-version: ${{ matrix.xcode-version }}
           ios-sim: ${{ matrix.ios-sim }}
+          github-token: ${{ secrets.github-token }}
 
       - uses: ./.github/actions/build-docs
 

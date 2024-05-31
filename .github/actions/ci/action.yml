@@ -10,6 +10,9 @@ inputs:
   ios-sim:
     description: 'iOS Simulator to use for testing'
     required: true
+  github-token:
+    description: 'Token to use for publishing.'
+    required: true
 
 runs:
   using: composite
@@ -76,4 +79,4 @@ runs:
       with:
         # Inform the test harness of test service's port.
         test_service_port: 8000
-        token: ${{ secrets.GITHUB_TOKEN }}
+        token: ${{ inputs.github-token }}
