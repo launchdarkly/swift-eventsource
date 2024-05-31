@@ -2,6 +2,14 @@
 
 All notable changes to the LaunchDarkly Swift EventSource library will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [3.3.0](https://github.com/launchdarkly/swift-eventsource/compare/3.2.0...3.3.0) (2024-05-31)
+
+
+### Features
+
+* adds ability to provide a OSLog instance via the Config.logger property ([c10ec29](https://github.com/launchdarkly/swift-eventsource/commit/c10ec2936e77959f828a041b71ea56e454e39ff2))
+* adds ability to provide a OSLog instance via the Config.logger property ([#78](https://github.com/launchdarkly/swift-eventsource/issues/78)) ([2220929](https://github.com/launchdarkly/swift-eventsource/commit/2220929cbc98edd88e0e7d8b5ccb1f3992b4cf4f))
+
 ## [3.2.0](https://github.com/launchdarkly/swift-eventsource/compare/3.1.1...3.2.0) (2023-12-29)
 
 

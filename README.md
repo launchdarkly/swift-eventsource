@@ -41,7 +41,7 @@ To include LDSwiftEventSource in a Swift package, simply add it to the dependenc
 <!-- x-release-please-start-version -->
 ```swift
 dependencies: [
-    .package(url: "https://github.com/LaunchDarkly/swift-eventsource.git", .upToNextMajor(from: "3.2.0"))
+    .package(url: "https://github.com/LaunchDarkly/swift-eventsource.git", .upToNextMajor(from: "3.3.0"))
 ]
 ```
 <!-- x-release-please-end -->
