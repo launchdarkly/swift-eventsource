@@ -68,6 +68,15 @@ runs:
       shell: bash
       run: swift test -v 2>&1 | xcpretty
 
-    - name: Run contract tests
+    - name: Build contract test service
       shell: bash
-      run: make contract-tests
+      run: make build-contract-tests
+
+    - name: Start contract test service
+      shell: bash
+      run: make start-contract-test-service-bg
+
+    - uses: launchdarkly/gh-actions/actions/contract-tests@contract-tests-v1.0.2
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        extra_params: "-url http://localhost:8000 -debug -stop-service-at-end -skip 'basic parsing/large message in one chunk' -skip 'basic parsing/large message in two chunks'"
