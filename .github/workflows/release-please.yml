@@ -36,7 +36,7 @@ jobs:
       #
       # These remaining steps are ONLY run if a release was actually created
       #
-      - uses: launchdarkly/gh-actions/actions/release-secrets@release-secrets-v1.0.0
+      - uses: launchdarkly/gh-actions/actions/release-secrets@release-secrets-v1.2.0
         if: ${{ steps.release.outputs.releases_created == 'true' }}
         name: 'Get Cocoapods token'
         with:
