@@ -10,6 +10,9 @@ inputs:
   ios-sim:
     description: 'iOS Simulator to use for testing'
     required: true
+  token:
+    description: 'Token to use for publishing.'
+    required: true
 
 runs:
   using: composite
@@ -78,5 +81,5 @@ runs:
 
     - uses: launchdarkly/gh-actions/actions/contract-tests@contract-tests-v1.0.2
       with:
-        token: ${{ secrets.GITHUB_TOKEN }}
+        token: ${{ inputs.token }}
         extra_params: "-url http://localhost:8000 -debug -stop-service-at-end -skip 'basic parsing/large message in one chunk' -skip 'basic parsing/large message in two chunks'"
