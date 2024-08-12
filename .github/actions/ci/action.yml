@@ -82,4 +82,5 @@ runs:
     - uses: launchdarkly/gh-actions/actions/contract-tests@contract-tests-v1.0.2
       with:
         token: ${{ inputs.token }}
-        extra_params: "-url http://localhost:8000 -debug -stop-service-at-end -skip 'basic parsing/large message in one chunk' -skip 'basic parsing/large message in two chunks'"
+        test_service_port: '8000'
+        extra_params: "-status-timeout 60 -stop-service-at-end -skip 'basic parsing/large message in one chunk' -skip 'basic parsing/large message in two chunks'"
