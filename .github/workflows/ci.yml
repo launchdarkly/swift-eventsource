@@ -14,6 +14,7 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     strategy:
+      fail-fast: false
       matrix:
         include:
           - xcode-version: 15.0.1
@@ -35,6 +36,7 @@ jobs:
         with:
           xcode-version: ${{ matrix.xcode-version }}
           ios-sim: ${{ matrix.ios-sim }}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: ./.github/actions/build-docs
 
@@ -42,14 +44,9 @@ jobs:
     runs-on: ubuntu-latest
 
     strategy:
+      fail-fast: false
       matrix:
         swift-version:
-          - 5.1
-          - 5.2
-          - 5.3
-          - 5.4
-          - 5.5
-          - 5.6
           - 5.7
           - 5.8
           - 5.9
@@ -57,7 +54,7 @@ jobs:
     container: swift:${{ matrix.swift-version }}
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0 # If you only need the current version keep this.
 
@@ -68,7 +65,7 @@ jobs:
     name: Windows - Swift 5.9
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Install Swift
         uses: compnerd/gha-setup-swift@cd348eb89f2f450b0664c07fb1cb66880addf17d
         with:

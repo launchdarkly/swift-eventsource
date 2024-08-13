@@ -10,6 +10,9 @@ inputs:
   ios-sim:
     description: 'iOS Simulator to use for testing'
     required: true
+  token:
+    description: 'Token to use for publishing.'
+    required: true
 
 runs:
   using: composite

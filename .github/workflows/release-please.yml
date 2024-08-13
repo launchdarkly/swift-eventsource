@@ -15,10 +15,9 @@ jobs:
       pull-requests: write
 
     steps:
-      - uses: google-github-actions/release-please-action@v4
+      - uses: googleapis/release-please-action@v4
         id: release
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
           target-branch: ${{ github.ref_name }}
 
       - uses: actions/checkout@v4
@@ -36,7 +35,7 @@ jobs:
       #
       # These remaining steps are ONLY run if a release was actually created
       #
-      - uses: launchdarkly/gh-actions/actions/release-secrets@release-secrets-v1.0.0
+      - uses: launchdarkly/gh-actions/actions/release-secrets@release-secrets-v1.2.0
         if: ${{ steps.release.outputs.releases_created == 'true' }}
         name: 'Get Cocoapods token'
         with:
@@ -48,6 +47,7 @@ jobs:
         with:
           xcode-version: 14.3.1
           ios-sim: 'platform=iOS Simulator,name=iPhone 16,OS=16.4'
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: ./.github/actions/build-docs
         if: ${{ steps.release.outputs.releases_created == 'true' }}

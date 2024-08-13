@@ -8,7 +8,7 @@ inputs:
 runs:
   using: composite
   steps:
-    - uses: launchdarkly/gh-actions/actions/publish-pages@publish-pages-v1.0.1
+    - uses: launchdarkly/gh-actions/actions/publish-pages@publish-pages-v1.0.2
       name: 'Publish to GitHub pages'
       with:
         docs_path: docs

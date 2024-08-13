@@ -19,7 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: launchdarkly/gh-actions/actions/release-secrets@release-secrets-v1.0.0
+      - uses: launchdarkly/gh-actions/actions/release-secrets@release-secrets-v1.2.0
         name: 'Get Cocoapods token'
         with:
           aws_assume_role: ${{ vars.AWS_ROLE_ARN }}
@@ -29,6 +29,7 @@ jobs:
         with:
           xcode-version: 14.3.1
           ios-sim: 'platform=iOS Simulator,name=iPhone 16,OS=16.4'
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: ./.github/actions/publish
         with:
