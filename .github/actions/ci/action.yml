@@ -71,16 +71,6 @@ runs:
       shell: bash
       run: swift test -v 2>&1 | xcpretty
 
-    - name: Build contract test service
+    - name: Run contract tests
       shell: bash
-      run: make build-contract-tests
-
-    - name: Start contract test service
-      shell: bash
-      run: make start-contract-test-service-bg
-
-    - uses: launchdarkly/gh-actions/actions/contract-tests@contract-tests-v1.0.2
-      with:
-        token: ${{ inputs.token }}
-        test_service_port: '8000'
-        extra_params: "-status-timeout 60 -stop-service-at-end -skip 'basic parsing/large message in one chunk' -skip 'basic parsing/large message in two chunks'"
+      run: make contract-tests

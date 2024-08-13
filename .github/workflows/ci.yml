@@ -14,6 +14,7 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     strategy:
+      fail-fast: false
       matrix:
         include:
           - xcode-version: 15.0.1
@@ -43,14 +44,9 @@ jobs:
     runs-on: ubuntu-latest
 
     strategy:
+      fail-fast: false
       matrix:
         swift-version:
-          - 5.1
-          - 5.2
-          - 5.3
-          - 5.4
-          - 5.5
-          - 5.6
           - 5.7
           - 5.8
           - 5.9
@@ -58,7 +54,7 @@ jobs:
     container: swift:${{ matrix.swift-version }}
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0 # If you only need the current version keep this.
 
