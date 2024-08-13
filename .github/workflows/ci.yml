@@ -45,6 +45,9 @@ jobs:
     strategy:
       matrix:
         swift-version:
+          - 5.1
+          - 5.2
+          - 5.3
           - 5.4
           - 5.5
           - 5.6
@@ -55,7 +58,7 @@ jobs:
     container: swift:${{ matrix.swift-version }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0 # If you only need the current version keep this.
 
