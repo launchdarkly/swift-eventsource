@@ -22,7 +22,7 @@ jobs:
 
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # If you only need the current version keep this.
+          fetch-depth: 0 # Full history is required for proper changelog generation
 
       #
       # This step runs and updates an existing PR
