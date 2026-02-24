@@ -17,12 +17,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - xcode-version: 15.0.1
-            ios-sim: 'platform=iOS Simulator,name=iPhone 17,OS=17.0'
-            os: macos-13
-          - xcode-version: 14.3.1
-            ios-sim: 'platform=iOS Simulator,name=iPhone 16,OS=16.4'
-            os: macos-13
+          - xcode-version: 15.4.0
+            ios-sim: 'platform=iOS Simulator,name=iPhone 15'
+            os: macos-14
 
     steps:
       - uses: actions/checkout@v4
@@ -59,14 +56,14 @@ jobs:
         run: swift test --enable-test-discovery
 
   windows-build:
-    name: Windows - Swift 5.9
+    name: Windows - Swift 5.10
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
       - name: Install Swift
         uses: compnerd/gha-setup-swift@cd348eb89f2f450b0664c07fb1cb66880addf17d
         with:
-          branch: swift-5.9-release
-          tag: 5.9-RELEASE
+          branch: swift-5.10.1-release
+          tag: 5.10.1-RELEASE
       - name: Build and test
         run: swift test
