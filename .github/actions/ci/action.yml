@@ -27,6 +27,10 @@ runs:
         brew tap mint-lang/mint-lang
         brew install mint-lang
 
+    - name: Bootstrap Mint packages
+      shell: bash
+      run: mint bootstrap
+
     - name: Install cocoapods
       shell: bash
       run: gem install cocoapods
