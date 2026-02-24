@@ -56,14 +56,14 @@ jobs:
         run: swift test --enable-test-discovery
 
   windows-build:
-    name: Windows - Swift 5.10
-    runs-on: windows-latest
+    name: Windows - Swift 5.9
+    runs-on: windows-2022
     steps:
       - uses: actions/checkout@v4
       - name: Install Swift
         uses: compnerd/gha-setup-swift@cd348eb89f2f450b0664c07fb1cb66880addf17d
         with:
-          branch: swift-5.10.1-release
-          tag: 5.10.1-RELEASE
+          branch: swift-5.9-release
+          tag: 5.9-RELEASE
       - name: Build and test
         run: swift test
