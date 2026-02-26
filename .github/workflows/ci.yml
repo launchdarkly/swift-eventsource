@@ -17,9 +17,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - xcode-version: 15.4.0
+          - xcode-version: 16.4
             ios-sim: 'platform=iOS Simulator,name=iPhone 15'
-            os: macos-14
+            os: macos-15
 
     steps:
       - uses: actions/checkout@v4
