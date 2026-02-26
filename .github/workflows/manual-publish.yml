@@ -9,7 +9,7 @@ on:
 
 jobs:
   build-publish:
-    runs-on: macos-14
+    runs-on: macos-15
 
     # Needed to get tokens during publishing.
     permissions:
@@ -27,7 +27,7 @@ jobs:
 
       - uses: ./.github/actions/ci
         with:
-          xcode-version: 15.4.0
+          xcode-version: 16.4
           ios-sim: 'platform=iOS Simulator,name=iPhone 15'
           token: ${{ secrets.GITHUB_TOKEN }}
 
