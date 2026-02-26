@@ -23,8 +23,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 # If you only need the current version keep this.
 
       - uses: ./.github/actions/ci
         with:
@@ -49,8 +47,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 # If you only need the current version keep this.
 
       - name: Build and test
         run: swift test --enable-test-discovery
