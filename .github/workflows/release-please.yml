@@ -46,7 +46,7 @@ jobs:
         if: ${{ steps.release.outputs.releases_created == 'true' }}
         with:
           xcode-version: 16.4
-          ios-sim: 'platform=iOS Simulator,name=iPhone 15'
+          ios-sim: 'platform=iOS Simulator,name=iPhone 16'
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: ./.github/actions/build-docs
