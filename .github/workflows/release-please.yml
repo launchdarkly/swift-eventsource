@@ -7,7 +7,7 @@ on:
 
 jobs:
   release-package:
-    runs-on: macos-14
+    runs-on: macos-15
 
     permissions:
       id-token: write # Needed if using OIDC to get release secrets.
@@ -45,8 +45,8 @@ jobs:
       - uses: ./.github/actions/ci
         if: ${{ steps.release.outputs.releases_created == 'true' }}
         with:
-          xcode-version: 15.4.0
-          ios-sim: 'platform=iOS Simulator,name=iPhone 15'
+          xcode-version: 16.4
+          ios-sim: 'platform=iOS Simulator,name=iPhone 16'
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: ./.github/actions/build-docs
