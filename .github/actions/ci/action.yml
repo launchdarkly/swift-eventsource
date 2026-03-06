@@ -75,4 +75,6 @@ runs:
 
     - name: Run contract tests
       shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.token }}
       run: make contract-tests
