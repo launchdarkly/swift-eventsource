@@ -16,10 +16,11 @@ runs:
       shell: bash
       run: make start-contract-test-service-bg
 
-    # DEBUG: Running the downloader script inline with added debugging
-    # instead of using the shared action, to diagnose release resolution failure.
-    # Original action usage commented out at the bottom of this file.
-    - name: Run contract tests (debug)
+    # Inline downloader script instead of shared action to ensure the GitHub
+    # API call for resolving the release version uses an auth token. The
+    # upstream sse-contract-tests/downloader/run.sh does not pass the token,
+    # which causes rate-limit failures on shared CI runners.
+    - name: Run contract tests
       shell: bash
       env:
         GITHUB_TOKEN: ${{ inputs.token }}
@@ -28,18 +29,9 @@ runs:
       run: |
         set -e
 
-        echo "=== DEBUG: Contract test downloader script (inline with debugging) ==="
-        echo "VERSION=$VERSION"
-        echo "PARAMS=$PARAMS"
-        echo "GITHUB_TOKEN is set: $([ -n "$GITHUB_TOKEN" ] && echo 'yes' || echo 'no')"
-        echo "GITHUB_TOKEN length: ${#GITHUB_TOKEN}"
-
         RELEASES_API_URL=https://api.github.com/repos/launchdarkly/sse-contract-tests/releases
         RELEASES_SITE_URL=https://github.com/launchdarkly/sse-contract-tests/releases
         EXECUTABLE_ARCHIVE_NAME=sse-contract-tests_$(uname -s)_$(uname -m).tar.gz
-
-        echo "=== DEBUG: OS=$(uname -s) ARCH=$(uname -m) ==="
-        echo "=== DEBUG: EXECUTABLE_ARCHIVE_NAME=$EXECUTABLE_ARCHIVE_NAME ==="
 
         if [ -z "${VERSION}" -o -z "${PARAMS}" ]; then
           echo 'You must specify a version string in $VERSION and command parameters in $PARAMS' >&2
@@ -48,41 +40,14 @@ runs:
 
         resolve_version() {
           if echo "$1" | grep -q '^v[^.][^.]*\.[^.][^.]*\.'; then
-            echo "=== DEBUG: Version '$1' is already a complete version string ===" >&2
             echo "$1"
             return
           fi
 
-          echo "=== DEBUG: Version '$1' is partial, resolving from API ===" >&2
-          echo "=== DEBUG: API URL: ${RELEASES_API_URL} ===" >&2
-
-          # Try with auth token (matching how the action passes it)
           if [ -n "${GITHUB_TOKEN}" ]; then
-            echo "=== DEBUG: Fetching releases WITH auth token ===" >&2
             API_RESPONSE=$(curl -s -H "Authorization: token ${GITHUB_TOKEN}" "${RELEASES_API_URL}")
           else
-            echo "=== DEBUG: Fetching releases WITHOUT auth token ===" >&2
             API_RESPONSE=$(curl -s "${RELEASES_API_URL}")
-          fi
-
-          echo "=== DEBUG: API response length: ${#API_RESPONSE} ===" >&2
-          echo "=== DEBUG: First 500 chars of response: ===" >&2
-          echo "${API_RESPONSE}" | head -c 500 >&2
-          echo "" >&2
-
-          # Check for rate limiting or error
-          if echo "${API_RESPONSE}" | grep -q '"message"'; then
-            echo "=== DEBUG: API returned a message (possible error/rate limit): ===" >&2
-            echo "${API_RESPONSE}" | grep '"message"' >&2
-          fi
-
-          # Check for tag_name entries
-          TAG_COUNT=$(echo "${API_RESPONSE}" | grep "tag_name" | wc -l)
-          echo "=== DEBUG: Found $TAG_COUNT tag_name entries ===" >&2
-
-          if [ "$TAG_COUNT" -gt 0 ]; then
-            echo "=== DEBUG: All tags found: ===" >&2
-            echo "${API_RESPONSE}" | grep "tag_name" | sed -e 's/.*:[^"]*"\([^"]*\).*/\1/' >&2
           fi
 
           RESOLVED=$(echo "${API_RESPONSE}" \
@@ -91,42 +56,18 @@ runs:
             | grep "^$1\." \
             | head -n 1)
 
-          echo "=== DEBUG: grep pattern used: '^$1.' ===" >&2
-          echo "=== DEBUG: Resolved version: '${RESOLVED}' ===" >&2
           echo "${RESOLVED}"
         }
 
         VERSION_TO_DOWNLOAD=$(resolve_version "${VERSION}")
         if [ -z "${VERSION_TO_DOWNLOAD}" ]; then
           echo "Unable to find a release matching '${VERSION}'" >&2
-
-          echo "=== DEBUG: Trying paginated API (per_page=100) ===" >&2
-          if [ -n "${GITHUB_TOKEN}" ]; then
-            PAGINATED_RESPONSE=$(curl -s -H "Authorization: token ${GITHUB_TOKEN}" "${RELEASES_API_URL}?per_page=100")
-          else
-            PAGINATED_RESPONSE=$(curl -s "${RELEASES_API_URL}?per_page=100")
-          fi
-          echo "=== DEBUG: Paginated response length: ${#PAGINATED_RESPONSE} ===" >&2
-          PAGINATED_TAGS=$(echo "${PAGINATED_RESPONSE}" | grep "tag_name" | sed -e 's/.*:[^"]*"\([^"]*\).*/\1/')
-          echo "=== DEBUG: Paginated tags: ===" >&2
-          echo "${PAGINATED_TAGS}" >&2
-
-          # Also check rate limit status
-          echo "=== DEBUG: Checking rate limit ===" >&2
-          if [ -n "${GITHUB_TOKEN}" ]; then
-            curl -s -H "Authorization: token ${GITHUB_TOKEN}" https://api.github.com/rate_limit >&2
-          else
-            curl -s https://api.github.com/rate_limit >&2
-          fi
-
           exit 1
         fi
 
         TEMP_DIR="/tmp/sse-contract-tests_${VERSION_TO_DOWNLOAD}"
         EXECUTABLE="${TEMP_DIR}/sse-contract-tests"
         DOWNLOAD_URL="${RELEASES_SITE_URL}/download/${VERSION_TO_DOWNLOAD}/${EXECUTABLE_ARCHIVE_NAME}"
-
-        echo "=== DEBUG: Will download from ${DOWNLOAD_URL} ==="
 
         if [ ! -x "${EXECUTABLE}" ]; then
           rm -rf "${TEMP_DIR}"
@@ -136,17 +77,4 @@ runs:
           tar -xf "${TEMP_DIR}/archive.tar.gz" -C "${TEMP_DIR}"
         fi
 
-        echo "=== DEBUG: Running contract tests ==="
         sh -c "${EXECUTABLE} $PARAMS"
-
-    # COMMENTED OUT: Original action usage - restore after debugging
-    # - name: Run contract tests
-    #   uses: launchdarkly/gh-actions/actions/contract-tests@5adb11fd6953e1bc35d9cf1fc1b4374c464e3a8b # contract-tests-v1.3.0
-    #   with:
-    #     repo: sse-contract-tests
-    #     branch: main
-    #     test_service_port: 8000
-    #     debug_logging: true
-    #     enable_persistence_tests: false
-    #     token: ${{ inputs.token }}
-    #     extra_params: "-skip 'basic parsing/large message in one chunk' -skip 'basic parsing/large message in two chunks'"
