@@ -1,0 +1,20 @@
+name: Build & Test tvOS
+description: 'Build for tvOS device and run tests on tvOS Simulator.'
+
+runs:
+  using: composite
+  steps:
+    # Workaround for intermittent macos-15 runner issue where simulator
+    # runtimes aren't loaded. Listing devices forces the simulator service
+    # to initialize. See https://github.com/actions/runner-images/issues/12948
+    - name: Prepare tvOS Simulator runtime
+      shell: bash
+      run: xcrun simctl list devices available
+
+    - name: Build Tests for tvOS device
+      shell: bash
+      run: xcodebuild build-for-testing -scheme 'LDSwiftEventSource' -sdk appletvos CODE_SIGN_IDENTITY= | xcpretty
+
+    - name: Build & Test on tvOS Simulator
+      shell: bash
+      run: xcodebuild test -scheme 'LDSwiftEventSource' -sdk appletvsimulator -destination 'platform=tvOS Simulator,name=Apple TV' | xcpretty

@@ -1,0 +1,24 @@
+name: Build & Test iOS
+description: 'Build for iOS device and run tests on iOS Simulator.'
+inputs:
+  ios-sim:
+    description: 'iOS Simulator to use for testing'
+    required: true
+
+runs:
+  using: composite
+  steps:
+    # Workaround for intermittent macos-15 runner issue where simulator
+    # runtimes aren't loaded. Listing devices forces the simulator service
+    # to initialize. See https://github.com/actions/runner-images/issues/12948
+    - name: Prepare iOS Simulator runtime
+      shell: bash
+      run: xcrun simctl list devices available
+
+    - name: Build Tests for iOS device
+      shell: bash
+      run: xcodebuild build-for-testing -scheme 'LDSwiftEventSource' -sdk iphoneos CODE_SIGN_IDENTITY= | xcpretty
+
+    - name: Build & Test on iOS Simulator
+      shell: bash
+      run: xcodebuild test -scheme 'LDSwiftEventSource' -sdk iphonesimulator -destination '${{ inputs.ios-sim }}' CODE_SIGN_IDENTITY= | xcpretty

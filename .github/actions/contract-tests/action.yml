@@ -1,0 +1,13 @@
+name: Contract Tests
+description: 'Build and run SDK contract tests.'
+inputs:
+  token:
+    description: 'GH token used to download SDK test harness.'
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Run contract tests
+      shell: bash
+      run: make contract-tests

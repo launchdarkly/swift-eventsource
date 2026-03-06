@@ -1,0 +1,20 @@
+name: Build watchOS
+description: 'Build for watchOS device and simulator.'
+
+runs:
+  using: composite
+  steps:
+    # Workaround for intermittent macos-15 runner issue where simulator
+    # runtimes aren't loaded. Listing devices forces the simulator service
+    # to initialize. See https://github.com/actions/runner-images/issues/12948
+    - name: Prepare watchOS Simulator runtime
+      shell: bash
+      run: xcrun simctl list devices available
+
+    - name: Build for watchOS simulator
+      shell: bash
+      run: xcodebuild build -scheme 'LDSwiftEventSource' -sdk watchsimulator | xcpretty
+
+    - name: Build for watchOS device
+      shell: bash
+      run: xcodebuild build -scheme 'LDSwiftEventSource' -sdk watchos | xcpretty
