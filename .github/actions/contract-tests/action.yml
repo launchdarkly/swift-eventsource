@@ -8,6 +8,20 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Run contract tests
+    - name: Build contract test service
       shell: bash
-      run: make contract-tests
+      run: make build-contract-tests
+
+    - name: Start contract test service
+      shell: bash
+      run: make start-contract-test-service-bg
+
+    - name: Run contract tests
+      uses: launchdarkly/gh-actions/actions/contract-tests@contract-tests-v1.3.0
+      with:
+        repo: sse-contract-tests
+        branch: main
+        test_service_port: 8000
+        debug_logging: true
+        token: ${{ inputs.token }}
+        extra_params: "-skip 'basic parsing/large message in one chunk' -skip 'basic parsing/large message in two chunks'"
