@@ -86,6 +86,7 @@ runs:
       with:
         repo: sse-contract-tests
         branch: main
+        branch: main
         test_service_port: 8000
         debug_logging: true
         token: ${{ inputs.token }}
