@@ -27,4 +27,5 @@ runs:
         test_harness_port: '8111'
         debug_logging: 'true'
         stop_service: true
+        enable_persistence_tests: false
         extra_params: "-skip 'basic parsing/large message in one chunk' -skip 'basic parsing/large message in two chunks'"
