@@ -16,65 +16,14 @@ runs:
       shell: bash
       run: make start-contract-test-service-bg
 
-    # Inline downloader script instead of shared action to ensure the GitHub
-    # API call for resolving the release version uses an auth token. The
-    # upstream sse-contract-tests/downloader/run.sh does not pass the token,
-    # which causes rate-limit failures on shared CI runners.
     - name: Run contract tests
-      shell: bash
-      env:
-        GITHUB_TOKEN: ${{ inputs.token }}
-        VERSION: v2
-        PARAMS: "-url http://localhost:8000 -port 8111 -skip 'basic parsing/large message in one chunk' -skip 'basic parsing/large message in two chunks' -debug -stop-service-at-end"
-      run: |
-        set -e
-
-        RELEASES_API_URL=https://api.github.com/repos/launchdarkly/sse-contract-tests/releases
-        RELEASES_SITE_URL=https://github.com/launchdarkly/sse-contract-tests/releases
-        EXECUTABLE_ARCHIVE_NAME=sse-contract-tests_$(uname -s)_$(uname -m).tar.gz
-
-        if [ -z "${VERSION}" -o -z "${PARAMS}" ]; then
-          echo 'You must specify a version string in $VERSION and command parameters in $PARAMS' >&2
-          exit 1
-        fi
-
-        resolve_version() {
-          if echo "$1" | grep -q '^v[^.][^.]*\.[^.][^.]*\.'; then
-            echo "$1"
-            return
-          fi
-
-          if [ -n "${GITHUB_TOKEN}" ]; then
-            API_RESPONSE=$(curl -s -H "Authorization: token ${GITHUB_TOKEN}" "${RELEASES_API_URL}")
-          else
-            API_RESPONSE=$(curl -s "${RELEASES_API_URL}")
-          fi
-
-          RESOLVED=$(echo "${API_RESPONSE}" \
-            | grep "tag_name" \
-            | sed -e 's/.*:[^"]*"\([^"]*\).*/\1/' \
-            | grep "^$1\." \
-            | head -n 1)
-
-          echo "${RESOLVED}"
-        }
-
-        VERSION_TO_DOWNLOAD=$(resolve_version "${VERSION}")
-        if [ -z "${VERSION_TO_DOWNLOAD}" ]; then
-          echo "Unable to find a release matching '${VERSION}'" >&2
-          exit 1
-        fi
-
-        TEMP_DIR="/tmp/sse-contract-tests_${VERSION_TO_DOWNLOAD}"
-        EXECUTABLE="${TEMP_DIR}/sse-contract-tests"
-        DOWNLOAD_URL="${RELEASES_SITE_URL}/download/${VERSION_TO_DOWNLOAD}/${EXECUTABLE_ARCHIVE_NAME}"
-
-        if [ ! -x "${EXECUTABLE}" ]; then
-          rm -rf "${TEMP_DIR}"
-          mkdir "${TEMP_DIR}"
-          echo "Downloading ${DOWNLOAD_URL}"
-          curl --fail -s -L -o "${TEMP_DIR}/archive.tar.gz" "${DOWNLOAD_URL}" || (echo "Download failed" >&2; exit 1)
-          tar -xf "${TEMP_DIR}/archive.tar.gz" -C "${TEMP_DIR}"
-        fi
-
-        sh -c "${EXECUTABLE} $PARAMS"
+      uses: launchdarkly/gh-actions/actions/contract-tests@main
+      with:
+        repo: sse-contract-tests
+        version: v2
+        token: ${{ inputs.token }}
+        test_service_port: '8000'
+        test_harness_port: '8111'
+        debug_logging: 'true'
+        stop_service: true
+        extra_params: "-skip 'basic parsing/large message in one chunk' -skip 'basic parsing/large message in two chunks'"
