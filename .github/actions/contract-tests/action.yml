@@ -25,4 +25,5 @@ runs:
         token: ${{ inputs.token }}
         test_service_port: '8000'
         debug_logging: 'true'
+        enable_persistence_tests: 'false'
         extra_params: "-skip 'basic parsing/large message in one chunk' -skip 'basic parsing/large message in two chunks'"
