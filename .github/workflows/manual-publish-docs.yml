@@ -13,11 +13,26 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build and Test
-        uses: ./.github/actions/ci
+      - uses: maxim-lobanov/setup-xcode@60606e260d2fc5762a71e64e74b2174e8ea3c8bd
         with:
           xcode-version: 16.4
+
+      - uses: ./.github/actions/lint
+
+      - uses: ./.github/actions/build-ios
+        with:
           ios-sim: 'platform=iOS Simulator,name=iPhone 16'
+
+      - uses: ./.github/actions/build-macos
+
+      - uses: ./.github/actions/build-tvos
+
+      - uses: ./.github/actions/build-watchos
+
+      - uses: ./.github/actions/test-swiftpm
+
+      - uses: ./.github/actions/contract-tests
+        with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: ./.github/actions/build-docs

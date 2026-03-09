@@ -1,0 +1,9 @@
+name: Test SwiftPM
+description: 'Build and test using Swift Package Manager.'
+
+runs:
+  using: composite
+  steps:
+    - name: Build & Test with SwiftPM
+      shell: bash
+      run: swift test -v 2>&1 | xcpretty

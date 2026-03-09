@@ -1,0 +1,22 @@
+name: Lint
+description: 'Run podspec and swiftlint checks.'
+
+runs:
+  using: composite
+  steps:
+    - name: Install swiftlint
+      shell: bash
+      run: brew install swiftlint
+
+    - name: Install cocoapods
+      shell: bash
+      run: gem install cocoapods
+
+    - name: Lint the podspec
+      shell: bash
+      # --quick skips building since dedicated build jobs already compile all platforms
+      run: pod lib lint LDSwiftEventSource.podspec --allow-warnings --quick
+
+    - name: Run swiftlint
+      shell: bash
+      run: swiftlint lint

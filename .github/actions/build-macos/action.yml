@@ -1,0 +1,13 @@
+name: Build & Test macOS
+description: 'Build and test for macOS.'
+
+runs:
+  using: composite
+  steps:
+    - name: Build & Test on macOS
+      shell: bash
+      run: xcodebuild test -scheme 'LDSwiftEventSource' -sdk macosx -destination 'platform=macOS' | xcpretty
+
+    - name: Build for ARM64 macOS
+      shell: bash
+      run: xcodebuild build -scheme 'LDSwiftEventSource' -arch arm64e -sdk macosx | xcpretty
