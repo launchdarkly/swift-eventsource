@@ -20,6 +20,7 @@ runs:
       uses: launchdarkly/gh-actions/actions/contract-tests@main
       with:
         repo: sse-contract-tests
+        branch: main
         version: v2
         token: ${{ inputs.token }}
         test_service_port: '8000'
