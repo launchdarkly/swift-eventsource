@@ -15,7 +15,7 @@ jobs:
       pull-requests: write
 
     steps:
-      - uses: googleapis/release-please-action@v4
+      - uses: googleapis/release-please-action@16a9c90856f42705d54a6fda1823352bdc62cf38 # v4.4.0
         id: release
         with:
           target-branch: ${{ github.ref_name }}
@@ -42,7 +42,7 @@ jobs:
           aws_assume_role: ${{ vars.AWS_ROLE_ARN }}
           ssm_parameter_pairs: '/production/common/releasing/cocoapods/token = COCOAPODS_TRUNK_TOKEN'
 
-      - uses: maxim-lobanov/setup-xcode@60606e260d2fc5762a71e64e74b2174e8ea3c8bd
+      - uses: maxim-lobanov/setup-xcode@60606e260d2fc5762a71e64e74b2174e8ea3c8bd # 60606e260d2fc5762a71e64e74b2174e8ea3c8bd
         if: ${{ steps.release.outputs.releases_created == 'true' }}
         with:
           xcode-version: 16.4
