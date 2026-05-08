@@ -7,6 +7,9 @@ on:
       - edited
       - synchronize
 
+permissions:
+  pull-requests: read
+
 jobs:
   lint-pr-title:
     uses: launchdarkly/gh-actions/.github/workflows/lint-pr-title.yml@main
