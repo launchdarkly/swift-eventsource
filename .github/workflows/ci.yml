@@ -1,11 +1,11 @@
 name: Run CI
 on:
   push:
-    branches: [ main ]
+    branches: [ main, "4.x" ]
     paths-ignore:
       - '**.md' # Do not need to run CI for markdown changes.
   pull_request:
-    branches: [ main ]
+    branches: [ main, "4.x" ]
     paths-ignore:
       - '**.md'
 
@@ -117,9 +117,8 @@ jobs:
       fail-fast: false
       matrix:
         swift-version:
-          - 5.7
-          - 5.8
-          - 5.9
+          - "6.0"
+          - "6.1"
 
     container: swift:${{ matrix.swift-version }}
 
@@ -127,7 +126,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Build and test
-        run: swift test --enable-test-discovery
+        run: swift test
 
   windows-build:
     name: Windows - Swift 6.1
