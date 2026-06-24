@@ -6,16 +6,16 @@ import Foundation
  This is different from `EventHandler.onError(error:)` in that it will not be called for other kinds of errors; also,
  it has the ability to tell the client to stop reconnecting by returning a `ConnectionErrorAction.shutdown`.
 */
-public typealias ConnectionErrorHandler = (Error) -> ConnectionErrorAction
+public typealias ConnectionErrorHandler = @Sendable (Error) -> ConnectionErrorAction
 
 /**
  Type for a function that will take in the current HTTP headers and return a new set of HTTP headers to be used when
  connecting and reconnecting to a stream.
  */
-public typealias HeaderTransform = ([String: String]) -> [String: String]
+public typealias HeaderTransform = @Sendable ([String: String]) -> [String: String]
 
 /// Potential actions a `ConnectionErrorHandler` can return
-public enum ConnectionErrorAction {
+public enum ConnectionErrorAction: Sendable {
     /**
      Specifies that the error should be logged normally and dispatched to the `EventHandler`. Connection retrying will
      proceed normally if appropriate.
@@ -29,7 +29,7 @@ public enum ConnectionErrorAction {
 }
 
 /// Struct representing received event from the stream.
-public struct MessageEvent: Equatable, Hashable {
+public struct MessageEvent: Equatable, Hashable, Sendable {
     /// The event data of the event.
     public let data: String
     /// The last seen event id, or the event id set in the Config if none have been received.
@@ -48,7 +48,7 @@ public struct MessageEvent: Equatable, Hashable {
 }
 
 /// Protocol for an object that will receive SSE events.
-public protocol EventHandler {
+public protocol EventHandler: Sendable {
     /// EventSource calls this method when the stream connection has been opened.
     func onOpened()
 
@@ -82,7 +82,7 @@ public protocol EventHandler {
 }
 
 /// Enum values representing the states of an EventSource
-public enum ReadyState: String, Equatable {
+public enum ReadyState: String, Equatable, Sendable {
     /// The `EventSource` client has not been started yet.
     case raw
     /// The `EventSource` client is attempting to make a connection.
@@ -96,7 +96,7 @@ public enum ReadyState: String, Equatable {
 }
 
 /// Error class that indicates the remote server returned an unsuccessful HTTP response code.
-public class UnsuccessfulResponseError: Error {
+public final class UnsuccessfulResponseError: Error, Sendable {
     /// The HTTP response code received.
     public let responseCode: Int
 
