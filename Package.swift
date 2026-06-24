@@ -13,15 +13,18 @@ let package = Package(
     products: [
         .library(name: "LDSwiftEventSource", targets: ["LDSwiftEventSource"]),
     ],
-    dependencies: [],
+    dependencies: [
+        .package(url: "https://github.com/apple/swift-log.git", from: "1.5.0"),
+    ],
     targets: [
         .target(
             name: "LDSwiftEventSource",
+            dependencies: [
+                .product(name: "Logging", package: "swift-log"),
+            ],
             path: "Source",
             swiftSettings: [
-                // Sendable annotations land first under v5 (mismatches are warnings);
-                // the .v6 flip comes with the delegate/logging Sendable cleanup.
-                .swiftLanguageMode(.v5),
+                .swiftLanguageMode(.v6),
             ]
         ),
         .testTarget(
@@ -29,8 +32,8 @@ let package = Package(
             dependencies: ["LDSwiftEventSource"],
             path: "Tests",
             swiftSettings: [
-                // Sendable annotations land first under v5 (mismatches are warnings);
-                // the .v6 flip comes with the delegate/logging Sendable cleanup.
+                // Library is on the v6 language mode; the test target follows in a
+                // later step once the test doubles are made Sendable.
                 .swiftLanguageMode(.v5),
             ]
         ),
