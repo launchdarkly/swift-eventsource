@@ -1,14 +1,14 @@
-// swift-tools-version:5.0
+// swift-tools-version:5.9
 
 import PackageDescription
 
 let package = Package(
   name: "ContractTestService",
   platforms: [
-    .iOS(.v11),
-    .macOS(.v10_13),
-    .watchOS(.v4),
-    .tvOS(.v11),
+    .iOS(.v16),
+    .macOS(.v13),
+    .watchOS(.v9),
+    .tvOS(.v16),
   ],
   products: [
     .executable(
@@ -18,14 +18,14 @@ let package = Package(
   ],
   dependencies: [
     // Local dependency to LDSwiftEventSource
-    .package(path: ".."),
+    .package(name: "LDSwiftEventSource", path: ".."),
     .package(url: "https://github.com/Kitura/Kitura", from: "2.9.200")
   ],
   targets: [
     .target(
       name: "ContractTestService",
       dependencies: [
-        "LDSwiftEventSource",
+        .product(name: "LDSwiftEventSource", package: "LDSwiftEventSource"),
         "Kitura"
       ]
     )
