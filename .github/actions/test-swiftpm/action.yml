@@ -6,4 +6,4 @@ runs:
   steps:
     - name: Build & Test with SwiftPM
       shell: bash
-      run: swift test -v 2>&1 | xcpretty
+      run: swift test

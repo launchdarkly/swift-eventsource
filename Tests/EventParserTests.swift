@@ -1,61 +1,60 @@
-import XCTest
+import Foundation
+import Testing
 @testable import LDSwiftEventSource
 
-final class EventParserTests: XCTestCase {
-    var handler: MockHandler!
-    var parser: EventParser!
+@Suite("EventParser")
+final class EventParserTests {
+    private let handler = MockHandler()
+    private let parser: EventParser
 
-    override func setUp() {
-        super.setUp()
-        handler = MockHandler()
+    init() {
         parser = EventParser(handler: handler, initialEventId: "", initialRetry: 1.0)
     }
 
-    override func tearDown() {
-        super.tearDown()
-        XCTAssertNil(handler.events.maybeEvent())
+    deinit {
+        #expect(handler.events.maybeEvent() == nil)
     }
 
     // MARK: Retry time tests
-    func testUnsetRetryReturnsConfigured() {
-        parser = EventParser(handler: handler, initialEventId: "", initialRetry: 5.0)
-        XCTAssertEqual(parser.reset(), 5.0)
+    @Test func unsetRetryReturnsConfigured() {
+        let parser = EventParser(handler: handler, initialEventId: "", initialRetry: 5.0)
+        #expect(parser.reset() == 5.0)
     }
 
-    func testSetsRetryTimeToSevenSeconds() {
+    @Test func setsRetryTimeToSevenSeconds() {
         parser.parse(line: "retry: 7000")
-        XCTAssertEqual(parser.reset(), 7.0)
-        XCTAssertEqual(parser.getLastEventId(), "")
+        #expect(parser.reset() == 7.0)
+        #expect(parser.getLastEventId() == "")
     }
 
-    func testRetryWithNoSpace() {
+    @Test func retryWithNoSpace() {
         parser.parse(line: "retry:7000")
-        XCTAssertEqual(parser.reset(), 7.0)
-        XCTAssertEqual(parser.getLastEventId(), "")
+        #expect(parser.reset() == 7.0)
+        #expect(parser.getLastEventId() == "")
     }
 
-    func testDoesNotSetRetryTimeUnlessEntireValueIsNumeric() {
+    @Test func doesNotSetRetryTimeUnlessEntireValueIsNumeric() {
         parser.parse(line: "retry: 7000L")
-        XCTAssertEqual(parser.reset(), 1.0)
+        #expect(parser.reset() == 1.0)
     }
 
-    func testSafeToUseEmptyRetryTime() {
+    @Test func safeToUseEmptyRetryTime() {
         parser.parse(line: "retry")
-        XCTAssertEqual(parser.reset(), 1.0)
+        #expect(parser.reset() == 1.0)
     }
 
-    func testSafeToAttemptToSetRetryToOutOfBoundsValue() {
+    @Test func safeToAttemptToSetRetryToOutOfBoundsValue() {
         parser.parse(line: "retry: 10000000000000000000000000")
-        XCTAssertEqual(parser.reset(), 1.0)
+        #expect(parser.reset() == 1.0)
     }
 
-    func testResetDoesNotResetRetry() {
+    @Test func resetDoesNotResetRetry() {
         parser.parse(line: "retry: 7000")
-        XCTAssertEqual(parser.reset(), 7.0)
-        XCTAssertEqual(parser.reset(), 7.0)
+        #expect(parser.reset() == 7.0)
+        #expect(parser.reset() == 7.0)
     }
 
-    func testRetryNotChangedDuringOtherMessages() {
+    @Test func retryNotChangedDuringOtherMessages() {
         parser.parse(line: "retry: 7000")
         parser.parse(line: "")
         parser.parse(line: ":123")
@@ -64,247 +63,247 @@ final class EventParserTests: XCTestCase {
         parser.parse(line: "id: 123")
         parser.parse(line: "none: 123")
         parser.parse(line: "")
-        XCTAssertEqual(parser.reset(), 7.0)
+        #expect(parser.reset() == 7.0)
         _ = handler.events.maybeEvent()
         _ = handler.events.maybeEvent()
     }
 
     // MARK: Comment tests
-    func testEmptyComment() {
+    @Test func emptyComment() {
         parser.parse(line: ":")
-        XCTAssertEqual(handler.events.maybeEvent(), .comment(""))
+        #expect(handler.events.maybeEvent() == .comment(""))
     }
 
-    func testCommentBody() {
+    @Test func commentBody() {
         parser.parse(line: ": comment")
-        XCTAssertEqual(handler.events.maybeEvent(), .comment(" comment"))
+        #expect(handler.events.maybeEvent() == .comment(" comment"))
     }
 
-    func testCommentCanContainColon() {
+    @Test func commentCanContainColon() {
         parser.parse(line: ":comment:line")
-        XCTAssertEqual(handler.events.maybeEvent(), .comment("comment:line"))
+        #expect(handler.events.maybeEvent() == .comment("comment:line"))
     }
 
     // MARK: Message data tests
-    func testDispatchesEmptyMessageData() {
+    @Test func dispatchesEmptyMessageData() {
         parser.parse(line: "data")
         parser.parse(line: "")
         parser.parse(line: "data:")
         parser.parse(line: "")
         parser.parse(line: "data: ")
         parser.parse(line: "")
-        XCTAssertEqual(handler.events.maybeEvent(), .message("message", MessageEvent(data: "", lastEventId: "")))
-        XCTAssertEqual(handler.events.maybeEvent(), .message("message", MessageEvent(data: "", lastEventId: "")))
-        XCTAssertEqual(handler.events.maybeEvent(), .message("message", MessageEvent(data: "", lastEventId: "")))
+        #expect(handler.events.maybeEvent() == .message("message", MessageEvent(data: "", lastEventId: "")))
+        #expect(handler.events.maybeEvent() == .message("message", MessageEvent(data: "", lastEventId: "")))
+        #expect(handler.events.maybeEvent() == .message("message", MessageEvent(data: "", lastEventId: "")))
     }
 
-    func testDoesNotRemoveTrailingSpaceWhenColonNotPresent() {
+    @Test func doesNotRemoveTrailingSpaceWhenColonNotPresent() {
         parser.parse(line: "data ")
         parser.parse(line: "")
-        XCTAssertNil(handler.events.maybeEvent())
+        #expect(handler.events.maybeEvent() == nil)
     }
 
-    func testEmptyFirstDataAppendsNewline() {
+    @Test func emptyFirstDataAppendsNewline() {
         parser.parse(line: "data:")
         parser.parse(line: "data:")
         parser.parse(line: "")
-        XCTAssertEqual(handler.events.maybeEvent(), .message("message", MessageEvent(data: "\n", lastEventId: "")))
+        #expect(handler.events.maybeEvent() == .message("message", MessageEvent(data: "\n", lastEventId: "")))
     }
 
-    func testDispatchesSingleLineMessage() {
+    @Test func dispatchesSingleLineMessage() {
         parser.parse(line: "data: hello")
         parser.parse(line: "")
-        XCTAssertEqual(handler.events.maybeEvent(), .message("message", MessageEvent(data: "hello", lastEventId: "")))
+        #expect(handler.events.maybeEvent() == .message("message", MessageEvent(data: "hello", lastEventId: "")))
     }
 
-    func testEmptyDataWithBufferedDataAppendsNewline() {
+    @Test func emptyDataWithBufferedDataAppendsNewline() {
         parser.parse(line: "data: data1")
         parser.parse(line: "data: ")
         parser.parse(line: "")
-        XCTAssertEqual(handler.events.maybeEvent(), .message("message", MessageEvent(data: "data1\n", lastEventId: "")))
+        #expect(handler.events.maybeEvent() == .message("message", MessageEvent(data: "data1\n", lastEventId: "")))
     }
 
-    func testDataResetAfterEvent() {
+    @Test func dataResetAfterEvent() {
         parser.parse(line: "data: hello")
         parser.parse(line: "")
         parser.parse(line: "")
-        XCTAssertEqual(handler.events.maybeEvent(), .message("message", MessageEvent(data: "hello", lastEventId: "")))
+        #expect(handler.events.maybeEvent() == .message("message", MessageEvent(data: "hello", lastEventId: "")))
     }
 
-    func testRemovesOnlyFirstSpace() {
+    @Test func removesOnlyFirstSpace() {
         parser.parse(line: "data:  {\"foo\": \"bar baz\"}")
         parser.parse(line: "")
-        XCTAssertEqual(handler.events.maybeEvent(), .message("message", MessageEvent(data: " {\"foo\": \"bar baz\"}", lastEventId: "")))
+        #expect(handler.events.maybeEvent() == .message("message", MessageEvent(data: " {\"foo\": \"bar baz\"}", lastEventId: "")))
     }
 
-    func testDoesNotRemoveOtherWhitespace() {
+    @Test func doesNotRemoveOtherWhitespace() {
         parser.parse(line: "data:\t{\"foo\": \"bar baz\"}")
         parser.parse(line: "")
-        XCTAssertEqual(handler.events.maybeEvent(), .message("message", MessageEvent(data: "\t{\"foo\": \"bar baz\"}", lastEventId: "")))
+        #expect(handler.events.maybeEvent() == .message("message", MessageEvent(data: "\t{\"foo\": \"bar baz\"}", lastEventId: "")))
     }
 
-    func testAllowsNoLeadingSpace() {
+    @Test func allowsNoLeadingSpace() {
         parser.parse(line: "data:{\"foo\": \"bar baz\"}")
         parser.parse(line: "")
-        XCTAssertEqual(handler.events.maybeEvent(), .message("message", MessageEvent(data: "{\"foo\": \"bar baz\"}", lastEventId: "")))
+        #expect(handler.events.maybeEvent() == .message("message", MessageEvent(data: "{\"foo\": \"bar baz\"}", lastEventId: "")))
     }
 
-    func testMultipleDataDispatch() {
+    @Test func multipleDataDispatch() {
         parser.parse(line: "data: data1")
         parser.parse(line: "data: data2")
         parser.parse(line: "")
-        XCTAssertEqual(handler.events.maybeEvent(), .message("message", MessageEvent(data: "data1\ndata2", lastEventId: "")))
+        #expect(handler.events.maybeEvent() == .message("message", MessageEvent(data: "data1\ndata2", lastEventId: "")))
     }
 
     // MARK: Event type tests
-    func testDispatchesMessageWithCustomEventType() {
+    @Test func dispatchesMessageWithCustomEventType() {
         parser.parse(line: "event: customEvent")
         parser.parse(line: "data: hello")
         parser.parse(line: "")
-        XCTAssertEqual(handler.events.maybeEvent(), .message("customEvent", MessageEvent(data: "hello", lastEventId: "")))
+        #expect(handler.events.maybeEvent() == .message("customEvent", MessageEvent(data: "hello", lastEventId: "")))
     }
 
-    func testCustomEventTypeWithoutSpace() {
+    @Test func customEventTypeWithoutSpace() {
         parser.parse(line: "event:customEvent")
         parser.parse(line: "data: hello")
         parser.parse(line: "")
-        XCTAssertEqual(handler.events.maybeEvent(), .message("customEvent", MessageEvent(data: "hello", lastEventId: "")))
+        #expect(handler.events.maybeEvent() == .message("customEvent", MessageEvent(data: "hello", lastEventId: "")))
     }
 
-    func testCustomEventAfterData() {
+    @Test func customEventAfterData() {
         parser.parse(line: "data: hello")
         parser.parse(line: "event: customEvent")
         parser.parse(line: "")
-        XCTAssertEqual(handler.events.maybeEvent(), .message("customEvent", MessageEvent(data: "hello", lastEventId: "")))
+        #expect(handler.events.maybeEvent() == .message("customEvent", MessageEvent(data: "hello", lastEventId: "")))
     }
 
-    func testEmptyEventTypesDefaultToMessage() {
+    @Test func emptyEventTypesDefaultToMessage() {
         ["event", "event:", "event: "].forEach {
             parser.parse(line: $0)
             parser.parse(line: "data: foo")
             parser.parse(line: "")
         }
-        XCTAssertEqual(handler.events.maybeEvent(), .message("message", MessageEvent(data: "foo", lastEventId: "")))
-        XCTAssertEqual(handler.events.maybeEvent(), .message("message", MessageEvent(data: "foo", lastEventId: "")))
-        XCTAssertEqual(handler.events.maybeEvent(), .message("message", MessageEvent(data: "foo", lastEventId: "")))
+        #expect(handler.events.maybeEvent() == .message("message", MessageEvent(data: "foo", lastEventId: "")))
+        #expect(handler.events.maybeEvent() == .message("message", MessageEvent(data: "foo", lastEventId: "")))
+        #expect(handler.events.maybeEvent() == .message("message", MessageEvent(data: "foo", lastEventId: "")))
     }
 
-    func testDispatchWithoutDataResetsMessageType() {
+    @Test func dispatchWithoutDataResetsMessageType() {
         parser.parse(line: "event: customEvent")
         parser.parse(line: "")
         parser.parse(line: "data: foo")
         parser.parse(line: "")
-        XCTAssertEqual(handler.events.maybeEvent(), .message("message", MessageEvent(data: "foo", lastEventId: "")))
+        #expect(handler.events.maybeEvent() == .message("message", MessageEvent(data: "foo", lastEventId: "")))
     }
 
-    func testDispatchWithDataResetsMessageType() {
+    @Test func dispatchWithDataResetsMessageType() {
         parser.parse(line: "event: customEvent")
         parser.parse(line: "data: foo")
         parser.parse(line: "")
         parser.parse(line: "data: bar")
         parser.parse(line: "")
-        XCTAssertEqual(handler.events.maybeEvent(), .message("customEvent", MessageEvent(data: "foo", lastEventId: "")))
-        XCTAssertEqual(handler.events.maybeEvent(), .message("message", MessageEvent(data: "bar", lastEventId: "")))
+        #expect(handler.events.maybeEvent() == .message("customEvent", MessageEvent(data: "foo", lastEventId: "")))
+        #expect(handler.events.maybeEvent() == .message("message", MessageEvent(data: "bar", lastEventId: "")))
     }
 
     // MARK: Last event ID tests
-    func testLastEventIdNotReturnedUntilDispatch() {
-        XCTAssertEqual(parser.getLastEventId(), "")
+    @Test func lastEventIdNotReturnedUntilDispatch() {
+        #expect(parser.getLastEventId() == "")
         parser.parse(line: "id: 1")
-        XCTAssertNil(handler.events.maybeEvent())
-        XCTAssertEqual(parser.getLastEventId(), "")
+        #expect(handler.events.maybeEvent() == nil)
+        #expect(parser.getLastEventId() == "")
     }
 
-    func testRecordsLastEventIdWithoutData() {
+    @Test func recordsLastEventIdWithoutData() {
         parser.parse(line: "id: 1")
         parser.parse(line: "")
-        XCTAssertNil(handler.events.maybeEvent())
-        XCTAssertEqual(parser.getLastEventId(), "1")
+        #expect(handler.events.maybeEvent() == nil)
+        #expect(parser.getLastEventId() == "1")
     }
 
-    func testEventIdIncludedInMessageEvent() {
+    @Test func eventIdIncludedInMessageEvent() {
         parser.parse(line: "data: hello")
         parser.parse(line: "id: 1")
         parser.parse(line: "")
-        XCTAssertEqual(handler.events.maybeEvent(), .message("message", MessageEvent(data: "hello", lastEventId: "1")))
+        #expect(handler.events.maybeEvent() == .message("message", MessageEvent(data: "hello", lastEventId: "1")))
     }
 
-    func testReusesEventIdIfNotSet() {
+    @Test func reusesEventIdIfNotSet() {
         parser.parse(line: "data: hello")
         parser.parse(line: "id: reused")
         parser.parse(line: "")
         parser.parse(line: "data: world")
         parser.parse(line: "")
-        XCTAssertEqual(handler.events.maybeEvent(), .message("message", MessageEvent(data: "hello", lastEventId: "reused")))
-        XCTAssertEqual(handler.events.maybeEvent(), .message("message", MessageEvent(data: "world", lastEventId: "reused")))
-        XCTAssertEqual(parser.getLastEventId(), "reused")
+        #expect(handler.events.maybeEvent() == .message("message", MessageEvent(data: "hello", lastEventId: "reused")))
+        #expect(handler.events.maybeEvent() == .message("message", MessageEvent(data: "world", lastEventId: "reused")))
+        #expect(parser.getLastEventId() == "reused")
     }
 
-    func testEventIdSetTwiceInEvent() {
+    @Test func eventIdSetTwiceInEvent() {
         parser.parse(line: "id: abc")
         parser.parse(line: "id: def")
         parser.parse(line: "data")
-        XCTAssertEqual(parser.getLastEventId(), "")
+        #expect(parser.getLastEventId() == "")
         parser.parse(line: "")
-        XCTAssertEqual(handler.events.maybeEvent(), .message("message", MessageEvent(data: "", lastEventId: "def")))
-        XCTAssertEqual(parser.getLastEventId(), "def")
+        #expect(handler.events.maybeEvent() == .message("message", MessageEvent(data: "", lastEventId: "def")))
+        #expect(parser.getLastEventId() == "def")
     }
 
-    func testEventIdContainingNullIgnored() {
+    @Test func eventIdContainingNullIgnored() {
         parser.parse(line: "id: reused")
         parser.parse(line: "id: abc\u{0000}def")
         parser.parse(line: "data")
         parser.parse(line: "")
-        XCTAssertEqual(handler.events.maybeEvent(), .message("message", MessageEvent(data: "", lastEventId: "reused")))
-        XCTAssertEqual(parser.getLastEventId(), "reused")
+        #expect(handler.events.maybeEvent() == .message("message", MessageEvent(data: "", lastEventId: "reused")))
+        #expect(parser.getLastEventId() == "reused")
     }
 
-    func testResetDoesResetLastEventIdBuffer() {
+    @Test func resetDoesResetLastEventIdBuffer() {
         parser.parse(line: "id: 1")
         _ = parser.reset()
         parser.parse(line: "data: hello")
         parser.parse(line: "")
-        XCTAssertEqual(handler.events.maybeEvent(), .message("message", MessageEvent(data: "hello", lastEventId: "")))
-        XCTAssertEqual(parser.getLastEventId(), "")
+        #expect(handler.events.maybeEvent() == .message("message", MessageEvent(data: "hello", lastEventId: "")))
+        #expect(parser.getLastEventId() == "")
     }
 
-    func testResetDoesNotResetLastEventId() {
+    @Test func resetDoesNotResetLastEventId() {
         parser.parse(line: "id: 1")
         parser.parse(line: "")
         _ = parser.reset()
         parser.parse(line: "data: hello")
         parser.parse(line: "")
-        XCTAssertEqual(handler.events.maybeEvent(), .message("message", MessageEvent(data: "hello", lastEventId: "1")))
-        XCTAssertEqual(parser.getLastEventId(), "1")
+        #expect(handler.events.maybeEvent() == .message("message", MessageEvent(data: "hello", lastEventId: "1")))
+        #expect(parser.getLastEventId() == "1")
     }
 
     // MARK: Mixed and other tests
-    func testRepeatedEmptyLines() {
+    @Test func repeatedEmptyLines() {
         parser.parse(line: "")
         parser.parse(line: "")
         parser.parse(line: "")
-        XCTAssertNil(handler.events.maybeEvent())
+        #expect(handler.events.maybeEvent() == nil)
     }
 
-    func testNothingDoneForInvalidFieldName() {
+    @Test func nothingDoneForInvalidFieldName() {
         parser.parse(line: "invalid: bar")
-        XCTAssertNil(handler.events.maybeEvent())
+        #expect(handler.events.maybeEvent() == nil)
     }
 
-    func testInvalidFieldNameIgnoredInEvent() {
+    @Test func invalidFieldNameIgnoredInEvent() {
         parser.parse(line: "data: foo")
         parser.parse(line: "invalid: bar")
         parser.parse(line: "event: msg")
         parser.parse(line: "")
-        XCTAssertEqual(handler.events.maybeEvent(), .message("msg", MessageEvent(data: "foo", lastEventId: "")))
+        #expect(handler.events.maybeEvent() == .message("msg", MessageEvent(data: "foo", lastEventId: "")))
     }
 
-    func testCommentInEvent() {
+    @Test func commentInEvent() {
         parser.parse(line: "data: foo")
         parser.parse(line: ":bar")
         parser.parse(line: "event: msg")
         parser.parse(line: "")
-        XCTAssertEqual(handler.events.maybeEvent(), .comment("bar"))
-        XCTAssertEqual(handler.events.maybeEvent(), .message("msg", MessageEvent(data: "foo", lastEventId: "")))
+        #expect(handler.events.maybeEvent() == .comment("bar"))
+        #expect(handler.events.maybeEvent() == .message("msg", MessageEvent(data: "foo", lastEventId: "")))
     }
 }

@@ -1,47 +1,45 @@
-import XCTest
+import Foundation
+import Testing
 @testable import LDSwiftEventSource
 
 #if os(Linux) || os(Windows)
 import FoundationNetworking
 #endif
 
-final class LDSwiftEventSourceTests: XCTestCase {
-    private var mockHandler: MockHandler!
+@Suite("LDSwiftEventSource", .serialized)
+final class LDSwiftEventSourceTests {
+    private let mockHandler = MockHandler()
 
-    override func setUp() {
-        super.setUp()
-        mockHandler = MockHandler()
-        XCTAssertTrue(URLProtocol.registerClass(MockingProtocol.self))
+    init() {
+        #expect(URLProtocol.registerClass(MockingProtocol.self))
     }
 
-    override func tearDown() {
-        super.tearDown()
+    deinit {
         URLProtocol.unregisterClass(MockingProtocol.self)
         // Enforce that tests consume all mocked network requests
         MockingProtocol.requested.expectNoEvent(within: 0.01)
         MockingProtocol.resetRequested()
         // Enforce that tests consume all calls to the mock handler
         mockHandler.events.expectNoEvent(within: 0.01)
-        mockHandler = nil
     }
 
-    func testConfigDefaults() {
+    @Test func configDefaults() {
         let url = URL(string: "abc")!
         let config = EventSource.Config(handler: mockHandler, url: url)
-        XCTAssertEqual(config.url, url)
-        XCTAssertEqual(config.method, "GET")
-        XCTAssertEqual(config.body, nil)
-        XCTAssertEqual(config.lastEventId, "")
-        XCTAssertEqual(config.headers, [:])
-        XCTAssertEqual(config.reconnectTime, 1.0)
-        XCTAssertEqual(config.maxReconnectTime, 30.0)
-        XCTAssertEqual(config.backoffResetThreshold, 60.0)
-        XCTAssertEqual(config.idleTimeout, 300.0)
-        XCTAssertEqual(config.headerTransform(["abc": "123"]), ["abc": "123"])
-        XCTAssertEqual(config.connectionErrorHandler(DummyError()), .proceed)
+        #expect(config.url == url)
+        #expect(config.method == "GET")
+        #expect(config.body == nil)
+        #expect(config.lastEventId == "")
+        #expect(config.headers == [:])
+        #expect(config.reconnectTime == 1.0)
+        #expect(config.maxReconnectTime == 30.0)
+        #expect(config.backoffResetThreshold == 60.0)
+        #expect(config.idleTimeout == 300.0)
+        #expect(config.headerTransform(["abc": "123"]) == ["abc": "123"])
+        #expect(config.connectionErrorHandler(DummyError()) == .proceed)
     }
 
-    func testConfigModification() {
+    @Test func configModification() {
         let url = URL(string: "abc")!
         var config = EventSource.Config(handler: mockHandler, url: url)
 
@@ -59,67 +57,67 @@ final class LDSwiftEventSourceTests: XCTestCase {
         config.headerTransform = { _ in [:] }
         config.connectionErrorHandler = { _ in .shutdown }
 
-        XCTAssertEqual(config.url, url)
-        XCTAssertEqual(config.method, "REPORT")
-        XCTAssertEqual(config.body, testBody)
-        XCTAssertEqual(config.lastEventId, "eventId")
-        XCTAssertEqual(config.headers, testHeaders)
-        XCTAssertEqual(config.headerTransform(config.headers), [:])
-        XCTAssertEqual(config.reconnectTime, 2.0)
-        XCTAssertEqual(config.maxReconnectTime, 60.0)
-        XCTAssertEqual(config.backoffResetThreshold, 120.0)
-        XCTAssertEqual(config.idleTimeout, 180.0)
-        XCTAssertEqual(config.connectionErrorHandler(DummyError()), .shutdown)
+        #expect(config.url == url)
+        #expect(config.method == "REPORT")
+        #expect(config.body == testBody)
+        #expect(config.lastEventId == "eventId")
+        #expect(config.headers == testHeaders)
+        #expect(config.headerTransform(config.headers) == [:])
+        #expect(config.reconnectTime == 2.0)
+        #expect(config.maxReconnectTime == 60.0)
+        #expect(config.backoffResetThreshold == 120.0)
+        #expect(config.idleTimeout == 180.0)
+        #expect(config.connectionErrorHandler(DummyError()) == .shutdown)
     }
 
-    func testConfigUrlSession() {
+    @Test func configUrlSession() {
         var config = EventSource.Config(handler: mockHandler, url: URL(string: "abc")!)
         let defaultSessionConfig = config.urlSessionConfiguration
-        XCTAssertEqual(defaultSessionConfig.timeoutIntervalForRequest, 300.0)
-        XCTAssertEqual(defaultSessionConfig.httpAdditionalHeaders?["Accept"] as? String, "text/event-stream")
-        XCTAssertEqual(defaultSessionConfig.httpAdditionalHeaders?["Cache-Control"] as? String, "no-cache")
+        #expect(defaultSessionConfig.timeoutIntervalForRequest == 300.0)
+        #expect(defaultSessionConfig.httpAdditionalHeaders?["Accept"] as? String == "text/event-stream")
+        #expect(defaultSessionConfig.httpAdditionalHeaders?["Cache-Control"] as? String == "no-cache")
         // Configuration should return a fresh session configuration each retrieval
-        XCTAssertTrue(defaultSessionConfig !== config.urlSessionConfiguration)
+        #expect(defaultSessionConfig !== config.urlSessionConfiguration)
         // Updating idleTimeout should effect session config
         config.idleTimeout = 600.0
-        XCTAssertEqual(config.urlSessionConfiguration.timeoutIntervalForRequest, 600.0)
-        XCTAssertEqual(defaultSessionConfig.timeoutIntervalForRequest, 300.0)
+        #expect(config.urlSessionConfiguration.timeoutIntervalForRequest == 600.0)
+        #expect(defaultSessionConfig.timeoutIntervalForRequest == 300.0)
         // Updating returned urlSessionConfiguration without setting should not update the Config until set
         let sessionConfig = config.urlSessionConfiguration
         sessionConfig.allowsCellularAccess = false
-        XCTAssertTrue(config.urlSessionConfiguration.allowsCellularAccess)
+        #expect(config.urlSessionConfiguration.allowsCellularAccess)
         config.urlSessionConfiguration = sessionConfig
-        XCTAssertFalse(config.urlSessionConfiguration.allowsCellularAccess)
-        XCTAssertTrue(sessionConfig !== config.urlSessionConfiguration)
+        #expect(!config.urlSessionConfiguration.allowsCellularAccess)
+        #expect(sessionConfig !== config.urlSessionConfiguration)
     }
 
-    func testLastEventIdFromConfig() {
+    @Test func lastEventIdFromConfig() {
         var config = EventSource.Config(handler: mockHandler, url: URL(string: "abc")!)
         var es = EventSource(config: config)
-        XCTAssertEqual(es.getLastEventId(), "")
+        #expect(es.getLastEventId() == "")
         config.lastEventId = "def"
         es = EventSource(config: config)
-        XCTAssertEqual(es.getLastEventId(), "def")
+        #expect(es.getLastEventId() == "def")
     }
 
-    func testCreatedSession() {
+    @Test func createdSession() {
         let config = EventSource.Config(handler: mockHandler, url: URL(string: "abc")!)
         let session = EventSourceDelegate(config: config).createSession()
-        XCTAssertEqual(session.configuration.timeoutIntervalForRequest, config.idleTimeout)
-        XCTAssertEqual(session.configuration.httpAdditionalHeaders?["Accept"] as? String, "text/event-stream")
-        XCTAssertEqual(session.configuration.httpAdditionalHeaders?["Cache-Control"] as? String, "no-cache")
+        #expect(session.configuration.timeoutIntervalForRequest == config.idleTimeout)
+        #expect(session.configuration.httpAdditionalHeaders?["Accept"] as? String == "text/event-stream")
+        #expect(session.configuration.httpAdditionalHeaders?["Cache-Control"] as? String == "no-cache")
     }
 
-    func testCreateRequest() {
+    @Test func createRequest() {
         // 192.0.2.1 is assigned as TEST-NET-1 reserved usage.
         var config = EventSource.Config(handler: mockHandler, url: URL(string: "http://192.0.2.1")!)
         // Testing default configs
         var request = EventSourceDelegate(config: config).createRequest()
-        XCTAssertEqual(request.url, config.url)
-        XCTAssertEqual(request.httpMethod, config.method)
-        XCTAssertEqual(request.httpBody, config.body)
-        XCTAssertEqual(request.timeoutInterval, config.idleTimeout)
-        XCTAssertEqual(request.allHTTPHeaderFields, config.headers)
+        #expect(request.url == config.url)
+        #expect(request.httpMethod == config.method)
+        #expect(request.httpBody == config.body)
+        #expect(request.timeoutInterval == config.idleTimeout)
+        #expect(request.allHTTPHeaderFields == config.headers)
         // Testing customized configs
         let testBody = "test data".data(using: .utf8)
         let testHeaders = ["removing": "a", "updating": "b"]
@@ -130,18 +128,18 @@ final class LDSwiftEventSourceTests: XCTestCase {
         config.headers = testHeaders
         config.idleTimeout = 180.0
         config.headerTransform = { provided in
-            XCTAssertEqual(provided, ["removing": "a", "updating": "b", "Last-Event-Id": "eventId"])
+            #expect(provided == ["removing": "a", "updating": "b", "Last-Event-Id": "eventId"])
             return overrideHeaders
         }
         request = EventSourceDelegate(config: config).createRequest()
-        XCTAssertEqual(request.url, config.url)
-        XCTAssertEqual(request.httpMethod, config.method)
-        XCTAssertEqual(request.httpBody, config.body)
-        XCTAssertEqual(request.timeoutInterval, config.idleTimeout)
-        XCTAssertEqual(request.allHTTPHeaderFields, overrideHeaders)
+        #expect(request.url == config.url)
+        #expect(request.httpMethod == config.method)
+        #expect(request.httpBody == config.body)
+        #expect(request.timeoutInterval == config.idleTimeout)
+        #expect(request.allHTTPHeaderFields == overrideHeaders)
     }
 
-    func testDispatchError() {
+    @Test func dispatchError() {
         let connectionErrorHandlerCallCount = Box(0)
         let connectionErrorAction = Box<ConnectionErrorAction>(.proceed)
         var config = EventSource.Config(handler: mockHandler, url: URL(string: "abc")!)
@@ -150,17 +148,17 @@ final class LDSwiftEventSourceTests: XCTestCase {
             return connectionErrorAction.value
         }
         let es = EventSourceDelegate(config: config)
-        XCTAssertEqual(es.dispatchError(error: DummyError()), .proceed)
-        XCTAssertEqual(connectionErrorHandlerCallCount.value, 1)
+        #expect(es.dispatchError(error: DummyError()) == .proceed)
+        #expect(connectionErrorHandlerCallCount.value == 1)
         guard case .error(let err) = mockHandler.events.expectEvent(), err is DummyError
         else {
-            XCTFail("handler should receive error if EventSource is not shutting down")
+            Issue.record("handler should receive error if EventSource is not shutting down")
             return
         }
         mockHandler.events.expectNoEvent()
         connectionErrorAction.value = .shutdown
-        XCTAssertEqual(es.dispatchError(error: DummyError()), .shutdown)
-        XCTAssertEqual(connectionErrorHandlerCallCount.value, 2)
+        #expect(es.dispatchError(error: DummyError()) == .shutdown)
+        #expect(connectionErrorHandlerCallCount.value == 2)
     }
 
     func sessionWithMockProtocol() -> URLSessionConfiguration {
@@ -170,23 +168,23 @@ final class LDSwiftEventSourceTests: XCTestCase {
     }
 
 #if !os(Linux) && !os(Windows)
-    func testStartDefaultRequest() {
+    @Test func startDefaultRequest() {
         var config = EventSource.Config(handler: mockHandler, url: URL(string: "http://example.com")!)
         config.urlSessionConfiguration = sessionWithMockProtocol()
         let es = EventSource(config: config)
         es.start()
         let handler = MockingProtocol.requested.expectEvent()
-        XCTAssertEqual(handler.request.url, config.url)
-        XCTAssertEqual(handler.request.httpMethod, config.method)
-        XCTAssertEqual(handler.request.httpBody, config.body)
-        XCTAssertEqual(handler.request.timeoutInterval, config.idleTimeout)
-        XCTAssertEqual(handler.request.allHTTPHeaderFields?["Accept"], "text/event-stream")
-        XCTAssertEqual(handler.request.allHTTPHeaderFields?["Cache-Control"], "no-cache")
-        XCTAssertNil(handler.request.allHTTPHeaderFields?["Last-Event-Id"])
+        #expect(handler.request.url == config.url)
+        #expect(handler.request.httpMethod == config.method)
+        #expect(handler.request.httpBody == config.body)
+        #expect(handler.request.timeoutInterval == config.idleTimeout)
+        #expect(handler.request.allHTTPHeaderFields?["Accept"] == "text/event-stream")
+        #expect(handler.request.allHTTPHeaderFields?["Cache-Control"] == "no-cache")
+        #expect(handler.request.allHTTPHeaderFields?["Last-Event-Id"] == nil)
         es.stop()
     }
 
-    func testStartRequestWithConfiguration() {
+    @Test func startRequestWithConfiguration() {
         var config = EventSource.Config(handler: mockHandler, url: URL(string: "http://example.com")!)
         config.urlSessionConfiguration = sessionWithMockProtocol()
         config.method = "REPORT"
@@ -197,18 +195,18 @@ final class LDSwiftEventSourceTests: XCTestCase {
         let es = EventSource(config: config)
         es.start()
         let handler = MockingProtocol.requested.expectEvent()
-        XCTAssertEqual(handler.request.url, config.url)
-        XCTAssertEqual(handler.request.httpMethod, config.method)
-        XCTAssertEqual(handler.request.bodyStreamAsData(), config.body)
-        XCTAssertEqual(handler.request.timeoutInterval, config.idleTimeout)
-        XCTAssertEqual(handler.request.allHTTPHeaderFields?["Accept"], "text/event-stream")
-        XCTAssertEqual(handler.request.allHTTPHeaderFields?["Cache-Control"], "no-cache")
-        XCTAssertEqual(handler.request.allHTTPHeaderFields?["Last-Event-Id"], config.lastEventId)
-        XCTAssertEqual(handler.request.allHTTPHeaderFields?["X-LD-Header"], "def")
+        #expect(handler.request.url == config.url)
+        #expect(handler.request.httpMethod == config.method)
+        #expect(handler.request.bodyStreamAsData() == config.body)
+        #expect(handler.request.timeoutInterval == config.idleTimeout)
+        #expect(handler.request.allHTTPHeaderFields?["Accept"] == "text/event-stream")
+        #expect(handler.request.allHTTPHeaderFields?["Cache-Control"] == "no-cache")
+        #expect(handler.request.allHTTPHeaderFields?["Last-Event-Id"] == config.lastEventId)
+        #expect(handler.request.allHTTPHeaderFields?["X-LD-Header"] == "def")
         es.stop()
     }
 
-    func testStartRequestIsNotReentrant() {
+    @Test func startRequestIsNotReentrant() {
         var config = EventSource.Config(handler: mockHandler, url: URL(string: "http://example.com")!)
         config.urlSessionConfiguration = sessionWithMockProtocol()
         let es = EventSource(config: config)
@@ -219,19 +217,19 @@ final class LDSwiftEventSourceTests: XCTestCase {
         es.stop()
     }
 
-    func testSuccessfulResponseOpens() {
+    @Test func successfulResponseOpens() {
         var config = EventSource.Config(handler: mockHandler, url: URL(string: "http://example.com")!)
         config.urlSessionConfiguration = sessionWithMockProtocol()
         let es = EventSource(config: config)
         es.start()
         let handler = MockingProtocol.requested.expectEvent()
         handler.respond(statusCode: 200)
-        XCTAssertEqual(mockHandler.events.expectEvent(), .opened)
+        #expect(mockHandler.events.expectEvent() == .opened)
         es.stop()
-        XCTAssertEqual(mockHandler.events.expectEvent(), .closed)
+        #expect(mockHandler.events.expectEvent() == .closed)
     }
 
-    func testLastEventIdUpdatedByEvents() {
+    @Test func lastEventIdUpdatedByEvents() {
         var config = EventSource.Config(handler: mockHandler, url: URL(string: "http://example.com")!)
         config.urlSessionConfiguration = sessionWithMockProtocol()
         config.reconnectTime = 0.1
@@ -239,22 +237,22 @@ final class LDSwiftEventSourceTests: XCTestCase {
         es.start()
         let handler = MockingProtocol.requested.expectEvent()
         handler.respond(statusCode: 200)
-        XCTAssertEqual(mockHandler.events.expectEvent(), .opened)
-        XCTAssertEqual(es.getLastEventId(), "")
+        #expect(mockHandler.events.expectEvent() == .opened)
+        #expect(es.getLastEventId() == "")
         handler.respond(didLoad: "id: abc\n\n")
         // Comment used for synchronization
         handler.respond(didLoad: ":comment\n")
-        XCTAssertEqual(mockHandler.events.expectEvent(), .comment("comment"))
-        XCTAssertEqual(es.getLastEventId(), "abc")
+        #expect(mockHandler.events.expectEvent() == .comment("comment"))
+        #expect(es.getLastEventId() == "abc")
         handler.finish()
-        XCTAssertEqual(mockHandler.events.expectEvent(), .closed)
+        #expect(mockHandler.events.expectEvent() == .closed)
         // Expect to reconnect and include new event id
         let reconnectHandler = MockingProtocol.requested.expectEvent()
-        XCTAssertEqual(reconnectHandler.request.allHTTPHeaderFields?["Last-Event-Id"], "abc")
+        #expect(reconnectHandler.request.allHTTPHeaderFields?["Last-Event-Id"] == "abc")
         es.stop()
     }
 
-    func testUsesRetryTime() {
+    @Test func usesRetryTime() {
         var config = EventSource.Config(handler: mockHandler, url: URL(string: "http://example.com")!)
         config.urlSessionConfiguration = sessionWithMockProtocol()
         // Long enough to cause a timeout if the retry time is not updated
@@ -263,30 +261,30 @@ final class LDSwiftEventSourceTests: XCTestCase {
         es.start()
         let handler = MockingProtocol.requested.expectEvent()
         handler.respond(statusCode: 200)
-        XCTAssertEqual(mockHandler.events.expectEvent(), .opened)
+        #expect(mockHandler.events.expectEvent() == .opened)
         handler.respond(didLoad: "retry: 100\n\n")
         handler.finish()
-        XCTAssertEqual(mockHandler.events.expectEvent(), .closed)
+        #expect(mockHandler.events.expectEvent() == .closed)
         // Expect to reconnect before this times out
         _ = MockingProtocol.requested.expectEvent()
         es.stop()
     }
 
-    func testCallsHandlerWithMessage() {
+    @Test func callsHandlerWithMessage() {
         var config = EventSource.Config(handler: mockHandler, url: URL(string: "http://example.com")!)
         config.urlSessionConfiguration = sessionWithMockProtocol()
         let es = EventSource(config: config)
         es.start()
         let handler = MockingProtocol.requested.expectEvent()
         handler.respond(statusCode: 200)
-        XCTAssertEqual(mockHandler.events.expectEvent(), .opened)
+        #expect(mockHandler.events.expectEvent() == .opened)
         handler.respond(didLoad: "event: custom\ndata: {}\n\n")
-        XCTAssertEqual(mockHandler.events.expectEvent(), .message("custom", MessageEvent(data: "{}")))
+        #expect(mockHandler.events.expectEvent() == .message("custom", MessageEvent(data: "{}")))
         es.stop()
-        XCTAssertEqual(mockHandler.events.expectEvent(), .closed)
+        #expect(mockHandler.events.expectEvent() == .closed)
     }
 
-    func testRetryOnInvalidResponseCode() {
+    @Test func retryOnInvalidResponseCode() {
         var config = EventSource.Config(handler: mockHandler, url: URL(string: "http://example.com")!)
         config.urlSessionConfiguration = sessionWithMockProtocol()
         config.reconnectTime = 0.1
@@ -297,25 +295,24 @@ final class LDSwiftEventSourceTests: XCTestCase {
         guard case let .error(err) = mockHandler.events.expectEvent(),
               let responseErr = err as? UnsuccessfulResponseError
         else {
-            XCTFail("Expected UnsuccessfulResponseError to be given to handler")
+            Issue.record("Expected UnsuccessfulResponseError to be given to handler")
             return
         }
-        XCTAssertEqual(responseErr.responseCode, 400)
+        #expect(responseErr.responseCode == 400)
         // Expect the client to reconnect
         _ = MockingProtocol.requested.expectEvent()
         es.stop()
     }
 
-    func testShutdownByErrorHandlerOnInitialErrorResponse() {
+    @Test func shutdownByErrorHandlerOnInitialErrorResponse() {
+        // The connectionErrorHandler runs on the URLSession delegate queue, off the
+        // test's task, so we capture what it observed and assert on the test thread.
+        let observedResponseCode = Box<Int?>(nil)
         var config = EventSource.Config(handler: mockHandler, url: URL(string: "http://example.com")!)
         config.urlSessionConfiguration = sessionWithMockProtocol()
         config.reconnectTime = 0.1
         config.connectionErrorHandler = { err in
-            if let responseErr = err as? UnsuccessfulResponseError {
-                XCTAssertEqual(responseErr.responseCode, 400)
-            } else {
-                XCTFail("Expected UnsuccessfulResponseError to be given to handler")
-            }
+            observedResponseCode.value = (err as? UnsuccessfulResponseError)?.responseCode
             return .shutdown
         }
         let es = EventSource(config: config)
@@ -327,9 +324,10 @@ final class LDSwiftEventSourceTests: XCTestCase {
         es.stop()
         // Error should not have been given to the handler
         mockHandler.events.expectNoEvent()
+        #expect(observedResponseCode.value == 400)
     }
 
-    func testShutdownByErrorHandlerOnResponseCompletionError() {
+    @Test func shutdownByErrorHandlerOnResponseCompletionError() {
         var config = EventSource.Config(handler: mockHandler, url: URL(string: "http://example.com")!)
         config.urlSessionConfiguration = sessionWithMockProtocol()
         config.reconnectTime = 0.1
@@ -340,9 +338,9 @@ final class LDSwiftEventSourceTests: XCTestCase {
         es.start()
         let handler = MockingProtocol.requested.expectEvent()
         handler.respond(statusCode: 200)
-        XCTAssertEqual(mockHandler.events.expectEvent(), .opened)
+        #expect(mockHandler.events.expectEvent() == .opened)
         handler.finishWith(error: DummyError())
-        XCTAssertEqual(mockHandler.events.expectEvent(), .closed)
+        #expect(mockHandler.events.expectEvent() == .closed)
         // Expect the client not to reconnect
         MockingProtocol.requested.expectNoEvent(within: 1.0)
         es.stop()
@@ -350,7 +348,7 @@ final class LDSwiftEventSourceTests: XCTestCase {
         mockHandler.events.expectNoEvent()
     }
 
-    func testShutdownBy204Response() {
+    @Test func shutdownBy204Response() {
         var config = EventSource.Config(handler: mockHandler, url: URL(string: "http://example.com")!)
         config.urlSessionConfiguration = sessionWithMockProtocol()
         config.reconnectTime = 0.1
@@ -368,16 +366,15 @@ final class LDSwiftEventSourceTests: XCTestCase {
         mockHandler.events.expectNoEvent()
     }
 
-    func testCanOverride204DefaultBehavior() {
+    @Test func canOverride204DefaultBehavior() {
+        // The connectionErrorHandler runs on the URLSession delegate queue, off the
+        // test's task, so we capture what it observed and assert on the test thread.
+        let observedResponseCode = Box<Int?>(nil)
         var config = EventSource.Config(handler: mockHandler, url: URL(string: "http://example.com")!)
         config.urlSessionConfiguration = sessionWithMockProtocol()
         config.reconnectTime = 0.1
         config.connectionErrorHandler = { err in
-            if let responseErr = err as? UnsuccessfulResponseError {
-                XCTAssertEqual(responseErr.responseCode, 204)
-            } else {
-                XCTFail("Expected UnsuccessfulResponseError to be given to handler")
-            }
+            observedResponseCode.value = (err as? UnsuccessfulResponseError)?.responseCode
             return .shutdown
         }
         let es = EventSource(config: config)
@@ -389,6 +386,7 @@ final class LDSwiftEventSourceTests: XCTestCase {
         es.stop()
         // Error should not have been given to the handler
         mockHandler.events.expectNoEvent()
+        #expect(observedResponseCode.value == 204)
     }
 #endif
 }
