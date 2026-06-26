@@ -12,6 +12,16 @@ import FoundationNetworking
  */
 public final class EventSource: Sendable {
     private let esDelegate: EventSourceDelegate
+    private let stream: AsyncStream<EventSourceEvent>
+
+    /**
+     The stream of events produced by this `EventSource`.
+
+     Call `start()` to open the connection; received events and state changes are then delivered here as
+     `EventSourceEvent` values. The sequence is single-consumer and terminates only when `stop()` is called (or the
+     consuming task is cancelled). Events that arrive before iteration begins are buffered.
+     */
+    public var events: AsyncStream<EventSourceEvent> { stream }
 
     /**
      Initialize the `EventSource` client with the given configuration.
@@ -19,20 +29,27 @@ public final class EventSource: Sendable {
      - Parameter config: The configuration for initializing the `EventSource` client.
      */
     public init(config: Config) {
-        esDelegate = EventSourceDelegate(config: config)
+        let (stream, continuation) = AsyncStream.makeStream(of: EventSourceEvent.self)
+        self.stream = stream
+        let delegate = EventSourceDelegate(config: config, continuation: continuation)
+        self.esDelegate = delegate
+        // If the consumer stops iterating (its task is cancelled or the stream is dropped) without calling stop(),
+        // tear the connection down.
+        continuation.onTermination = { _ in delegate.stop() }
     }
 
     /**
      Start the `EventSource` client.
 
-     This will initiate a streaming connection to the configured URL. The application will be informed of received
-     events and state changes using the configured `EventHandler`.
+     This will initiate a streaming connection to the configured URL. Received events and state changes are
+     delivered through the `events` sequence.
      */
     public func start() {
         esDelegate.start()
     }
 
-    /// Shuts down the `EventSource` client. It is not valid to restart the client after calling this function.
+    /// Shuts down the `EventSource` client and finishes the `events` stream. It is not valid to restart the client
+    /// after calling this function.
     public func stop() {
         esDelegate.stop()
     }
@@ -43,8 +60,6 @@ public final class EventSource: Sendable {
 
     /// Struct for configuring the EventSource.
     public struct Config {
-        /// The `EventHandler` called in response to activity on the stream.
-        public let handler: EventHandler
         /// The `URL` of the request used when connecting to the EventSource API.
         public let url: URL
 
@@ -124,9 +139,8 @@ public final class EventSource: Sendable {
             return .proceed
         }
 
-        /// Create a new configuration with an `EventHandler` and a `URL`
-        public init(handler: EventHandler, url: URL) {
-            self.handler = handler
+        /// Create a new configuration with the `URL` to connect to.
+        public init(url: URL) {
             self.url = url
         }
     }
@@ -165,6 +179,8 @@ final class EventSourceDelegate: NSObject, URLSessionDataDelegate, @unchecked Se
     private let logger: Logging.Logger
 
     private let config: EventSource.Config
+    private let handler: EventHandler
+    private let continuation: AsyncStream<EventSourceEvent>.Continuation
 
     private var readyState: ReadyState = .raw {
         didSet {
@@ -178,11 +194,14 @@ final class EventSourceDelegate: NSObject, URLSessionDataDelegate, @unchecked Se
     private var urlSession: URLSession?
     private var sessionTask: URLSessionDataTask?
 
-    init(config: EventSource.Config) {
+    init(config: EventSource.Config, continuation: AsyncStream<EventSourceEvent>.Continuation) {
         self.config = config
         self.logger = config.logger
+        self.continuation = continuation
 
-        self.eventParser = EventParser(handler: config.handler,
+        let handler = ContinuationEventHandler(continuation: continuation)
+        self.handler = handler
+        self.eventParser = EventParser(handler: handler,
                                        initialEventId: config.lastEventId,
                                        initialRetry: config.reconnectTime)
         self.reconnectionTimer = ReconnectionTimer(maxDelay: config.maxReconnectTime,
@@ -210,10 +229,11 @@ final class EventSourceDelegate: NSObject, URLSessionDataDelegate, @unchecked Se
             self.readyState = .shutdown
             self.sessionTask?.cancel()
             if previousState == .open {
-                self.config.handler.onClosed()
+                self.handler.onClosed()
             }
             self.urlSession?.invalidateAndCancel()
             self.urlSession = nil
+            self.continuation.finish()
         }
     }
 
@@ -250,7 +270,7 @@ final class EventSourceDelegate: NSObject, URLSessionDataDelegate, @unchecked Se
     func dispatchError(error: Error) -> ConnectionErrorAction {
         let action: ConnectionErrorAction = config.connectionErrorHandler(error)
         if action != .shutdown {
-            config.handler.onError(error: error)
+            handler.onError(error: error)
         }
         return action
     }
@@ -273,9 +293,10 @@ final class EventSourceDelegate: NSObject, URLSessionDataDelegate, @unchecked Se
                 if dispatchError(error: error) == .shutdown {
                     logger.info("Connection has been explicitly shut down by error handler")
                     if readyState == .open {
-                        config.handler.onClosed()
+                        handler.onClosed()
                     }
                     readyState = .shutdown
+                    continuation.finish()
                     return
                 }
             }
@@ -284,7 +305,7 @@ final class EventSourceDelegate: NSObject, URLSessionDataDelegate, @unchecked Se
         }
 
         if readyState == .open {
-            config.handler.onClosed()
+            handler.onClosed()
         }
 
         readyState = .closed
@@ -314,13 +335,14 @@ final class EventSourceDelegate: NSObject, URLSessionDataDelegate, @unchecked Se
         if (200..<300).contains(statusCode) && statusCode != 204 {
             reconnectionTimer.connectedTime = Date()
             readyState = .open
-            config.handler.onOpened()
+            handler.onOpened()
             completionHandler(.allow)
         } else {
             logger.info("Unsuccessful response: \(statusCode)")
             if dispatchError(error: UnsuccessfulResponseError(responseCode: statusCode)) == .shutdown {
                 logger.info("Connection has been explicitly shut down by error handler")
                 readyState = .shutdown
+                continuation.finish()
             }
             completionHandler(.cancel)
         }
@@ -329,4 +351,23 @@ final class EventSourceDelegate: NSObject, URLSessionDataDelegate, @unchecked Se
     public func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive data: Data) {
         utf8LineParser.append(data).forEach(eventParser.parse)
     }
+}
+
+// MARK: ContinuationEventHandler
+// Internal adapter that forwards the delegate's and EventParser's callbacks into the public
+// `EventSource.events` stream.
+final class ContinuationEventHandler: EventHandler {
+    private let continuation: AsyncStream<EventSourceEvent>.Continuation
+
+    init(continuation: AsyncStream<EventSourceEvent>.Continuation) {
+        self.continuation = continuation
+    }
+
+    func onOpened() { continuation.yield(.opened) }
+    func onClosed() { continuation.yield(.closed) }
+    func onMessage(eventType: String, messageEvent: MessageEvent) {
+        continuation.yield(.message(eventType: eventType, messageEvent))
+    }
+    func onComment(comment: String) { continuation.yield(.comment(comment)) }
+    func onError(error: Error) { continuation.yield(.error(error)) }
 }

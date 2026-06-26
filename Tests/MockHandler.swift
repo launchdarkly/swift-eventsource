@@ -3,6 +3,23 @@
 enum ReceivedEvent: Equatable {
     case opened, closed, message(String, MessageEvent), comment(String), error(Error)
 
+    /// Maps a public `EventSourceEvent` to the test-side enum so stream output can be
+    /// compared with the same `Equatable` the callback-based doubles use.
+    init(_ event: EventSourceEvent) {
+        switch event {
+        case .opened:
+            self = .opened
+        case .closed:
+            self = .closed
+        case let .message(eventType, messageEvent):
+            self = .message(eventType, messageEvent)
+        case let .comment(comment):
+            self = .comment(comment)
+        case let .error(error):
+            self = .error(error)
+        }
+    }
+
     static func == (lhs: ReceivedEvent, rhs: ReceivedEvent) -> Bool {
         switch (lhs, rhs) {
         case (.opened, .opened):

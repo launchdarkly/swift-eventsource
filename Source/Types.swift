@@ -47,8 +47,33 @@ public struct MessageEvent: Equatable, Hashable, Sendable {
     }
 }
 
-/// Protocol for an object that will receive SSE events.
-public protocol EventHandler: Sendable {
+/// An event delivered through the `EventSource.events` stream.
+public enum EventSourceEvent: Sendable {
+    /// The stream connection has been opened.
+    case opened
+    /// The stream connection has been closed.
+    case closed
+    /**
+     A message was received from the stream.
+
+     - Parameter eventType: The type of the event.
+     - Parameter messageEvent: The data for the event.
+     */
+    case message(eventType: String, MessageEvent)
+    /// A comment line was received from the stream.
+    case comment(String)
+    /**
+     An error occurred on the network connection (including an `UnsuccessfulResponseError` if the server returns an
+     unexpected HTTP status). Delivered only after the `ConnectionErrorHandler` (if any) has processed it. This is a
+     value in the stream, not a termination: unless the error handler shuts the connection down, the client keeps
+     retrying and the stream continues. To affect the state of the connection, use a `ConnectionErrorHandler`.
+     */
+    case error(any Error)
+}
+
+/// Internal protocol for an object that receives SSE events. The public surface is the `EventSource.events`
+/// stream; conformers of this protocol feed it.
+protocol EventHandler: Sendable {
     /// EventSource calls this method when the stream connection has been opened.
     func onOpened()
 
