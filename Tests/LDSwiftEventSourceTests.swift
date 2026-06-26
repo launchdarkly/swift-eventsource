@@ -142,25 +142,25 @@ final class LDSwiftEventSourceTests: XCTestCase {
     }
 
     func testDispatchError() {
-        var connectionErrorHandlerCallCount = 0
-        var connectionErrorAction: ConnectionErrorAction = .proceed
+        let connectionErrorHandlerCallCount = Box(0)
+        let connectionErrorAction = Box<ConnectionErrorAction>(.proceed)
         var config = EventSource.Config(handler: mockHandler, url: URL(string: "abc")!)
         config.connectionErrorHandler = { _ in
-            connectionErrorHandlerCallCount += 1
-            return connectionErrorAction
+            connectionErrorHandlerCallCount.value += 1
+            return connectionErrorAction.value
         }
         let es = EventSourceDelegate(config: config)
         XCTAssertEqual(es.dispatchError(error: DummyError()), .proceed)
-        XCTAssertEqual(connectionErrorHandlerCallCount, 1)
+        XCTAssertEqual(connectionErrorHandlerCallCount.value, 1)
         guard case .error(let err) = mockHandler.events.expectEvent(), err is DummyError
         else {
             XCTFail("handler should receive error if EventSource is not shutting down")
             return
         }
         mockHandler.events.expectNoEvent()
-        connectionErrorAction = .shutdown
+        connectionErrorAction.value = .shutdown
         XCTAssertEqual(es.dispatchError(error: DummyError()), .shutdown)
-        XCTAssertEqual(connectionErrorHandlerCallCount, 2)
+        XCTAssertEqual(connectionErrorHandlerCallCount.value, 2)
     }
 
     func sessionWithMockProtocol() -> URLSessionConfiguration {
@@ -393,4 +393,4 @@ final class LDSwiftEventSourceTests: XCTestCase {
 #endif
 }
 
-private class DummyError: Error { }
+private struct DummyError: Error { }

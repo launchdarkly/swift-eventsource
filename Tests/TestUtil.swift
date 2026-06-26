@@ -4,44 +4,84 @@ import XCTest
 import FoundationNetworking
 #endif
 
-struct EventSink<T> {
-    private let semaphore = DispatchSemaphore(value: 0)
-    private let queue = DispatchQueue(label: "EventSinkQueue." + UUID().uuidString)
+// A thread-safe queue used to hand events from the background threads that drive
+// the mocks (the URLSession delegate queue, the URLProtocol loading thread) to the
+// test thread, which blocks waiting for them. A reference type guarded by an
+// `NSCondition` so it can be shared across those threads; `@unchecked Sendable`
+// because the locking the compiler cannot verify is what makes the access safe.
+final class EventSink<T>: @unchecked Sendable {
+    private let condition = NSCondition()
+    private var receivedEvents: [T] = []
 
-    var receivedEvents: [T] = []
-
-    mutating func record(_ event: T) {
-        queue.sync { receivedEvents.append(event) }
-        semaphore.signal()
+    func record(_ event: T) {
+        condition.lock()
+        defer { condition.unlock() }
+        receivedEvents.append(event)
+        condition.signal()
     }
 
-    mutating func expectEvent(maxWait: TimeInterval = 1.0) -> T {
-        switch semaphore.wait(timeout: DispatchTime.now() + maxWait) {
-        case .success:
-            return queue.sync { receivedEvents.remove(at: 0) }
-        case .timedOut:
-            XCTFail("Expected mock handler to be called")
-            return (nil as T?)!
+    func expectEvent(maxWait: TimeInterval = 1.0) -> T {
+        let deadline = Date(timeIntervalSinceNow: maxWait)
+        condition.lock()
+        defer { condition.unlock() }
+        while receivedEvents.isEmpty {
+            guard condition.wait(until: deadline)
+            else {
+                XCTFail("Expected mock handler to be called")
+                return (nil as T?)!
+            }
         }
+        return receivedEvents.removeFirst()
     }
 
-    mutating func maybeEvent() -> T? {
-        switch semaphore.wait(timeout: DispatchTime.now()) {
-        case .success:
-            return queue.sync { receivedEvents.remove(at: 0) }
-        case .timedOut:
-            return nil
-        }
+    func maybeEvent() -> T? {
+        condition.lock()
+        defer { condition.unlock() }
+        return receivedEvents.isEmpty ? nil : receivedEvents.removeFirst()
     }
 
     func expectNoEvent(within: TimeInterval = 0.1) {
-        if case .success = semaphore.wait(timeout: DispatchTime.now() + within) {
-            XCTFail("Expected no events in sink, found \(String(describing: receivedEvents.first))")
+        let deadline = Date(timeIntervalSinceNow: within)
+        condition.lock()
+        defer { condition.unlock() }
+        while receivedEvents.isEmpty {
+            guard condition.wait(until: deadline)
+            else { return }
+        }
+        XCTFail("Expected no events in sink, found \(String(describing: receivedEvents.first))")
+    }
+
+    func reset() {
+        condition.lock()
+        defer { condition.unlock() }
+        receivedEvents.removeAll()
+    }
+}
+
+// A lock-protected reference cell so tests can read and mutate a value from inside
+// the `@Sendable` configuration closures (e.g. connectionErrorHandler) without
+// tripping the concurrent-capture checks of the v6 language mode.
+final class Box<T>: @unchecked Sendable {
+    private let lock = NSLock()
+    private var storedValue: T
+
+    init(_ value: T) { storedValue = value }
+
+    var value: T {
+        get {
+            lock.lock()
+            defer { lock.unlock() }
+            return storedValue
+        }
+        set {
+            lock.lock()
+            defer { lock.unlock() }
+            storedValue = newValue
         }
     }
 }
 
-class RequestHandler {
+final class RequestHandler {
     let proto: URLProtocol
     let request: URLRequest
     let client: URLProtocolClient?
@@ -86,10 +126,10 @@ class MockingProtocol: URLProtocol {
     override class func canInit(with request: URLRequest) -> Bool { true }
     override class func canInit(with task: URLSessionTask) -> Bool { true }
 
-    static var requested = EventSink<RequestHandler>()
+    static let requested = EventSink<RequestHandler>()
 
     class func resetRequested() {
-        requested = EventSink<RequestHandler>()
+        requested.reset()
     }
 
     private var currentlyLoading: RequestHandler?
