@@ -1,13 +1,8 @@
 import Foundation
+import Logging
 
 #if os(Linux) || os(Windows)
 import FoundationNetworking
-#endif
-
-#if canImport(os)
-// os_log is not supported on some platforms, but we want to use it for most of our customer's
-// use cases that use Apple OSs
-import os.log
 #endif
 
 /**
@@ -15,7 +10,7 @@ import os.log
 
  See the [Server-Sent Events spec](https://html.spec.whatwg.org/multipage/server-sent-events.html) for more details.
  */
-public class EventSource {
+public final class EventSource: Sendable {
     private let esDelegate: EventSourceDelegate
 
     /**
@@ -63,12 +58,15 @@ public class EventSource {
         public var headerTransform: HeaderTransform = { $0 }
         /// An initial value for the last-event-id header to be sent on the initial request
         public var lastEventId: String = ""
-        
-#if canImport(os)
-        /// Configure the logger that will be used.
-        public var logger: OSLog = OSLog(subsystem: "com.launchdarkly.swift-eventsource", category: "LDEventSource")
-#endif
-        
+
+        /// The `swift-log` logger that will be used. Defaults to a logger backed
+        /// by a no-op handler that discards all output; assign a `Logging.Logger`
+        /// to receive log messages.
+        public var logger: Logging.Logger = Logger(
+            label: "com.launchdarkly.swift-eventsource",
+            factory: { _ in SwiftLogNoOpLogHandler() }
+        )
+
         /// The minimum amount of time to wait before reconnecting after a failure
         public var reconnectTime: TimeInterval = 1.0
         /// The maximum amount of time to wait before reconnecting after a failure
@@ -99,11 +97,7 @@ public class EventSource {
                 sessionConfig.timeoutIntervalForRequest = idleTimeout
 
                 #if !os(Linux) && !os(Windows)
-                if #available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *) {
-                    sessionConfig.tlsMinimumSupportedProtocolVersion = .TLSv12
-                } else {
-                    sessionConfig.tlsMinimumSupportedProtocol = .tlsProtocol12
-                }
+                sessionConfig.tlsMinimumSupportedProtocolVersion = .TLSv12
                 #endif
                 return sessionConfig
             }
@@ -162,16 +156,19 @@ class ReconnectionTimer {
 }
 
 // MARK: EventSourceDelegate
-class EventSourceDelegate: NSObject, URLSessionDataDelegate {
+// All mutable state is confined to the serial `delegateQueue` (the URLSession
+// delegate callbacks are dispatched onto it as well), which provides the
+// synchronization the compiler cannot verify -- hence `@unchecked Sendable`.
+final class EventSourceDelegate: NSObject, URLSessionDataDelegate, @unchecked Sendable {
     private let delegateQueue: DispatchQueue = DispatchQueue(label: "ESDelegateQueue")
-    
-    public var logger: InternalLogging
-    
+
+    private let logger: Logging.Logger
+
     private let config: EventSource.Config
 
     private var readyState: ReadyState = .raw {
         didSet {
-            logger.log(.debug, "State: %@ -> %@", oldValue.rawValue, readyState.rawValue)
+            logger.debug("State: \(oldValue.rawValue) -> \(readyState.rawValue)")
         }
     }
 
@@ -183,14 +180,8 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
 
     init(config: EventSource.Config) {
         self.config = config
-        
-#if canImport(os)
-        self.logger = OSLogAdapter(osLog: config.logger)
-#else
-        self.logger = NoOpLogging()
-#endif
-        
-        
+        self.logger = config.logger
+
         self.eventParser = EventParser(handler: config.handler,
                                        initialEventId: config.lastEventId,
                                        initialRetry: config.reconnectTime)
@@ -204,7 +195,7 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
             else { return }
             guard self.readyState == .raw
             else {
-                self.logger.log(.info, "start() called on already-started EventSource object. Returning")
+                self.logger.info("start() called on already-started EventSource object. Returning")
                 return
             }
             self.readyState = .connecting
@@ -250,7 +241,7 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
     }
 
     private func connect() {
-        logger.log(.info, "Starting EventSource client")
+        logger.info("Starting EventSource client")
         let task = urlSession?.dataTask(with: createRequest())
         task?.resume()
         sessionTask = task
@@ -278,9 +269,9 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
 
         if let error = error {
             if (error as NSError).code != NSURLErrorCancelled {
-                logger.log(.info, "Connection error: %@", error.localizedDescription)
+                logger.info("Connection error: \(error.localizedDescription)")
                 if dispatchError(error: error) == .shutdown {
-                    logger.log(.info, "Connection has been explicitly shut down by error handler")
+                    logger.info("Connection has been explicitly shut down by error handler")
                     if readyState == .open {
                         config.handler.onClosed()
                     }
@@ -289,7 +280,7 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
                 }
             }
         } else {
-            logger.log(.info, "Connection unexpectedly closed.")
+            logger.info("Connection unexpectedly closed.")
         }
 
         if readyState == .open {
@@ -298,8 +289,7 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
 
         readyState = .closed
         let sleep = reconnectionTimer.reconnectDelay(baseDelay: currentRetry)
-        // this formatting shenanigans is to workaround String not implementing CVarArg on Swift<5.4 on Linux
-        logger.log(.info, "Waiting %@ seconds before reconnecting...", String(format: "%.3f", sleep))
+        logger.info("Waiting \(String(format: "%.3f", sleep)) seconds before reconnecting...")
         delegateQueue.asyncAfter(deadline: .now() + sleep) { [weak self] in
             self?.connect()
         }
@@ -310,7 +300,7 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
                            dataTask: URLSessionDataTask,
                            didReceive response: URLResponse,
                            completionHandler: @escaping (URLSession.ResponseDisposition) -> Void) {
-        logger.log(.debug, "Initial reply received")
+        logger.debug("Initial reply received")
 
         guard readyState != .shutdown
         else {
@@ -327,10 +317,9 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
             config.handler.onOpened()
             completionHandler(.allow)
         } else {
-            // this formatting shenanigans is to workaround String not implementing CVarArg on Swift<5.4 on Linux
-            logger.log(.info, "Unsuccessful response: %@", String(format: "%d", statusCode))
+            logger.info("Unsuccessful response: \(statusCode)")
             if dispatchError(error: UnsuccessfulResponseError(responseCode: statusCode)) == .shutdown {
-                logger.log(.info, "Connection has been explicitly shut down by error handler")
+                logger.info("Connection has been explicitly shut down by error handler")
                 readyState = .shutdown
             }
             completionHandler(.cancel)

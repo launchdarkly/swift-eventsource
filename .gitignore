@@ -3,6 +3,7 @@
 .\#*
 .DS_Store
 /.build
+/Package.resolved
 xcuserdata/
 IDEWorkspaceChecks.plist
 .swiftpm
