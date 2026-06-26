@@ -7,81 +7,16 @@ on:
 
 jobs:
   release-package:
-    runs-on: macos-15
+    runs-on: ubuntu-latest
 
     permissions:
-      id-token: write # Needed if using OIDC to get release secrets.
-      contents: write # Contents and pull-requests are for release-please to make releases.
-      pull-requests: write
+      contents: write # release-please creates releases and tags.
+      pull-requests: write # release-please maintains the release PR.
 
     steps:
+      # For a SwiftPM-only package, a release is just a git tag plus a GitHub
+      # release. release-please maintains the release PR and, when it merges,
+      # creates the tag/release that Swift Package Manager consumers resolve.
       - uses: googleapis/release-please-action@16a9c90856f42705d54a6fda1823352bdc62cf38 # v4.4.0
-        id: release
         with:
           target-branch: ${{ github.ref_name }}
-
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 # Full history is required for proper changelog generation
-
-      #
-      # This step runs and updates an existing PR
-      #
-      - uses: ./.github/actions/update-versions
-        if: ${{ steps.release.outputs.prs_created == 'true' }}
-        with:
-          branch: ${{ fromJSON(steps.release.outputs.pr).headBranchName }}
-
-      #
-      # These remaining steps are ONLY run if a release was actually created
-      #
-      - uses: launchdarkly/gh-actions/actions/release-secrets@release-secrets-v1.2.0
-        if: ${{ steps.release.outputs.releases_created == 'true' }}
-        name: 'Get Cocoapods token'
-        with:
-          aws_assume_role: ${{ vars.AWS_ROLE_ARN }}
-          ssm_parameter_pairs: '/production/common/releasing/cocoapods/token = COCOAPODS_TRUNK_TOKEN'
-
-      - uses: maxim-lobanov/setup-xcode@60606e260d2fc5762a71e64e74b2174e8ea3c8bd # 60606e260d2fc5762a71e64e74b2174e8ea3c8bd
-        if: ${{ steps.release.outputs.releases_created == 'true' }}
-        with:
-          xcode-version: 16.4
-
-      - uses: ./.github/actions/lint
-        if: ${{ steps.release.outputs.releases_created == 'true' }}
-
-      - uses: ./.github/actions/build-ios
-        if: ${{ steps.release.outputs.releases_created == 'true' }}
-        with:
-          ios-sim: 'platform=iOS Simulator,name=iPhone 16'
-
-      - uses: ./.github/actions/build-macos
-        if: ${{ steps.release.outputs.releases_created == 'true' }}
-
-      - uses: ./.github/actions/build-tvos
-        if: ${{ steps.release.outputs.releases_created == 'true' }}
-
-      - uses: ./.github/actions/build-watchos
-        if: ${{ steps.release.outputs.releases_created == 'true' }}
-
-      - uses: ./.github/actions/test-swiftpm
-        if: ${{ steps.release.outputs.releases_created == 'true' }}
-
-      - uses: ./.github/actions/contract-tests
-        if: ${{ steps.release.outputs.releases_created == 'true' }}
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - uses: ./.github/actions/build-docs
-        if: ${{ steps.release.outputs.releases_created == 'true' }}
-
-      - uses: ./.github/actions/publish
-        if: ${{ steps.release.outputs.releases_created == 'true' }}
-        with:
-          token: ${{secrets.GITHUB_TOKEN}}
-          dry_run: false
-
-      - uses: ./.github/actions/publish-docs
-        if: ${{ steps.release.outputs.releases_created == 'true' }}
-        with:
-          token: ${{secrets.GITHUB_TOKEN}}
