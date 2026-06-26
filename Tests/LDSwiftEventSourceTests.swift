@@ -172,7 +172,11 @@ final class LDSwiftEventSourceTests {
         return sessionConfig
     }
 
-#if !os(Linux) && !os(Windows)
+// The URLProtocol-based network tests run on Darwin and Linux. Windows is excluded
+// (the mock interception there is unverified). A few assertions and one test depend on
+// Darwin-specific URLSession/URLProtocol behavior and are further guarded with #if !os(Linux)
+// inline, with the reason noted at each site.
+#if !os(Windows)
     @Test func startDefaultRequest() async throws {
         var config = EventSource.Config(url: URL(string: "http://example.com")!)
         config.urlSessionConfiguration = sessionWithMockProtocol()
@@ -183,8 +187,12 @@ final class LDSwiftEventSourceTests {
         #expect(handler.request.httpMethod == config.method)
         #expect(handler.request.httpBody == config.body)
         #expect(handler.request.timeoutInterval == config.idleTimeout)
+#if !os(Linux)
+        // swift-corelibs-foundation does not merge the session's httpAdditionalHeaders into the
+        // request seen by URLProtocol, so the session-injected headers are only assertable on Darwin.
         #expect(handler.request.allHTTPHeaderFields?["Accept"] == "text/event-stream")
         #expect(handler.request.allHTTPHeaderFields?["Cache-Control"] == "no-cache")
+#endif
         #expect(handler.request.allHTTPHeaderFields?["Last-Event-Id"] == nil)
         es.stop()
     }
@@ -202,10 +210,19 @@ final class LDSwiftEventSourceTests {
         let handler = try #require(await MockingProtocol.requested.expectEvent())
         #expect(handler.request.url == config.url)
         #expect(handler.request.httpMethod == config.method)
+#if os(Linux)
+        // On swift-corelibs-foundation the body stays in httpBody rather than being converted to
+        // an httpBodyStream as it is on Darwin.
+        #expect(handler.request.httpBody == config.body)
+#else
         #expect(handler.request.bodyStreamAsData() == config.body)
+#endif
         #expect(handler.request.timeoutInterval == config.idleTimeout)
+#if !os(Linux)
+        // Session-injected headers are not surfaced to URLProtocol on swift-corelibs-foundation.
         #expect(handler.request.allHTTPHeaderFields?["Accept"] == "text/event-stream")
         #expect(handler.request.allHTTPHeaderFields?["Cache-Control"] == "no-cache")
+#endif
         #expect(handler.request.allHTTPHeaderFields?["Last-Event-Id"] == config.lastEventId)
         #expect(handler.request.allHTTPHeaderFields?["X-LD-Header"] == "def")
         es.stop()
@@ -297,6 +314,11 @@ final class LDSwiftEventSourceTests {
         collector.cancel()
     }
 
+    // Darwin-only: after an error response cancels the connection (completionHandler(.cancel)),
+    // swift-corelibs-foundation does not route the reconnect's data task back through the custom
+    // URLProtocol, so the reconnect request cannot be observed on Linux/Windows. (The
+    // open -> finish -> reconnect path used by other tests does work cross-platform.)
+#if !os(Linux)
     @Test func retryOnInvalidResponseCode() async throws {
         var config = EventSource.Config(url: URL(string: "http://example.com")!)
         config.urlSessionConfiguration = sessionWithMockProtocol()
@@ -318,6 +340,7 @@ final class LDSwiftEventSourceTests {
         es.stop()
         collector.cancel()
     }
+#endif
 
     @Test func shutdownByErrorHandlerOnInitialErrorResponse() async throws {
         // The connectionErrorHandler runs on the URLSession delegate queue, off the test's
