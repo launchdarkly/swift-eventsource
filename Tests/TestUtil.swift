@@ -1,4 +1,5 @@
-import XCTest
+import Foundation
+import Testing
 
 #if os(Linux) || os(Windows)
 import FoundationNetworking
@@ -27,7 +28,7 @@ final class EventSink<T>: @unchecked Sendable {
         while receivedEvents.isEmpty {
             guard condition.wait(until: deadline)
             else {
-                XCTFail("Expected mock handler to be called")
+                Issue.record("Expected mock handler to be called")
                 return (nil as T?)!
             }
         }
@@ -48,7 +49,7 @@ final class EventSink<T>: @unchecked Sendable {
             guard condition.wait(until: deadline)
             else { return }
         }
-        XCTFail("Expected no events in sink, found \(String(describing: receivedEvents.first))")
+        Issue.record("Expected no events in sink, found \(String(describing: receivedEvents.first))")
     }
 
     func reset() {
