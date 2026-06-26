@@ -22,20 +22,13 @@ let package = Package(
             dependencies: [
                 .product(name: "Logging", package: "swift-log"),
             ],
-            path: "Source",
-            swiftSettings: [
-                .swiftLanguageMode(.v6),
-            ]
+            path: "Source"
         ),
         .testTarget(
             name: "LDSwiftEventSourceTests",
             dependencies: ["LDSwiftEventSource"],
-            path: "Tests",
-            swiftSettings: [
-                // Library is on the v6 language mode; the test target follows in a
-                // later step once the test doubles are made Sendable.
-                .swiftLanguageMode(.v5),
-            ]
+            path: "Tests"
         ),
-    ]
+    ],
+    swiftLanguageModes: [.v6]
 )

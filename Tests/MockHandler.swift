@@ -21,8 +21,8 @@ enum ReceivedEvent: Equatable {
     }
 }
 
-class MockHandler: EventHandler {
-    var events = EventSink<ReceivedEvent>()
+final class MockHandler: EventHandler {
+    let events = EventSink<ReceivedEvent>()
 
     func onOpened() { events.record(.opened) }
     func onClosed() { events.record(.closed) }
