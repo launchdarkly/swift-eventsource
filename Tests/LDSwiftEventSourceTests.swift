@@ -508,9 +508,11 @@ final class LDSwiftEventSourceTests {
         handler.finishWith(error: DummyError())
         // A transport error after the connection opened; the handler forces it terminal, so it is
         // reported as unrecoverable, followed by .closed, and the stream ends without a reconnect.
+        // (URLSession wraps the delegate error into an NSError on Darwin, so assert presence, not type.)
         let err = await collector.expectError()
         #expect(err?.recoverable == false)
-        #expect(err?.underlyingError is DummyError)
+        #expect(err?.statusCode == nil)
+        #expect(err?.underlyingError != nil)
         #expect(await collector.events.expectEvent() == .closed)
         await MockingProtocol.requested.expectNoEvent(within: .seconds(1))
         await expectFullyConsumed(collector)
