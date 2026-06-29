@@ -6,57 +6,23 @@ import Testing
 import FoundationNetworking
 #endif
 
-// A thread-safe queue used to hand events from the background threads that drive
-// the mocks (the URLSession delegate queue, the URLProtocol loading thread) to the
-// test thread, which blocks waiting for them. A reference type guarded by an
-// `NSCondition` so it can be shared across those threads; `@unchecked Sendable`
-// because the locking the compiler cannot verify is what makes the access safe.
+// A thread-safe FIFO recorder for the synchronous parser tests, where events are produced (via
+// MockHandler) and drained on the same test thread. `@unchecked Sendable` with an `NSLock` so
+// MockHandler can stay `Sendable`; tests pull with the non-blocking `maybeEvent()`.
 final class EventSink<T>: @unchecked Sendable {
-    private let condition = NSCondition()
+    private let lock = NSLock()
     private var receivedEvents: [T] = []
 
     func record(_ event: T) {
-        condition.lock()
-        defer { condition.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         receivedEvents.append(event)
-        condition.signal()
-    }
-
-    func expectEvent(maxWait: TimeInterval = 1.0) -> T {
-        let deadline = Date(timeIntervalSinceNow: maxWait)
-        condition.lock()
-        defer { condition.unlock() }
-        while receivedEvents.isEmpty {
-            guard condition.wait(until: deadline)
-            else {
-                Issue.record("Expected mock handler to be called")
-                return (nil as T?)!
-            }
-        }
-        return receivedEvents.removeFirst()
     }
 
     func maybeEvent() -> T? {
-        condition.lock()
-        defer { condition.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         return receivedEvents.isEmpty ? nil : receivedEvents.removeFirst()
-    }
-
-    func expectNoEvent(within: TimeInterval = 0.1) {
-        let deadline = Date(timeIntervalSinceNow: within)
-        condition.lock()
-        defer { condition.unlock() }
-        while receivedEvents.isEmpty {
-            guard condition.wait(until: deadline)
-            else { return }
-        }
-        Issue.record("Expected no events in sink, found \(String(describing: receivedEvents.first))")
-    }
-
-    func reset() {
-        condition.lock()
-        defer { condition.unlock() }
-        receivedEvents.removeAll()
     }
 }
 
@@ -92,8 +58,10 @@ final class AsyncSink<T>: @unchecked Sendable {
         return maybeEvent()
     }
 
-    /// Asserts that no event arrives within `within`.
-    func expectNoEvent(within: Duration = .milliseconds(100)) async {
+    /// Asserts that no event arrives within `within`. The window is a safety margin against an event
+    /// that is in flight but not yet recorded; prefer `EventCollector.drained()` + `maybeEvent()` when
+    /// the stream has already finished, which is deterministic.
+    func expectNoEvent(within: Duration = .milliseconds(250)) async {
         try? await Task.sleep(for: within)
         if let event = maybeEvent() {
             Issue.record("Expected no events in sink, found \(String(describing: event))")
@@ -121,6 +89,14 @@ final class EventCollector: Sendable {
                 sink.record(ReceivedEvent(event))
             }
         }
+    }
+
+    /// Awaits the drain task, which finishes once the source stream finishes (e.g. after `stop()`).
+    /// Once this returns, every event the stream produced has been recorded, so the sink can be
+    /// checked synchronously with `maybeEvent()` — no timing window. Only call this when the stream is
+    /// expected to finish, or it will await indefinitely.
+    func drained() async {
+        await task.value
     }
 
     func cancel() {
@@ -156,7 +132,9 @@ final class RequestHandler {
     let request: URLRequest
     let client: URLProtocolClient?
 
-    var stopped = false
+    // Set when the URLProtocol's stopLoading runs (i.e. the connection was torn down). Lock-protected
+    // because it is written on the loading thread and read from the test thread.
+    let stopped = Box(false)
 
     init(proto: URLProtocol, request: URLRequest, client: URLProtocolClient?) {
         self.proto = proto
@@ -187,7 +165,7 @@ final class RequestHandler {
     }
 
     func stop() {
-        stopped = true
+        stopped.value = true
     }
 }
 

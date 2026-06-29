@@ -18,8 +18,20 @@ public final class EventSource: Sendable {
      The stream of events produced by this `EventSource`.
 
      Call `start()` to open the connection; received events and state changes are then delivered here as
-     `EventSourceEvent` values. The sequence is single-consumer and terminates only when `stop()` is called (or the
-     consuming task is cancelled). Events that arrive before iteration begins are buffered.
+     `EventSourceEvent` values. The sequence terminates only when `stop()` is called (or the consuming task is
+     cancelled).
+
+     - Important:
+        This is a **single-consumer** sequence: iterate it from exactly one task. Iterating it more than once
+        splits events between the iterators rather than delivering each event to all of them.
+
+     - Important:
+        The stream is **unbounded** and applies no backpressure to the network. The consumer is expected to drain
+        it continuously; events parsed off the connection are buffered until iterated, so a consumer that pauses,
+        falls behind, or never iterates while the connection is open will accumulate events in memory without
+        bound. This mirrors `AsyncStream`'s default buffering and the behavior of LaunchDarkly's other
+        async-pull SSE clients; the intended consumers (an SDK's data source) process each event synchronously and
+        never fall behind.
      */
     public var events: AsyncStream<EventSourceEvent> { stream }
 
@@ -29,13 +41,23 @@ public final class EventSource: Sendable {
      - Parameter config: The configuration for initializing the `EventSource` client.
      */
     public init(config: Config) {
+        // `.unbounded` (the default) is deliberate: dropping events would corrupt last-event-id resumption, and the
+        // URLSessionDataDelegate data path cannot apply real backpressure to the socket. The consumer-must-drain
+        // contract is documented on `events`.
         let (stream, continuation) = AsyncStream.makeStream(of: EventSourceEvent.self)
         self.stream = stream
         let delegate = EventSourceDelegate(config: config, continuation: continuation)
         self.esDelegate = delegate
         // If the consumer stops iterating (its task is cancelled or the stream is dropped) without calling stop(),
-        // tear the connection down.
-        continuation.onTermination = { _ in delegate.stop() }
+        // tear the connection down. Captured weakly so the continuation does not retain the delegate (and so this
+        // EventSource); if the delegate is already gone there is nothing left to tear down.
+        continuation.onTermination = { [weak delegate] _ in delegate?.stop() }
+    }
+
+    /// Tears the connection down if this `EventSource` is deallocated without `stop()` having been called -- e.g. a
+    /// caller that creates one, never iterates `events`, and drops it. Idempotent with `stop()`.
+    deinit {
+        esDelegate.stop()
     }
 
     /**
@@ -261,6 +283,9 @@ final class EventSourceDelegate: NSObject, URLSessionDataDelegate, @unchecked Se
     }
 
     private func connect() {
+        // A reconnect can be scheduled (via asyncAfter) before stop() runs; once shut down, do not reopen.
+        guard readyState != .shutdown
+        else { return }
         logger.info("Starting EventSource client")
         let task = urlSession?.dataTask(with: createRequest())
         task?.resume()

@@ -163,6 +163,7 @@ final class LDSwiftEventSourceTests {
         #expect(es.dispatchError(error: DummyError()) == .shutdown)
         #expect(connectionErrorHandlerCallCount.value == 2)
         continuation.finish()
+        await expectFullyConsumed(collector)
         collector.cancel()
     }
 
@@ -170,6 +171,18 @@ final class LDSwiftEventSourceTests {
         let sessionConfig = URLSessionConfiguration.default
         sessionConfig.protocolClasses = [MockingProtocol.self] + (sessionConfig.protocolClasses ?? [])
         return sessionConfig
+    }
+
+    /// Enforces the suite invariant that a test consumed everything it produced: no mocked network
+    /// request and no stream event is left unobserved when the test ends.
+    ///
+    /// Must be called after the stream has been stopped/finished. It awaits the collector's drain (so
+    /// every produced event is recorded) and then checks both sinks synchronously, so the assertion is
+    /// deterministic rather than relying on a timing window.
+    private func expectFullyConsumed(_ collector: EventCollector) async {
+        await collector.drained()
+        #expect(collector.events.maybeEvent() == nil, "test left an unconsumed stream event")
+        #expect(MockingProtocol.requested.maybeEvent() == nil, "test left an unconsumed mock request")
     }
 
 // The URLProtocol-based network tests run on Darwin and Linux. Windows is excluded
@@ -181,6 +194,7 @@ final class LDSwiftEventSourceTests {
         var config = EventSource.Config(url: URL(string: "http://example.com")!)
         config.urlSessionConfiguration = sessionWithMockProtocol()
         let es = EventSource(config: config)
+        let collector = EventCollector(es.events)
         es.start()
         let handler = try #require(await MockingProtocol.requested.expectEvent())
         #expect(handler.request.url == config.url)
@@ -195,6 +209,8 @@ final class LDSwiftEventSourceTests {
 #endif
         #expect(handler.request.allHTTPHeaderFields?["Last-Event-Id"] == nil)
         es.stop()
+        await expectFullyConsumed(collector)
+        collector.cancel()
     }
 
     @Test func startRequestWithConfiguration() async throws {
@@ -206,6 +222,7 @@ final class LDSwiftEventSourceTests {
         config.lastEventId = "abc"
         config.headers = ["X-LD-Header": "def"]
         let es = EventSource(config: config)
+        let collector = EventCollector(es.events)
         es.start()
         let handler = try #require(await MockingProtocol.requested.expectEvent())
         #expect(handler.request.url == config.url)
@@ -226,17 +243,22 @@ final class LDSwiftEventSourceTests {
         #expect(handler.request.allHTTPHeaderFields?["Last-Event-Id"] == config.lastEventId)
         #expect(handler.request.allHTTPHeaderFields?["X-LD-Header"] == "def")
         es.stop()
+        await expectFullyConsumed(collector)
+        collector.cancel()
     }
 
     @Test func startRequestIsNotReentrant() async throws {
         var config = EventSource.Config(url: URL(string: "http://example.com")!)
         config.urlSessionConfiguration = sessionWithMockProtocol()
         let es = EventSource(config: config)
+        let collector = EventCollector(es.events)
         es.start()
         es.start()
         _ = try #require(await MockingProtocol.requested.expectEvent())
         await MockingProtocol.requested.expectNoEvent()
         es.stop()
+        await expectFullyConsumed(collector)
+        collector.cancel()
     }
 
     @Test func successfulResponseOpens() async throws {
@@ -250,6 +272,7 @@ final class LDSwiftEventSourceTests {
         #expect(await collector.events.expectEvent() == .opened)
         es.stop()
         #expect(await collector.events.expectEvent() == .closed)
+        await expectFullyConsumed(collector)
         collector.cancel()
     }
 
@@ -275,6 +298,7 @@ final class LDSwiftEventSourceTests {
         let reconnectHandler = try #require(await MockingProtocol.requested.expectEvent())
         #expect(reconnectHandler.request.allHTTPHeaderFields?["Last-Event-Id"] == "abc")
         es.stop()
+        await expectFullyConsumed(collector)
         collector.cancel()
     }
 
@@ -295,6 +319,7 @@ final class LDSwiftEventSourceTests {
         // Expect to reconnect before this times out
         _ = try #require(await MockingProtocol.requested.expectEvent())
         es.stop()
+        await expectFullyConsumed(collector)
         collector.cancel()
     }
 
@@ -311,6 +336,53 @@ final class LDSwiftEventSourceTests {
         #expect(await collector.events.expectEvent() == .message("custom", MessageEvent(data: "{}")))
         es.stop()
         #expect(await collector.events.expectEvent() == .closed)
+        await expectFullyConsumed(collector)
+        collector.cancel()
+    }
+
+    @Test func cancellingConsumerTearsDownConnection() async throws {
+        var config = EventSource.Config(url: URL(string: "http://example.com")!)
+        config.urlSessionConfiguration = sessionWithMockProtocol()
+        let es = EventSource(config: config)
+        let collector = EventCollector(es.events)
+        es.start()
+        let handler = try #require(await MockingProtocol.requested.expectEvent())
+        handler.respond(statusCode: 200)
+        #expect(await collector.events.expectEvent() == .opened)
+        // Cancelling the only consumer fires the stream's onTermination, which tears the connection
+        // down (no explicit stop()). The mock observes this as stopLoading -> RequestHandler.stop().
+        collector.cancel()
+        let deadline = ContinuousClock.now + .seconds(1)
+        while ContinuousClock.now < deadline && !handler.stopped.value {
+            try? await Task.sleep(for: .milliseconds(5))
+        }
+        #expect(handler.stopped.value)
+    }
+
+    @Test func streamContinuesAcrossReconnect() async throws {
+        var config = EventSource.Config(url: URL(string: "http://example.com")!)
+        config.urlSessionConfiguration = sessionWithMockProtocol()
+        config.reconnectTime = 0.1
+        let es = EventSource(config: config)
+        let collector = EventCollector(es.events)
+        es.start()
+        let handler = try #require(await MockingProtocol.requested.expectEvent())
+        handler.respond(statusCode: 200)
+        #expect(await collector.events.expectEvent() == .opened)
+        handler.respond(didLoad: "data: first\n\n")
+        #expect(await collector.events.expectEvent() == .message("message", MessageEvent(data: "first")))
+        handler.finish()
+        #expect(await collector.events.expectEvent() == .closed)
+        // The connection drops and reconnects; the same stream keeps delivering events. A close/error
+        // is a value in the stream, not a termination.
+        let reconnect = try #require(await MockingProtocol.requested.expectEvent())
+        reconnect.respond(statusCode: 200)
+        #expect(await collector.events.expectEvent() == .opened)
+        reconnect.respond(didLoad: "data: second\n\n")
+        #expect(await collector.events.expectEvent() == .message("message", MessageEvent(data: "second")))
+        es.stop()
+        #expect(await collector.events.expectEvent() == .closed)
+        await expectFullyConsumed(collector)
         collector.cancel()
     }
 
@@ -338,6 +410,7 @@ final class LDSwiftEventSourceTests {
         // Expect the client to reconnect
         _ = try #require(await MockingProtocol.requested.expectEvent())
         es.stop()
+        await expectFullyConsumed(collector)
         collector.cancel()
     }
 #endif
@@ -364,6 +437,7 @@ final class LDSwiftEventSourceTests {
         // Error should not have been delivered through the stream
         await collector.events.expectNoEvent()
         #expect(observedResponseCode.value == 400)
+        await expectFullyConsumed(collector)
         collector.cancel()
     }
 
@@ -387,6 +461,7 @@ final class LDSwiftEventSourceTests {
         es.stop()
         // Error should not have been delivered through the stream
         await collector.events.expectNoEvent()
+        await expectFullyConsumed(collector)
         collector.cancel()
     }
 
@@ -407,6 +482,7 @@ final class LDSwiftEventSourceTests {
         es.stop()
         // Error should not have been delivered through the stream
         await collector.events.expectNoEvent()
+        await expectFullyConsumed(collector)
         collector.cancel()
     }
 
@@ -432,6 +508,7 @@ final class LDSwiftEventSourceTests {
         // Error should not have been delivered through the stream
         await collector.events.expectNoEvent()
         #expect(observedResponseCode.value == 204)
+        await expectFullyConsumed(collector)
         collector.cancel()
     }
 #endif
