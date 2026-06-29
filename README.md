@@ -25,6 +25,38 @@ dependencies: [
 ```
 <!-- x-release-please-end -->
 
+## Usage
+
+`EventSource` exposes received events as an `AsyncSequence`. Configure it with a `URL`, call `start()`, and iterate `events`:
+
+```swift
+import LDSwiftEventSource
+
+let config = EventSource.Config(url: URL(string: "https://example.com/stream")!)
+let eventSource = EventSource(config: config)
+eventSource.start()
+
+for await event in eventSource.events {
+    switch event {
+    case let .opened(headers):
+        // Connection (re)established. `headers` are the response headers, keys lowercased.
+        print("opened: \(headers)")
+    case .closed:
+        print("connection closed; the client will reconnect")
+    case let .message(eventType, message):
+        print("\(eventType): \(message.data)")
+    case let .comment(comment):
+        print("comment: \(comment)")
+    case let .error(error):
+        // Recoverable errors are advisory — the client keeps retrying and the stream stays open.
+        // An unrecoverable error is the last event before the stream finishes.
+        print("error (status: \(error.statusCode.map(String.init) ?? "none"), recoverable: \(error.recoverable))")
+    }
+}
+```
+
+The sequence is single-consumer: iterate it from one task. Call `stop()` to shut the client down and finish the stream; the connection is also torn down if the consuming task is cancelled. Errors are reported as values on the stream rather than thrown, so a recoverable failure does not interrupt iteration.
+
 ## Contributing
 
 We encourage pull requests and other contributions from the community. Check out our [contributing guidelines](https://github.com/LaunchDarkly/swift-eventsource/blob/main/CONTRIBUTING.md) for instructions on how to contribute to this SDK.

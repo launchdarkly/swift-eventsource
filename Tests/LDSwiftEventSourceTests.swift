@@ -140,7 +140,16 @@ final class LDSwiftEventSourceTests {
         #expect(request.allHTTPHeaderFields == overrideHeaders)
     }
 
-    @Test func dispatchError() async {
+    @Test func recoverableStatusClassification() {
+        for code in [500, 503, 599, 400, 408, 429] {
+            #expect(EventSourceDelegate.isRecoverable(statusCode: code), "\(code) should be recoverable")
+        }
+        for code in [200, 204, 301, 401, 403, 404] {
+            #expect(!EventSourceDelegate.isRecoverable(statusCode: code), "\(code) should not be recoverable")
+        }
+    }
+
+    @Test func emitErrorClassifiesAndReports() async {
         let connectionErrorHandlerCallCount = Box(0)
         let connectionErrorAction = Box<ConnectionErrorAction>(.proceed)
         var config = EventSource.Config(url: URL(string: "abc")!)
@@ -151,17 +160,23 @@ final class LDSwiftEventSourceTests {
         let (stream, continuation) = AsyncStream.makeStream(of: EventSourceEvent.self)
         let collector = EventCollector(stream)
         let es = EventSourceDelegate(config: config, continuation: continuation)
-        #expect(es.dispatchError(error: DummyError()) == .proceed)
+
+        // A transport error (no status) is recoverable by default; the handler is consulted and the
+        // error is reported on the stream with its underlying error preserved.
+        #expect(es.emitError(DummyError(), statusCode: nil, headers: [:]))
         #expect(connectionErrorHandlerCallCount.value == 1)
-        guard case .error(let err)? = await collector.events.expectEvent(), err is DummyError
-        else {
-            Issue.record("handler should receive error if EventSource is not shutting down")
-            return
-        }
+        let recoverableError = await collector.expectError()
+        #expect(recoverableError?.statusCode == nil)
+        #expect(recoverableError?.recoverable == true)
+        #expect(recoverableError?.underlyingError is DummyError)
         await collector.events.expectNoEvent()
+
+        // The handler can force the same error to be terminal.
         connectionErrorAction.value = .shutdown
-        #expect(es.dispatchError(error: DummyError()) == .shutdown)
+        #expect(!es.emitError(DummyError(), statusCode: nil, headers: [:]))
         #expect(connectionErrorHandlerCallCount.value == 2)
+        #expect(await collector.expectError()?.recoverable == false)
+
         continuation.finish()
         await expectFullyConsumed(collector)
         collector.cancel()
@@ -269,7 +284,7 @@ final class LDSwiftEventSourceTests {
         es.start()
         let handler = try #require(await MockingProtocol.requested.expectEvent())
         handler.respond(statusCode: 200)
-        #expect(await collector.events.expectEvent() == .opened)
+        await collector.expectOpened()
         es.stop()
         #expect(await collector.events.expectEvent() == .closed)
         await expectFullyConsumed(collector)
@@ -285,7 +300,7 @@ final class LDSwiftEventSourceTests {
         es.start()
         let handler = try #require(await MockingProtocol.requested.expectEvent())
         handler.respond(statusCode: 200)
-        #expect(await collector.events.expectEvent() == .opened)
+        await collector.expectOpened()
         #expect(es.getLastEventId() == "")
         handler.respond(didLoad: "id: abc\n\n")
         // Comment used for synchronization
@@ -312,7 +327,7 @@ final class LDSwiftEventSourceTests {
         es.start()
         let handler = try #require(await MockingProtocol.requested.expectEvent())
         handler.respond(statusCode: 200)
-        #expect(await collector.events.expectEvent() == .opened)
+        await collector.expectOpened()
         handler.respond(didLoad: "retry: 100\n\n")
         handler.finish()
         #expect(await collector.events.expectEvent() == .closed)
@@ -331,7 +346,7 @@ final class LDSwiftEventSourceTests {
         es.start()
         let handler = try #require(await MockingProtocol.requested.expectEvent())
         handler.respond(statusCode: 200)
-        #expect(await collector.events.expectEvent() == .opened)
+        await collector.expectOpened()
         handler.respond(didLoad: "event: custom\ndata: {}\n\n")
         #expect(await collector.events.expectEvent() == .message("custom", MessageEvent(data: "{}")))
         es.stop()
@@ -348,7 +363,7 @@ final class LDSwiftEventSourceTests {
         es.start()
         let handler = try #require(await MockingProtocol.requested.expectEvent())
         handler.respond(statusCode: 200)
-        #expect(await collector.events.expectEvent() == .opened)
+        await collector.expectOpened()
         // Cancelling the only consumer fires the stream's onTermination, which tears the connection
         // down (no explicit stop()). The mock observes this as stopLoading -> RequestHandler.stop().
         collector.cancel()
@@ -368,7 +383,7 @@ final class LDSwiftEventSourceTests {
         es.start()
         let handler = try #require(await MockingProtocol.requested.expectEvent())
         handler.respond(statusCode: 200)
-        #expect(await collector.events.expectEvent() == .opened)
+        await collector.expectOpened()
         handler.respond(didLoad: "data: first\n\n")
         #expect(await collector.events.expectEvent() == .message("message", MessageEvent(data: "first")))
         handler.finish()
@@ -377,11 +392,49 @@ final class LDSwiftEventSourceTests {
         // is a value in the stream, not a termination.
         let reconnect = try #require(await MockingProtocol.requested.expectEvent())
         reconnect.respond(statusCode: 200)
-        #expect(await collector.events.expectEvent() == .opened)
+        await collector.expectOpened()
         reconnect.respond(didLoad: "data: second\n\n")
         #expect(await collector.events.expectEvent() == .message("message", MessageEvent(data: "second")))
         es.stop()
         #expect(await collector.events.expectEvent() == .closed)
+        await expectFullyConsumed(collector)
+        collector.cancel()
+    }
+
+    @Test func openedCarriesResponseHeaders() async throws {
+        var config = EventSource.Config(url: URL(string: "http://example.com")!)
+        config.urlSessionConfiguration = sessionWithMockProtocol()
+        let es = EventSource(config: config)
+        let collector = EventCollector(es.events)
+        es.start()
+        let handler = try #require(await MockingProtocol.requested.expectEvent())
+        // Mixed-case keys to confirm they are surfaced lowercased.
+        handler.respond(statusCode: 200, headers: ["X-LD-EnvId": "env-123", "X-LD-FD-Fallback": "stream"])
+        let headers = await collector.expectOpened()
+        #expect(headers?["x-ld-envid"] == "env-123")
+        #expect(headers?["x-ld-fd-fallback"] == "stream")
+        es.stop()
+        #expect(await collector.events.expectEvent() == .closed)
+        await expectFullyConsumed(collector)
+        collector.cancel()
+    }
+
+    @Test func errorResponseCarriesStatusHeadersAndRecoverable() async throws {
+        var config = EventSource.Config(url: URL(string: "http://example.com")!)
+        config.urlSessionConfiguration = sessionWithMockProtocol()
+        config.reconnectTime = 0.1
+        let es = EventSource(config: config)
+        let collector = EventCollector(es.events)
+        es.start()
+        let handler = try #require(await MockingProtocol.requested.expectEvent())
+        // 401 is unrecoverable, so this terminates without a reconnect (observable cross-platform). The
+        // response headers must still be surfaced -- the FDv2 protocol reads directives off error responses.
+        handler.respond(statusCode: 401, headers: ["X-LD-FD-Fallback": "poll"])
+        let err = await collector.expectError()
+        #expect(err?.statusCode == 401)
+        #expect(err?.recoverable == false)
+        #expect(err?.headers["x-ld-fd-fallback"] == "poll")
+        await MockingProtocol.requested.expectNoEvent(within: .seconds(1))
         await expectFullyConsumed(collector)
         collector.cancel()
     }
@@ -400,13 +453,10 @@ final class LDSwiftEventSourceTests {
         es.start()
         let handler = try #require(await MockingProtocol.requested.expectEvent())
         handler.respond(statusCode: 400)
-        guard case .error(let err)? = await collector.events.expectEvent(),
-              let responseErr = err as? UnsuccessfulResponseError
-        else {
-            Issue.record("Expected UnsuccessfulResponseError to be given to handler")
-            return
-        }
-        #expect(responseErr.responseCode == 400)
+        // 400 is a recoverable status: the error is advisory and the client retries.
+        let err = await collector.expectError()
+        #expect(err?.statusCode == 400)
+        #expect(err?.recoverable == true)
         // Expect the client to reconnect
         _ = try #require(await MockingProtocol.requested.expectEvent())
         es.stop()
@@ -431,11 +481,12 @@ final class LDSwiftEventSourceTests {
         es.start()
         let handler = try #require(await MockingProtocol.requested.expectEvent())
         handler.respond(statusCode: 400)
-        // Expect the client not to reconnect
+        // 400 is recoverable by status, but the handler forces a terminal outcome: the error is reported
+        // as unrecoverable and the stream ends without a reconnect.
+        let err = await collector.expectError()
+        #expect(err?.statusCode == 400)
+        #expect(err?.recoverable == false)
         await MockingProtocol.requested.expectNoEvent(within: .seconds(1))
-        es.stop()
-        // Error should not have been delivered through the stream
-        await collector.events.expectNoEvent()
         #expect(observedResponseCode.value == 400)
         await expectFullyConsumed(collector)
         collector.cancel()
@@ -453,14 +504,15 @@ final class LDSwiftEventSourceTests {
         es.start()
         let handler = try #require(await MockingProtocol.requested.expectEvent())
         handler.respond(statusCode: 200)
-        #expect(await collector.events.expectEvent() == .opened)
+        await collector.expectOpened()
         handler.finishWith(error: DummyError())
+        // A transport error after the connection opened; the handler forces it terminal, so it is
+        // reported as unrecoverable, followed by .closed, and the stream ends without a reconnect.
+        let err = await collector.expectError()
+        #expect(err?.recoverable == false)
+        #expect(err?.underlyingError is DummyError)
         #expect(await collector.events.expectEvent() == .closed)
-        // Expect the client not to reconnect
         await MockingProtocol.requested.expectNoEvent(within: .seconds(1))
-        es.stop()
-        // Error should not have been delivered through the stream
-        await collector.events.expectNoEvent()
         await expectFullyConsumed(collector)
         collector.cancel()
     }
@@ -476,19 +528,18 @@ final class LDSwiftEventSourceTests {
 
         let handler = try #require(await MockingProtocol.requested.expectEvent())
         handler.respond(statusCode: 204)
-
+        // 204 is not a recoverable status: it is reported as a terminal error and the stream ends.
+        let err = await collector.expectError()
+        #expect(err?.statusCode == 204)
+        #expect(err?.recoverable == false)
         await MockingProtocol.requested.expectNoEvent(within: .seconds(1))
-
-        es.stop()
-        // Error should not have been delivered through the stream
-        await collector.events.expectNoEvent()
         await expectFullyConsumed(collector)
         collector.cancel()
     }
 
-    @Test func canOverride204DefaultBehavior() async throws {
-        // The connectionErrorHandler runs on the URLSession delegate queue, off the test's
-        // task, so we capture what it observed and assert on the test thread.
+    @Test func connectionErrorHandlerCanForceTerminal() async throws {
+        // 503 is normally recoverable; a connectionErrorHandler returning .shutdown overrides the
+        // default policy and makes the failure terminal (reported as unrecoverable, no reconnect).
         let observedResponseCode = Box<Int?>(nil)
         var config = EventSource.Config(url: URL(string: "http://example.com")!)
         config.urlSessionConfiguration = sessionWithMockProtocol()
@@ -501,13 +552,12 @@ final class LDSwiftEventSourceTests {
         let collector = EventCollector(es.events)
         es.start()
         let handler = try #require(await MockingProtocol.requested.expectEvent())
-        handler.respond(statusCode: 204)
-        // Expect the client not to reconnect
+        handler.respond(statusCode: 503)
+        let err = await collector.expectError()
+        #expect(err?.statusCode == 503)
+        #expect(err?.recoverable == false)
         await MockingProtocol.requested.expectNoEvent(within: .seconds(1))
-        es.stop()
-        // Error should not have been delivered through the stream
-        await collector.events.expectNoEvent()
-        #expect(observedResponseCode.value == 204)
+        #expect(observedResponseCode.value == 503)
         await expectFullyConsumed(collector)
         collector.cancel()
     }

@@ -91,6 +91,26 @@ final class EventCollector: Sendable {
         }
     }
 
+    /// Asserts the next event is `.opened`, returning its headers (records an issue and returns nil otherwise).
+    @discardableResult
+    func expectOpened(within: Duration = .seconds(1)) async -> [String: String]? {
+        guard case let .opened(headers)? = await events.expectEvent(within: within) else {
+            Issue.record("Expected an .opened event")
+            return nil
+        }
+        return headers
+    }
+
+    /// Asserts the next event is `.error`, returning it (records an issue and returns nil otherwise).
+    @discardableResult
+    func expectError(within: Duration = .seconds(1)) async -> EventSourceError? {
+        guard case let .error(error)? = await events.expectEvent(within: within) else {
+            Issue.record("Expected an .error event")
+            return nil
+        }
+        return error
+    }
+
     /// Awaits the drain task, which finishes once the source stream finishes (e.g. after `stop()`).
     /// Once this returns, every event the stream produced has been recorded, so the sink can be
     /// checked synchronously with `maybeEvent()` — no timing window. Only call this when the stream is
@@ -142,8 +162,9 @@ final class RequestHandler {
         self.client = client
     }
 
-    func respond(statusCode: Int) {
-        let headers = ["Content-Type": "text/event-stream; charset=utf-8", "Transfer-Encoding": "chunked"]
+    func respond(statusCode: Int, headers extraHeaders: [String: String] = [:]) {
+        var headers = ["Content-Type": "text/event-stream; charset=utf-8", "Transfer-Encoding": "chunked"]
+        headers.merge(extraHeaders) { _, new in new }
         let resp = HTTPURLResponse(url: request.url!, statusCode: statusCode, httpVersion: nil, headerFields: headers)!
         client?.urlProtocol(proto, didReceive: resp, cacheStoragePolicy: .notAllowed)
     }

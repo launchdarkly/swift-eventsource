@@ -1,14 +1,18 @@
 @testable import LDSwiftEventSource
 
 enum ReceivedEvent: Equatable {
-    case opened, closed, message(String, MessageEvent), comment(String), error(Error)
+    case opened(headers: [String: String])
+    case closed
+    case message(String, MessageEvent)
+    case comment(String)
+    case error(EventSourceError)
 
     /// Maps a public `EventSourceEvent` to the test-side enum so stream output can be
     /// compared with the same `Equatable` the callback-based doubles use.
     init(_ event: EventSourceEvent) {
         switch event {
-        case .opened:
-            self = .opened
+        case let .opened(headers):
+            self = .opened(headers: headers)
         case .closed:
             self = .closed
         case let .message(eventType, messageEvent):
@@ -23,6 +27,7 @@ enum ReceivedEvent: Equatable {
     static func == (lhs: ReceivedEvent, rhs: ReceivedEvent) -> Bool {
         switch (lhs, rhs) {
         case (.opened, .opened):
+            // Equality ignores headers; tests that care inspect them via EventCollector.expectOpened().
             return true
         case (.closed, .closed):
             return true
@@ -30,8 +35,9 @@ enum ReceivedEvent: Equatable {
             return typeLhs == typeRhs && eventLhs == eventRhs
         case let (.comment(lhs), .comment(rhs)):
             return lhs == rhs
-        case (.error, .error):
-            return true
+        case let (.error(lhs), .error(rhs)):
+            // Compare the load-bearing fields; underlyingError isn't Equatable.
+            return lhs.statusCode == rhs.statusCode && lhs.recoverable == rhs.recoverable
         default:
             return false
         }
@@ -41,9 +47,9 @@ enum ReceivedEvent: Equatable {
 final class MockHandler: EventHandler {
     let events = EventSink<ReceivedEvent>()
 
-    func onOpened() { events.record(.opened) }
+    func onOpened(headers: [String: String]) { events.record(.opened(headers: headers)) }
     func onClosed() { events.record(.closed) }
     func onMessage(eventType: String, messageEvent: MessageEvent) { events.record(.message(eventType, messageEvent)) }
     func onComment(comment: String) { events.record(.comment(comment)) }
-    func onError(error: Error) { events.record(.error(error)) }
+    func onError(_ error: EventSourceError) { events.record(.error(error)) }
 }

@@ -18,8 +18,8 @@ public final class EventSource: Sendable {
      The stream of events produced by this `EventSource`.
 
      Call `start()` to open the connection; received events and state changes are then delivered here as
-     `EventSourceEvent` values. The sequence terminates only when `stop()` is called (or the consuming task is
-     cancelled).
+     `EventSourceEvent` values. The sequence terminates when `stop()` is called, when the consuming task is
+     cancelled, or after an unrecoverable `.error` (refer to `EventSourceError.recoverable`).
 
      - Important:
         This is a **single-consumer** sequence: iterate it from exactly one task. Iterating it more than once
@@ -145,21 +145,13 @@ public final class EventSource: Sendable {
         }
 
         /**
-         An error handler that is called when an error occurs and can shut down the client in response.
+         An optional override of the client's error policy.
 
-         The default error handler will always attempt to reconnect on an
-         error, unless `EventSource.stop()` is called or the error code is 204.
+         The client classifies failures itself (recoverable HTTP statuses — 5xx, 400, 408, 429 — are retried; any
+         other status, including 204, is terminal). The default handler defers to that policy for every error; return
+         `.shutdown` to force an otherwise-recoverable failure to be terminal instead.
          */
-        public var connectionErrorHandler: ConnectionErrorHandler = { error in
-            guard let unsuccessfulResponseError = error as? UnsuccessfulResponseError
-            else { return .proceed }
-
-            let responseCode: Int = unsuccessfulResponseError.responseCode
-            if 204 == responseCode {
-                return .shutdown
-            }
-            return .proceed
-        }
+        public var connectionErrorHandler: ConnectionErrorHandler = { _ in .proceed }
 
         /// Create a new configuration with the `URL` to connect to.
         public init(url: URL) {
@@ -292,12 +284,37 @@ final class EventSourceDelegate: NSObject, URLSessionDataDelegate, @unchecked Se
         sessionTask = task
     }
 
-    func dispatchError(error: Error) -> ConnectionErrorAction {
-        let action: ConnectionErrorAction = config.connectionErrorHandler(error)
-        if action != .shutdown {
-            handler.onError(error: error)
+    /// HTTP statuses the client retries on its own. Mirrors the classification shared with the other
+    /// LaunchDarkly SSE clients: 5xx, 400, 408, and 429 are recoverable; everything else is terminal.
+    static func isRecoverable(statusCode: Int) -> Bool {
+        (500..<600).contains(statusCode) || statusCode == 400 || statusCode == 408 || statusCode == 429
+    }
+
+    /// Flattens an `HTTPURLResponse`'s headers into a `[String: String]` with lowercased keys, so callers can
+    /// look up directive headers (e.g. `x-ld-envid`, `x-ld-fd-fallback`) without worrying about server casing.
+    static func headerFields(from response: HTTPURLResponse) -> [String: String] {
+        var headers: [String: String] = [:]
+        for (key, value) in response.allHeaderFields {
+            if let key = key as? String, let value = value as? String {
+                headers[key.lowercased()] = value
+            }
         }
-        return action
+        return headers
+    }
+
+    /// Classifies a connection failure, reports it on the stream, and returns whether the client should retry.
+    /// `statusCode`/`headers` are present for HTTP responses and absent for transport errors (which default to
+    /// recoverable). The `connectionErrorHandler` may force a terminal outcome by returning `.shutdown`.
+    func emitError(_ error: Error, statusCode: Int?, headers: [String: String]) -> Bool {
+        let statusRecoverable = statusCode.map(EventSourceDelegate.isRecoverable) ?? true
+        let recoverable = statusRecoverable && config.connectionErrorHandler(error) != .shutdown
+        handler.onError(EventSourceError(
+            statusCode: statusCode,
+            headers: headers,
+            recoverable: recoverable,
+            underlyingError: statusCode == nil ? error : nil
+        ))
+        return recoverable
     }
 
     // MARK: URLSession Delegates
@@ -315,8 +332,10 @@ final class EventSourceDelegate: NSObject, URLSessionDataDelegate, @unchecked Se
         if let error = error {
             if (error as NSError).code != NSURLErrorCancelled {
                 logger.info("Connection error: \(error.localizedDescription)")
-                if dispatchError(error: error) == .shutdown {
-                    logger.info("Connection has been explicitly shut down by error handler")
+                // Transport errors carry no HTTP status, so they default to recoverable unless the
+                // connectionErrorHandler forces a shutdown.
+                if !emitError(error, statusCode: nil, headers: [:]) {
+                    logger.info("Connection has been shut down: error reported as unrecoverable")
                     if readyState == .open {
                         handler.onClosed()
                     }
@@ -357,15 +376,20 @@ final class EventSourceDelegate: NSObject, URLSessionDataDelegate, @unchecked Se
         // swiftlint:disable:next force_cast
         let httpResponse = response as! HTTPURLResponse
         let statusCode = httpResponse.statusCode
+        let headers = EventSourceDelegate.headerFields(from: httpResponse)
         if (200..<300).contains(statusCode) && statusCode != 204 {
             reconnectionTimer.connectedTime = Date()
             readyState = .open
-            handler.onOpened()
+            handler.onOpened(headers: headers)
             completionHandler(.allow)
         } else {
             logger.info("Unsuccessful response: \(statusCode)")
-            if dispatchError(error: UnsuccessfulResponseError(responseCode: statusCode)) == .shutdown {
-                logger.info("Connection has been explicitly shut down by error handler")
+            // The error (with status, headers, and recoverable flag) is reported on the stream either way.
+            // An unrecoverable status ends the stream; a recoverable one is left to the reconnect path
+            // (the cancelled task completes through didCompleteWithError, which schedules the retry).
+            let error = UnsuccessfulResponseError(responseCode: statusCode)
+            if !emitError(error, statusCode: statusCode, headers: headers) {
+                logger.info("Connection has been shut down: status \(statusCode) reported as unrecoverable")
                 readyState = .shutdown
                 continuation.finish()
             }
@@ -388,11 +412,11 @@ final class ContinuationEventHandler: EventHandler {
         self.continuation = continuation
     }
 
-    func onOpened() { continuation.yield(.opened) }
+    func onOpened(headers: [String: String]) { continuation.yield(.opened(headers: headers)) }
     func onClosed() { continuation.yield(.closed) }
     func onMessage(eventType: String, messageEvent: MessageEvent) {
         continuation.yield(.message(eventType: eventType, messageEvent))
     }
     func onComment(comment: String) { continuation.yield(.comment(comment)) }
-    func onError(error: Error) { continuation.yield(.error(error)) }
+    func onError(_ error: EventSourceError) { continuation.yield(.error(error)) }
 }
