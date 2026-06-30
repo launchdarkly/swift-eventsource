@@ -1,34 +1,10 @@
 import Foundation
 
 /**
- Type for a function that can override how the `EventSource` client reacts to a connection failure.
-
- The client classifies failures itself: an HTTP response with a recoverable status (5xx, 400, 408, 429) is retried with
- backoff, and any other status — or a `ConnectionErrorHandler` returning `.shutdown` — is terminal. This handler is an
- optional override of that policy: returning `.shutdown` forces an otherwise-recoverable failure to be terminal. The
- error is reported on the `EventSource.events` stream either way (with `recoverable` reflecting the final decision).
-*/
-public typealias ConnectionErrorHandler = @Sendable (Error) -> ConnectionErrorAction
-
-/**
  Type for a function that will take in the current HTTP headers and return a new set of HTTP headers to be used when
  connecting and reconnecting to a stream.
  */
 public typealias HeaderTransform = @Sendable ([String: String]) -> [String: String]
-
-/// Potential actions a `ConnectionErrorHandler` can return.
-public enum ConnectionErrorAction: Sendable {
-    /**
-     Defer to the client's default policy: the failure is retried if its status is recoverable, otherwise it is
-     terminal. The error is reported on the `events` stream regardless.
-     */
-    case proceed
-    /**
-     Force the failure to be terminal: the client stops and does not retry. The error is still reported on the
-     `events` stream (with `recoverable == false`), immediately after which the stream finishes.
-     */
-    case shutdown
-}
 
 /// Struct representing received event from the stream.
 public struct MessageEvent: Equatable, Hashable, Sendable {
@@ -160,19 +136,4 @@ public enum ReadyState: String, Equatable, Sendable {
     case closed
     /// The connection has been permanently closed and the `EventSource` not reconnect.
     case shutdown
-}
-
-/// Error class that indicates the remote server returned an unsuccessful HTTP response code.
-public final class UnsuccessfulResponseError: Error, Sendable {
-    /// The HTTP response code received.
-    public let responseCode: Int
-
-    /**
-     Constructor for an `UnsuccessfulResponseError`.
-
-     - Parameter responseCode: The HTTP response code of the unsuccessful response.
-     */
-    public init(responseCode: Int) {
-        self.responseCode = responseCode
-    }
 }

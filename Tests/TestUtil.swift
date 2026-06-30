@@ -124,9 +124,9 @@ final class EventCollector: Sendable {
     }
 }
 
-// A lock-protected reference cell so tests can read and mutate a value from inside
-// the `@Sendable` configuration closures (e.g. connectionErrorHandler) without
-// tripping the concurrent-capture checks of the v6 language mode.
+// A lock-protected reference cell for state that is written and read across threads (e.g. a flag set
+// on the URLProtocol loading thread and checked from the test thread), without tripping the v6
+// language mode's concurrent-capture checks.
 final class Box<T>: @unchecked Sendable {
     private let lock = NSLock()
     private var storedValue: T
