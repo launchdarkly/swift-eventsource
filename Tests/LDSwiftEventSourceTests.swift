@@ -357,9 +357,9 @@ final class LDSwiftEventSourceTests {
         // Cancelling the only consumer fires the stream's onTermination, which tears the connection
         // down (no explicit stop()). The mock observes this as stopLoading -> RequestHandler.stop().
         collector.cancel()
-        let deadline = ContinuousClock.now + .seconds(1)
-        while ContinuousClock.now < deadline && !handler.stopped.value {
-            try? await Task.sleep(for: .milliseconds(5))
+        let deadline = Date(timeIntervalSinceNow: 1.0)
+        while Date() < deadline && !handler.stopped.value {
+            try? await Task.sleep(nanoseconds: 5_000_000) // 5ms
         }
         #expect(handler.stopped.value)
     }
@@ -424,7 +424,7 @@ final class LDSwiftEventSourceTests {
         #expect(err?.statusCode == 401)
         #expect(err?.recoverable == false)
         #expect(err?.headers["x-ld-fd-fallback"] == "poll")
-        await MockingProtocol.requested.expectNoEvent(within: .seconds(1))
+        await MockingProtocol.requested.expectNoEvent(within: 1.0)
         await expectFullyConsumed(collector)
         collector.cancel()
     }
@@ -470,7 +470,7 @@ final class LDSwiftEventSourceTests {
         let err = await collector.expectError()
         #expect(err?.statusCode == 204)
         #expect(err?.recoverable == false)
-        await MockingProtocol.requested.expectNoEvent(within: .seconds(1))
+        await MockingProtocol.requested.expectNoEvent(within: 1.0)
         await expectFullyConsumed(collector)
         collector.cancel()
     }
