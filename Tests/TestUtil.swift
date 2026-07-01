@@ -46,23 +46,25 @@ final class AsyncSink<T>: @unchecked Sendable {
         return receivedEvents.isEmpty ? nil : receivedEvents.removeFirst()
     }
 
-    /// Polls up to `within` for an event, returning nil if none arrives in time.
-    func expectEvent(within: Duration = .seconds(1)) async -> T? {
-        let deadline = ContinuousClock.now + within
-        while ContinuousClock.now < deadline {
+    /// Polls up to `within` seconds for an event, returning nil if none arrives in time.
+    /// Uses `Date`/`Task.sleep(nanoseconds:)` rather than `ContinuousClock`/`Duration` so the tests
+    /// compile at the package's minimum deployment targets (Clock/Duration require iOS 16 / macOS 13).
+    func expectEvent(within: TimeInterval = 1.0) async -> T? {
+        let deadline = Date(timeIntervalSinceNow: within)
+        while Date() < deadline {
             if let event = maybeEvent() {
                 return event
             }
-            try? await Task.sleep(for: .milliseconds(5))
+            try? await Task.sleep(nanoseconds: 5_000_000) // 5ms
         }
         return maybeEvent()
     }
 
-    /// Asserts that no event arrives within `within`. The window is a safety margin against an event
-    /// that is in flight but not yet recorded; prefer `EventCollector.drained()` + `maybeEvent()` when
-    /// the stream has already finished, which is deterministic.
-    func expectNoEvent(within: Duration = .milliseconds(250)) async {
-        try? await Task.sleep(for: within)
+    /// Asserts that no event arrives within `within` seconds. The window is a safety margin against an
+    /// event that is in flight but not yet recorded; prefer `EventCollector.drained()` + `maybeEvent()`
+    /// when the stream has already finished, which is deterministic.
+    func expectNoEvent(within: TimeInterval = 0.25) async {
+        try? await Task.sleep(nanoseconds: UInt64(within * 1_000_000_000))
         if let event = maybeEvent() {
             Issue.record("Expected no events in sink, found \(String(describing: event))")
         }
@@ -93,7 +95,7 @@ final class EventCollector: Sendable {
 
     /// Asserts the next event is `.opened`, returning its headers (records an issue and returns nil otherwise).
     @discardableResult
-    func expectOpened(within: Duration = .seconds(1)) async -> [String: String]? {
+    func expectOpened(within: TimeInterval = 1.0) async -> [String: String]? {
         guard case let .opened(headers)? = await events.expectEvent(within: within) else {
             Issue.record("Expected an .opened event")
             return nil
@@ -103,7 +105,7 @@ final class EventCollector: Sendable {
 
     /// Asserts the next event is `.error`, returning it (records an issue and returns nil otherwise).
     @discardableResult
-    func expectError(within: Duration = .seconds(1)) async -> EventSourceError? {
+    func expectError(within: TimeInterval = 1.0) async -> EventSourceError? {
         guard case let .error(error)? = await events.expectEvent(within: within) else {
             Issue.record("Expected an .error event")
             return nil
