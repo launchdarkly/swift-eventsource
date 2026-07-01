@@ -1,3 +1,9 @@
+# CI layout: the library and its tests run on the full OS matrix via the
+# pure-Swift toolchain (swift build / swift test, no xcodebuild). The only job
+# that uses Xcode is build-apple, because xcodebuild is the only way to compile
+# for the non-host Apple platforms (iOS/tvOS/watchOS). Where macOS is involved
+# we select Xcode 26, the toolchain Apple requires for App Store submission as
+# of 2026-04-28.
 name: Run CI
 on:
   push:
@@ -11,19 +17,15 @@ on:
 
 jobs:
   lint:
-    runs-on: macos-15
+    runs-on: macos-26
 
     steps:
       - uses: actions/checkout@v4
 
-      - uses: maxim-lobanov/setup-xcode@60606e260d2fc5762a71e64e74b2174e8ea3c8bd
-        with:
-          xcode-version: 16.4
-
       - uses: ./.github/actions/lint
 
   build-apple:
-    runs-on: macos-15
+    runs-on: macos-26
 
     strategy:
       fail-fast: false
@@ -39,20 +41,48 @@ jobs:
 
       - uses: maxim-lobanov/setup-xcode@60606e260d2fc5762a71e64e74b2174e8ea3c8bd
         with:
-          xcode-version: 16.4
+          xcode-version: '26'
 
       - name: Build for ${{ matrix.destination }}
         run: xcodebuild build -scheme 'LDSwiftEventSource' -destination '${{ matrix.destination }}' | xcpretty
 
-  test-macos:
-    runs-on: macos-15
+  test:
+    name: 'test (${{ matrix.name }})'
+    runs-on: ${{ matrix.os }}
+    # Empty for non-Linux jobs, which run directly on the runner VM.
+    container: ${{ matrix.container }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: linux (6.0)
+            os: ubuntu-latest
+            container: swift:6.0
+          - name: linux (6.1)
+            os: ubuntu-latest
+            container: swift:6.1
+          - name: macos
+            os: macos-26
+          - name: windows
+            os: windows-latest
 
     steps:
       - uses: actions/checkout@v4
 
-      - uses: maxim-lobanov/setup-xcode@60606e260d2fc5762a71e64e74b2174e8ea3c8bd
+      # On macOS `swift` comes from the selected Xcode; use the App Store toolchain.
+      - name: Select Xcode 26
+        if: runner.os == 'macOS'
+        uses: maxim-lobanov/setup-xcode@60606e260d2fc5762a71e64e74b2174e8ea3c8bd
         with:
-          xcode-version: 16.4
+          xcode-version: '26'
+
+      - name: Install Swift
+        if: runner.os == 'Windows'
+        uses: compnerd/gha-setup-swift@cd348eb89f2f450b0664c07fb1cb66880addf17d
+        with:
+          branch: swift-6.1-release
+          tag: 6.1-RELEASE
 
       - uses: ./.github/actions/test-swiftpm
 
@@ -71,46 +101,18 @@ jobs:
         run: swift test --sanitize=thread
 
   contract-tests:
-    runs-on: macos-15
+    # Stays on macOS: the contract-test service is built on Kitura, whose
+    # BlueSSLService depends on the OpenSSL 1.1 API removed in OpenSSL 3, so it
+    # does not compile on the Linux (Ubuntu 24.04 / OpenSSL 3) swift container.
+    runs-on: macos-26
 
     steps:
       - uses: actions/checkout@v4
 
       - uses: maxim-lobanov/setup-xcode@60606e260d2fc5762a71e64e74b2174e8ea3c8bd
         with:
-          xcode-version: 16.4
+          xcode-version: '26'
 
       - uses: ./.github/actions/contract-tests
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-
-  test-linux:
-    runs-on: ubuntu-latest
-
-    strategy:
-      fail-fast: false
-      matrix:
-        swift-version:
-          - "6.0"
-          - "6.1"
-
-    container: swift:${{ matrix.swift-version }}
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Build and test
-        run: swift test
-
-  test-windows:
-    name: test-windows (Swift 6.1)
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install Swift
-        uses: compnerd/gha-setup-swift@cd348eb89f2f450b0664c07fb1cb66880addf17d
-        with:
-          branch: swift-6.1-release
-          tag: 6.1-RELEASE
-      - name: Build and test
-        run: swift test
