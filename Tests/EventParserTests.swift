@@ -306,4 +306,30 @@ final class EventParserTests {
         #expect(handler.events.maybeEvent() == .comment("bar"))
         #expect(handler.events.maybeEvent() == .message("msg", MessageEvent(data: "foo", lastEventId: "")))
     }
+
+    // MARK: Concurrency
+    // getLastEventId() is read from arbitrary threads while events are parsed on another; the read
+    // must be race-free. Uses a local parser/handler (not the suite fixtures) so the concurrent
+    // writes don't trip the deinit "no leftover events" check. Run under `--sanitize=thread` to
+    // actually catch a regression here.
+    @Test func getLastEventIdIsSafeDuringConcurrentParsing() async {
+        let parser = EventParser(handler: MockHandler(), initialEventId: "", initialRetry: 1.0)
+        await withTaskGroup(of: Void.self) { group in
+            // Writer: drive events on a single task, mirroring the serialized delegate queue.
+            group.addTask {
+                for id in 0..<2000 {
+                    parser.parse(line: "id: \(id)")
+                    parser.parse(line: "data: x")
+                    parser.parse(line: "")
+                }
+            }
+            // Reader: hammer getLastEventId() from a separate task, concurrent with the writer.
+            group.addTask {
+                for _ in 0..<2000 {
+                    _ = parser.getLastEventId()
+                }
+            }
+        }
+        #expect(parser.getLastEventId() == "1999")
+    }
 }

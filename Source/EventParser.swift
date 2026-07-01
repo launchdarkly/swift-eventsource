@@ -1,6 +1,10 @@
 import Foundation
 
-class EventParser {
+// `parse`, `reset`, and event dispatch must be driven from a single serialized context (the
+// EventSource delegate queue). `getLastEventId()` is the one entry point called concurrently — from
+// arbitrary caller threads via `EventSource.getLastEventId()` — so the `lastEventId` it reads is
+// lock-guarded. `@unchecked Sendable` reflects that split, which the compiler cannot verify.
+final class EventParser: @unchecked Sendable {
     private struct Constants {
         static let dataLabel: Substring = "data"
         static let idLabel: Substring = "id"
@@ -13,12 +17,28 @@ class EventParser {
     private var data: String = ""
     private var eventType: String = ""
     private var lastEventIdBuffer: String?
-    private var lastEventId: String
     private var currentRetry: TimeInterval
+
+    // Written on the serialized parse path and read from any thread via `getLastEventId()`, so its
+    // access is guarded by a lock.
+    private let lastEventIdLock = NSLock()
+    private var _lastEventId: String
+    private var lastEventId: String {
+        get {
+            lastEventIdLock.lock()
+            defer { lastEventIdLock.unlock() }
+            return _lastEventId
+        }
+        set {
+            lastEventIdLock.lock()
+            defer { lastEventIdLock.unlock() }
+            _lastEventId = newValue
+        }
+    }
 
     init(handler: EventHandler, initialEventId: String, initialRetry: TimeInterval) {
         self.handler = handler
-        self.lastEventId = initialEventId
+        self._lastEventId = initialEventId
         self.currentRetry = initialRetry
     }
 
