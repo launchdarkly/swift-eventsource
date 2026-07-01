@@ -12,6 +12,28 @@ import FoundationNetworking
  */
 public final class EventSource: Sendable {
     private let esDelegate: EventSourceDelegate
+    private let stream: AsyncStream<EventSourceEvent>
+
+    /**
+     The stream of events produced by this `EventSource`.
+
+     Call `start()` to open the connection; received events and state changes are then delivered here as
+     `EventSourceEvent` values. The sequence terminates when `stop()` is called, when the consuming task is
+     cancelled, or after an unrecoverable `.error` (refer to `EventSourceError.recoverable`).
+
+     - Important:
+        This is a **single-consumer** sequence: iterate it from exactly one task. Iterating it more than once
+        splits events between the iterators rather than delivering each event to all of them.
+
+     - Important:
+        The stream is **unbounded** and applies no backpressure to the network. The consumer is expected to drain
+        it continuously; events parsed off the connection are buffered until iterated, so a consumer that pauses,
+        falls behind, or never iterates while the connection is open will accumulate events in memory without
+        bound. This mirrors `AsyncStream`'s default buffering and the behavior of LaunchDarkly's other
+        async-pull SSE clients; the intended consumers (an SDK's data source) process each event synchronously and
+        never fall behind.
+     */
+    public var events: AsyncStream<EventSourceEvent> { stream }
 
     /**
      Initialize the `EventSource` client with the given configuration.
@@ -19,20 +41,37 @@ public final class EventSource: Sendable {
      - Parameter config: The configuration for initializing the `EventSource` client.
      */
     public init(config: Config) {
-        esDelegate = EventSourceDelegate(config: config)
+        // `.unbounded` (the default) is deliberate: dropping events would corrupt last-event-id resumption, and the
+        // URLSessionDataDelegate data path cannot apply real backpressure to the socket. The consumer-must-drain
+        // contract is documented on `events`.
+        let (stream, continuation) = AsyncStream.makeStream(of: EventSourceEvent.self)
+        self.stream = stream
+        let delegate = EventSourceDelegate(config: config, continuation: continuation)
+        self.esDelegate = delegate
+        // If the consumer stops iterating (its task is cancelled or the stream is dropped) without calling stop(),
+        // tear the connection down. Captured weakly so the continuation does not retain the delegate (and so this
+        // EventSource); if the delegate is already gone there is nothing left to tear down.
+        continuation.onTermination = { [weak delegate] _ in delegate?.stop() }
+    }
+
+    /// Tears the connection down if this `EventSource` is deallocated without `stop()` having been called -- e.g. a
+    /// caller that creates one, never iterates `events`, and drops it. Idempotent with `stop()`.
+    deinit {
+        esDelegate.stop()
     }
 
     /**
      Start the `EventSource` client.
 
-     This will initiate a streaming connection to the configured URL. The application will be informed of received
-     events and state changes using the configured `EventHandler`.
+     This will initiate a streaming connection to the configured URL. Received events and state changes are
+     delivered through the `events` sequence.
      */
     public func start() {
         esDelegate.start()
     }
 
-    /// Shuts down the `EventSource` client. It is not valid to restart the client after calling this function.
+    /// Shuts down the `EventSource` client and finishes the `events` stream. It is not valid to restart the client
+    /// after calling this function.
     public func stop() {
         esDelegate.stop()
     }
@@ -43,8 +82,6 @@ public final class EventSource: Sendable {
 
     /// Struct for configuring the EventSource.
     public struct Config {
-        /// The `EventHandler` called in response to activity on the stream.
-        public let handler: EventHandler
         /// The `URL` of the request used when connecting to the EventSource API.
         public let url: URL
 
@@ -107,26 +144,8 @@ public final class EventSource: Sendable {
             }
         }
 
-        /**
-         An error handler that is called when an error occurs and can shut down the client in response.
-
-         The default error handler will always attempt to reconnect on an
-         error, unless `EventSource.stop()` is called or the error code is 204.
-         */
-        public var connectionErrorHandler: ConnectionErrorHandler = { error in
-            guard let unsuccessfulResponseError = error as? UnsuccessfulResponseError
-            else { return .proceed }
-
-            let responseCode: Int = unsuccessfulResponseError.responseCode
-            if 204 == responseCode {
-                return .shutdown
-            }
-            return .proceed
-        }
-
-        /// Create a new configuration with an `EventHandler` and a `URL`
-        public init(handler: EventHandler, url: URL) {
-            self.handler = handler
+        /// Create a new configuration with the `URL` to connect to.
+        public init(url: URL) {
             self.url = url
         }
     }
@@ -165,6 +184,8 @@ final class EventSourceDelegate: NSObject, URLSessionDataDelegate, @unchecked Se
     private let logger: Logging.Logger
 
     private let config: EventSource.Config
+    private let handler: EventHandler
+    private let continuation: AsyncStream<EventSourceEvent>.Continuation
 
     private var readyState: ReadyState = .raw {
         didSet {
@@ -178,11 +199,14 @@ final class EventSourceDelegate: NSObject, URLSessionDataDelegate, @unchecked Se
     private var urlSession: URLSession?
     private var sessionTask: URLSessionDataTask?
 
-    init(config: EventSource.Config) {
+    init(config: EventSource.Config, continuation: AsyncStream<EventSourceEvent>.Continuation) {
         self.config = config
         self.logger = config.logger
+        self.continuation = continuation
 
-        self.eventParser = EventParser(handler: config.handler,
+        let handler = ContinuationEventHandler(continuation: continuation)
+        self.handler = handler
+        self.eventParser = EventParser(handler: handler,
                                        initialEventId: config.lastEventId,
                                        initialRetry: config.reconnectTime)
         self.reconnectionTimer = ReconnectionTimer(maxDelay: config.maxReconnectTime,
@@ -210,10 +234,11 @@ final class EventSourceDelegate: NSObject, URLSessionDataDelegate, @unchecked Se
             self.readyState = .shutdown
             self.sessionTask?.cancel()
             if previousState == .open {
-                self.config.handler.onClosed()
+                self.handler.onClosed()
             }
             self.urlSession?.invalidateAndCancel()
             self.urlSession = nil
+            self.continuation.finish()
         }
     }
 
@@ -241,18 +266,45 @@ final class EventSourceDelegate: NSObject, URLSessionDataDelegate, @unchecked Se
     }
 
     private func connect() {
+        // A reconnect can be scheduled (via asyncAfter) before stop() runs; once shut down, do not reopen.
+        guard readyState != .shutdown
+        else { return }
         logger.info("Starting EventSource client")
         let task = urlSession?.dataTask(with: createRequest())
         task?.resume()
         sessionTask = task
     }
 
-    func dispatchError(error: Error) -> ConnectionErrorAction {
-        let action: ConnectionErrorAction = config.connectionErrorHandler(error)
-        if action != .shutdown {
-            config.handler.onError(error: error)
+    /// HTTP statuses the client retries on its own. Mirrors the classification shared with the other
+    /// LaunchDarkly SSE clients: 5xx, 400, 408, and 429 are recoverable; everything else is terminal.
+    static func isRecoverable(statusCode: Int) -> Bool {
+        (500..<600).contains(statusCode) || statusCode == 400 || statusCode == 408 || statusCode == 429
+    }
+
+    /// Flattens an `HTTPURLResponse`'s headers into a `[String: String]` with lowercased keys, so callers can
+    /// look up directive headers (e.g. `x-ld-envid`, `x-ld-fd-fallback`) without worrying about server casing.
+    static func headerFields(from response: HTTPURLResponse) -> [String: String] {
+        var headers: [String: String] = [:]
+        for (key, value) in response.allHeaderFields {
+            if let key = key as? String, let value = value as? String {
+                headers[key.lowercased()] = value
+            }
         }
-        return action
+        return headers
+    }
+
+    /// Classifies a connection failure, reports it on the stream, and returns whether the client should retry.
+    /// An HTTP response is recoverable per `isRecoverable(statusCode:)`; a transport error (no status) defaults to
+    /// recoverable. `underlyingError` carries the transport error for the no-status case (nil for HTTP responses).
+    func emitError(statusCode: Int?, headers: [String: String], underlyingError: (any Error)?) -> Bool {
+        let recoverable = statusCode.map(EventSourceDelegate.isRecoverable) ?? true
+        handler.onError(EventSourceError(
+            statusCode: statusCode,
+            headers: headers,
+            recoverable: recoverable,
+            underlyingError: underlyingError
+        ))
+        return recoverable
     }
 
     // MARK: URLSession Delegates
@@ -270,12 +322,14 @@ final class EventSourceDelegate: NSObject, URLSessionDataDelegate, @unchecked Se
         if let error = error {
             if (error as NSError).code != NSURLErrorCancelled {
                 logger.info("Connection error: \(error.localizedDescription)")
-                if dispatchError(error: error) == .shutdown {
-                    logger.info("Connection has been explicitly shut down by error handler")
+                // Transport errors carry no HTTP status, so they are always recoverable.
+                if !emitError(statusCode: nil, headers: [:], underlyingError: error) {
+                    logger.info("Connection has been shut down: error reported as unrecoverable")
                     if readyState == .open {
-                        config.handler.onClosed()
+                        handler.onClosed()
                     }
                     readyState = .shutdown
+                    continuation.finish()
                     return
                 }
             }
@@ -284,7 +338,7 @@ final class EventSourceDelegate: NSObject, URLSessionDataDelegate, @unchecked Se
         }
 
         if readyState == .open {
-            config.handler.onClosed()
+            handler.onClosed()
         }
 
         readyState = .closed
@@ -311,16 +365,21 @@ final class EventSourceDelegate: NSObject, URLSessionDataDelegate, @unchecked Se
         // swiftlint:disable:next force_cast
         let httpResponse = response as! HTTPURLResponse
         let statusCode = httpResponse.statusCode
+        let headers = EventSourceDelegate.headerFields(from: httpResponse)
         if (200..<300).contains(statusCode) && statusCode != 204 {
             reconnectionTimer.connectedTime = Date()
             readyState = .open
-            config.handler.onOpened()
+            handler.onOpened(headers: headers)
             completionHandler(.allow)
         } else {
             logger.info("Unsuccessful response: \(statusCode)")
-            if dispatchError(error: UnsuccessfulResponseError(responseCode: statusCode)) == .shutdown {
-                logger.info("Connection has been explicitly shut down by error handler")
+            // The error (with status, headers, and recoverable flag) is reported on the stream either way.
+            // An unrecoverable status ends the stream; a recoverable one is left to the reconnect path
+            // (the cancelled task completes through didCompleteWithError, which schedules the retry).
+            if !emitError(statusCode: statusCode, headers: headers, underlyingError: nil) {
+                logger.info("Connection has been shut down: status \(statusCode) reported as unrecoverable")
                 readyState = .shutdown
+                continuation.finish()
             }
             completionHandler(.cancel)
         }
@@ -329,4 +388,23 @@ final class EventSourceDelegate: NSObject, URLSessionDataDelegate, @unchecked Se
     public func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive data: Data) {
         utf8LineParser.append(data).forEach(eventParser.parse)
     }
+}
+
+// MARK: ContinuationEventHandler
+// Internal adapter that forwards the delegate's and EventParser's callbacks into the public
+// `EventSource.events` stream.
+final class ContinuationEventHandler: EventHandler {
+    private let continuation: AsyncStream<EventSourceEvent>.Continuation
+
+    init(continuation: AsyncStream<EventSourceEvent>.Continuation) {
+        self.continuation = continuation
+    }
+
+    func onOpened(headers: [String: String]) { continuation.yield(.opened(headers: headers)) }
+    func onClosed() { continuation.yield(.closed) }
+    func onMessage(eventType: String, messageEvent: MessageEvent) {
+        continuation.yield(.message(eventType: eventType, messageEvent))
+    }
+    func onComment(comment: String) { continuation.yield(.comment(comment)) }
+    func onError(_ error: EventSourceError) { continuation.yield(.error(error)) }
 }

@@ -1,67 +1,132 @@
 import Foundation
 import Testing
+@testable import LDSwiftEventSource
 
 #if os(Linux) || os(Windows)
 import FoundationNetworking
 #endif
 
-// A thread-safe queue used to hand events from the background threads that drive
-// the mocks (the URLSession delegate queue, the URLProtocol loading thread) to the
-// test thread, which blocks waiting for them. A reference type guarded by an
-// `NSCondition` so it can be shared across those threads; `@unchecked Sendable`
-// because the locking the compiler cannot verify is what makes the access safe.
+// A thread-safe FIFO recorder for the synchronous parser tests, where events are produced (via
+// MockHandler) and drained on the same test thread. `@unchecked Sendable` with an `NSLock` so
+// MockHandler can stay `Sendable`; tests pull with the non-blocking `maybeEvent()`.
 final class EventSink<T>: @unchecked Sendable {
-    private let condition = NSCondition()
+    private let lock = NSLock()
     private var receivedEvents: [T] = []
 
     func record(_ event: T) {
-        condition.lock()
-        defer { condition.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         receivedEvents.append(event)
-        condition.signal()
-    }
-
-    func expectEvent(maxWait: TimeInterval = 1.0) -> T {
-        let deadline = Date(timeIntervalSinceNow: maxWait)
-        condition.lock()
-        defer { condition.unlock() }
-        while receivedEvents.isEmpty {
-            guard condition.wait(until: deadline)
-            else {
-                Issue.record("Expected mock handler to be called")
-                return (nil as T?)!
-            }
-        }
-        return receivedEvents.removeFirst()
     }
 
     func maybeEvent() -> T? {
-        condition.lock()
-        defer { condition.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
+        return receivedEvents.isEmpty ? nil : receivedEvents.removeFirst()
+    }
+}
+
+// Poll-based, non-blocking sibling of `EventSink` for async tests. `record(_:)` is
+// safe to call from any thread (the URLProtocol loading thread, the URLSession
+// delegate queue, or a drain Task); the `expect*` methods are async and never block a
+// thread, so they are safe to await on swift-testing's cooperative executor.
+final class AsyncSink<T>: @unchecked Sendable {
+    private let lock = NSLock()
+    private var receivedEvents: [T] = []
+
+    func record(_ event: T) {
+        lock.lock()
+        defer { lock.unlock() }
+        receivedEvents.append(event)
+    }
+
+    func maybeEvent() -> T? {
+        lock.lock()
+        defer { lock.unlock() }
         return receivedEvents.isEmpty ? nil : receivedEvents.removeFirst()
     }
 
-    func expectNoEvent(within: TimeInterval = 0.1) {
-        let deadline = Date(timeIntervalSinceNow: within)
-        condition.lock()
-        defer { condition.unlock() }
-        while receivedEvents.isEmpty {
-            guard condition.wait(until: deadline)
-            else { return }
+    /// Polls up to `within` for an event, returning nil if none arrives in time.
+    func expectEvent(within: Duration = .seconds(1)) async -> T? {
+        let deadline = ContinuousClock.now + within
+        while ContinuousClock.now < deadline {
+            if let event = maybeEvent() {
+                return event
+            }
+            try? await Task.sleep(for: .milliseconds(5))
         }
-        Issue.record("Expected no events in sink, found \(String(describing: receivedEvents.first))")
+        return maybeEvent()
+    }
+
+    /// Asserts that no event arrives within `within`. The window is a safety margin against an event
+    /// that is in flight but not yet recorded; prefer `EventCollector.drained()` + `maybeEvent()` when
+    /// the stream has already finished, which is deterministic.
+    func expectNoEvent(within: Duration = .milliseconds(250)) async {
+        try? await Task.sleep(for: within)
+        if let event = maybeEvent() {
+            Issue.record("Expected no events in sink, found \(String(describing: event))")
+        }
     }
 
     func reset() {
-        condition.lock()
-        defer { condition.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         receivedEvents.removeAll()
     }
 }
 
-// A lock-protected reference cell so tests can read and mutate a value from inside
-// the `@Sendable` configuration closures (e.g. connectionErrorHandler) without
-// tripping the concurrent-capture checks of the v6 language mode.
+// Drains an `EventSource`'s event stream into an `AsyncSink` for assertions, mapping
+// each `EventSourceEvent` to a `ReceivedEvent` (whose `Equatable` treats all errors as
+// equal). The draining task runs until the stream finishes or `cancel()` is called.
+final class EventCollector: Sendable {
+    let events = AsyncSink<ReceivedEvent>()
+    private let task: Task<Void, Never>
+
+    init(_ source: AsyncStream<EventSourceEvent>) {
+        let sink = events
+        task = Task {
+            for await event in source {
+                sink.record(ReceivedEvent(event))
+            }
+        }
+    }
+
+    /// Asserts the next event is `.opened`, returning its headers (records an issue and returns nil otherwise).
+    @discardableResult
+    func expectOpened(within: Duration = .seconds(1)) async -> [String: String]? {
+        guard case let .opened(headers)? = await events.expectEvent(within: within) else {
+            Issue.record("Expected an .opened event")
+            return nil
+        }
+        return headers
+    }
+
+    /// Asserts the next event is `.error`, returning it (records an issue and returns nil otherwise).
+    @discardableResult
+    func expectError(within: Duration = .seconds(1)) async -> EventSourceError? {
+        guard case let .error(error)? = await events.expectEvent(within: within) else {
+            Issue.record("Expected an .error event")
+            return nil
+        }
+        return error
+    }
+
+    /// Awaits the drain task, which finishes once the source stream finishes (e.g. after `stop()`).
+    /// Once this returns, every event the stream produced has been recorded, so the sink can be
+    /// checked synchronously with `maybeEvent()` — no timing window. Only call this when the stream is
+    /// expected to finish, or it will await indefinitely.
+    func drained() async {
+        await task.value
+    }
+
+    func cancel() {
+        task.cancel()
+    }
+}
+
+// A lock-protected reference cell for state that is written and read across threads (e.g. a flag set
+// on the URLProtocol loading thread and checked from the test thread), without tripping the v6
+// language mode's concurrent-capture checks.
 final class Box<T>: @unchecked Sendable {
     private let lock = NSLock()
     private var storedValue: T
@@ -87,7 +152,9 @@ final class RequestHandler {
     let request: URLRequest
     let client: URLProtocolClient?
 
-    var stopped = false
+    // Set when the URLProtocol's stopLoading runs (i.e. the connection was torn down). Lock-protected
+    // because it is written on the loading thread and read from the test thread.
+    let stopped = Box(false)
 
     init(proto: URLProtocol, request: URLRequest, client: URLProtocolClient?) {
         self.proto = proto
@@ -95,8 +162,9 @@ final class RequestHandler {
         self.client = client
     }
 
-    func respond(statusCode: Int) {
-        let headers = ["Content-Type": "text/event-stream; charset=utf-8", "Transfer-Encoding": "chunked"]
+    func respond(statusCode: Int, headers extraHeaders: [String: String] = [:]) {
+        var headers = ["Content-Type": "text/event-stream; charset=utf-8", "Transfer-Encoding": "chunked"]
+        headers.merge(extraHeaders) { _, new in new }
         let resp = HTTPURLResponse(url: request.url!, statusCode: statusCode, httpVersion: nil, headerFields: headers)!
         client?.urlProtocol(proto, didReceive: resp, cacheStoragePolicy: .notAllowed)
     }
@@ -118,7 +186,7 @@ final class RequestHandler {
     }
 
     func stop() {
-        stopped = true
+        stopped.value = true
     }
 }
 
@@ -127,7 +195,7 @@ class MockingProtocol: URLProtocol {
     override class func canInit(with request: URLRequest) -> Bool { true }
     override class func canInit(with task: URLSessionTask) -> Bool { true }
 
-    static let requested = EventSink<RequestHandler>()
+    static let requested = AsyncSink<RequestHandler>()
 
     class func resetRequested() {
         requested.reset()

@@ -19,7 +19,7 @@ struct CreateStreamReq: Decodable {
     let body: String?
 
     func createEventSourceConfig() -> EventSource.Config {
-        var esConfig = EventSource.Config(handler: CallbackHandler(baseUrl: callbackUrl), url: streamUrl)
+        var esConfig = EventSource.Config(url: streamUrl)
         if let initialDelayMs = initialDelayMs { esConfig.reconnectTime = Double(initialDelayMs) / 1000.0 }
         if let readTimeoutMs = readTimeoutMs { esConfig.idleTimeout = Double(readTimeoutMs) / 1000.0 }
         if let lastEventId = lastEventId { esConfig.lastEventId = lastEventId }
@@ -30,7 +30,9 @@ struct CreateStreamReq: Decodable {
     }
 }
 
-class CallbackHandler: EventHandler {
+// Consumes an `EventSource`'s event stream and forwards each event to the test harness's
+// callback URL as a numbered POST, per the SSE contract-test protocol.
+struct CallbackForwarder: Sendable {
     struct EventPayloadEvent: Encodable {
         let type: String
         let data: String
@@ -52,33 +54,31 @@ class CallbackHandler: EventHandler {
     }
 
     let baseUrl: URL
-    var count = 0
 
-    init(baseUrl: URL) {
-        self.baseUrl = baseUrl
+    func consume(_ stream: AsyncStream<EventSourceEvent>) async {
+        var count = 0
+        for await event in stream {
+            switch event {
+            case .opened, .closed:
+                continue
+            case let .message(eventType, msg):
+                count += 1
+                sendUpdate(count, EventPayload(event: EventPayloadEvent(type: eventType, data: msg.data, id: msg.lastEventId)))
+            case let .comment(comment):
+                count += 1
+                sendUpdate(count, CommentPayload(comment: comment))
+            case .error:
+                count += 1
+                sendUpdate(count, ErrorPayload())
+            }
+        }
     }
 
-    func onOpened() { }
-    func onClosed() { }
-
-    func sendUpdate<T: Encodable>(_ update: T) {
-        count += 1
+    func sendUpdate<T: Encodable>(_ count: Int, _ update: T) {
         var request = URLRequest(url: baseUrl.appendingPathComponent(String(count), isDirectory: false))
         request.httpMethod = "POST"
         let data = try! JSONEncoder().encode(update)
         URLSession.shared.uploadTask(with: request, from: data) { _, _, _ in }.resume()
-    }
-
-    func onMessage(eventType type: String, messageEvent msg: MessageEvent) {
-        sendUpdate(EventPayload(event: EventPayloadEvent(type: type, data: msg.data, id: msg.lastEventId)))
-    }
-
-    func onComment(comment: String) {
-        sendUpdate(CommentPayload(comment: comment))
-    }
-
-    func onError(error: Error) {
-        sendUpdate(ErrorPayload())
     }
 }
 
@@ -106,11 +106,15 @@ router.post("/") { req, resp, next in
         return next()
     }
     let es = EventSource(config: createStreamReq.createEventSourceConfig())
+    let forwarder = CallbackForwarder(baseUrl: createStreamReq.callbackUrl)
+    let stream = es.events
     let location: String = stateQueue.sync {
         state[String(nextId)] = es
         nextId += 1
         return "/control/\(nextId - 1)"
     }
+    // The consumer task drains the stream until `es.stop()` finishes it.
+    Task { await forwarder.consume(stream) }
     es.start()
     resp.headers["Location"] = location
     resp.send(["message": "Created test service entity at \(location)"])

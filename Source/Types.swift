@@ -1,32 +1,10 @@
 import Foundation
 
 /**
- Type for a function that will be notified when the `EventSource` client encounters a connection failure.
-
- This is different from `EventHandler.onError(error:)` in that it will not be called for other kinds of errors; also,
- it has the ability to tell the client to stop reconnecting by returning a `ConnectionErrorAction.shutdown`.
-*/
-public typealias ConnectionErrorHandler = @Sendable (Error) -> ConnectionErrorAction
-
-/**
  Type for a function that will take in the current HTTP headers and return a new set of HTTP headers to be used when
  connecting and reconnecting to a stream.
  */
 public typealias HeaderTransform = @Sendable ([String: String]) -> [String: String]
-
-/// Potential actions a `ConnectionErrorHandler` can return
-public enum ConnectionErrorAction: Sendable {
-    /**
-     Specifies that the error should be logged normally and dispatched to the `EventHandler`. Connection retrying will
-     proceed normally if appropriate.
-     */
-    case proceed
-    /**
-     Specifies that the connection should be immediately shut down and not retried. The error will not be dispatched
-     to the `EventHandler`
-     */
-    case shutdown
-}
 
 /// Struct representing received event from the stream.
 public struct MessageEvent: Equatable, Hashable, Sendable {
@@ -47,10 +25,77 @@ public struct MessageEvent: Equatable, Hashable, Sendable {
     }
 }
 
-/// Protocol for an object that will receive SSE events.
-public protocol EventHandler: Sendable {
-    /// EventSource calls this method when the stream connection has been opened.
-    func onOpened()
+/**
+ An error reported on the `EventSource.events` stream.
+
+ Carries enough for a consumer to decide what the failure means without inspecting connection internals:
+ - `recoverable == true`: the client has scheduled a reconnect with backoff. The stream stays open; this error is
+   advisory (act on it, or ignore it and let the retry run).
+ - `recoverable == false`: the client will not retry. This error is the last event before the stream finishes.
+
+ The `headers` may carry service directives (e.g. an FDv1-fallback instruction) even on an error response, so they are
+ load-bearing rather than diagnostic.
+ */
+public struct EventSourceError: Error, Sendable {
+    /// The HTTP status code, when the failure was an unsuccessful HTTP response; `nil` for a transport/network error
+    /// that never produced a response.
+    public let statusCode: Int?
+    /// The response headers (keys lowercased), when the failure was an HTTP response; empty for a transport error.
+    public let headers: [String: String]
+    /// Whether the client will retry this connection itself. When `true` the stream stays open and a reconnect is
+    /// scheduled; when `false` the client stops and the stream finishes after this error.
+    public let recoverable: Bool
+    /// The underlying transport/network error, when the failure was not an HTTP response; `nil` for HTTP-status
+    /// failures (use `statusCode`).
+    public let underlyingError: (any Error)?
+
+    /// Creates an `EventSourceError`.
+    public init(
+        statusCode: Int? = nil,
+        headers: [String: String] = [:],
+        recoverable: Bool,
+        underlyingError: (any Error)? = nil
+    ) {
+        self.statusCode = statusCode
+        self.headers = headers
+        self.recoverable = recoverable
+        self.underlyingError = underlyingError
+    }
+}
+
+/// An event delivered through the `EventSource.events` stream.
+public enum EventSourceEvent: Sendable {
+    /**
+     The stream connection has been opened.
+
+     - Parameter headers: The response headers of the connection (keys lowercased). Carries service directives such as
+       `x-ld-envid` / `x-ld-fd-fallback` that consumers may need.
+     */
+    case opened(headers: [String: String])
+    /// The stream connection has been closed.
+    case closed
+    /**
+     A message was received from the stream.
+
+     - Parameter eventType: The type of the event.
+     - Parameter messageEvent: The data for the event.
+     */
+    case message(eventType: String, MessageEvent)
+    /// A comment line was received from the stream.
+    case comment(String)
+    /**
+     An error occurred on the connection. This is a value in the stream, not necessarily a termination: a recoverable
+     error is advisory and the client keeps retrying, while an unrecoverable error is the last event before the stream
+     finishes. Refer to `EventSourceError.recoverable`.
+     */
+    case error(EventSourceError)
+}
+
+/// Internal protocol for an object that receives SSE events. The public surface is the `EventSource.events`
+/// stream; conformers of this protocol feed it.
+protocol EventHandler: Sendable {
+    /// EventSource calls this method when the stream connection has been opened, with the response headers.
+    func onOpened(headers: [String: String])
 
     /// EventSource calls this method when the stream connection has been closed.
     func onClosed()
@@ -71,14 +116,12 @@ public protocol EventHandler: Sendable {
     func onComment(comment: String)
 
     /**
-     This method will be called for all exceptions that occur on the network connection (including an
-     `UnsuccessfulResponseError` if the server returns an unexpected HTTP status), but only after the
-     ConnectionErrorHandler (if any) has processed it.  If you need to do anything that affects the state of the
-     connection, use ConnectionErrorHandler.
+     EventSource calls this method when a connection failure occurs, after classifying it. The `EventSourceError`
+     carries the status code (if any), response headers, and whether the client will retry.
 
-     - Parameter error: The error received.
+     - Parameter error: The classified error.
      */
-    func onError(error: Error)
+    func onError(_ error: EventSourceError)
 }
 
 /// Enum values representing the states of an EventSource
@@ -93,19 +136,4 @@ public enum ReadyState: String, Equatable, Sendable {
     case closed
     /// The connection has been permanently closed and the `EventSource` not reconnect.
     case shutdown
-}
-
-/// Error class that indicates the remote server returned an unsuccessful HTTP response code.
-public final class UnsuccessfulResponseError: Error, Sendable {
-    /// The HTTP response code received.
-    public let responseCode: Int
-
-    /**
-     Constructor for an `UnsuccessfulResponseError`.
-
-     - Parameter responseCode: The HTTP response code of the unsuccessful response.
-     */
-    public init(responseCode: Int) {
-        self.responseCode = responseCode
-    }
 }
