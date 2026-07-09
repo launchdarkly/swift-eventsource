@@ -56,6 +56,20 @@ jobs:
 
       - uses: ./.github/actions/test-swiftpm
 
+  test-thread-sanitizer:
+    runs-on: ubuntu-latest
+    container: swift:6.1
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Test with ThreadSanitizer
+        # halt_on_error makes a detected data race abort with a non-zero exit so the job fails;
+        # without it TSan only prints a warning and the step would stay green.
+        env:
+          TSAN_OPTIONS: halt_on_error=1
+        run: swift test --sanitize=thread
+
   contract-tests:
     runs-on: macos-15
 
