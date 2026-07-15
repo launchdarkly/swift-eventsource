@@ -1,11 +1,20 @@
-import Dispatch
 import Foundation
-import Kitura
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
+import HTTPTypes
+import Hummingbird
 import LDSwiftEventSource
+import Logging
+import ServiceLifecycle
 
-struct StatusResp: Encodable {
+struct StatusResp: ResponseEncodable {
     let name = "swift-eventsource"
     let capabilities = ["server-directed-shutdown-request", "comments", "headers", "last-event-id", "post", "read-timeout", "report"]
+}
+
+struct MessageResponse: ResponseEncodable {
+    let message: String
 }
 
 struct CreateStreamReq: Decodable {
@@ -82,56 +91,89 @@ struct CallbackForwarder: Sendable {
     }
 }
 
-let stateQueue = DispatchQueue(label: "StateQueue")
-var nextId: Int = 0
-var state: [String: EventSource] = [:]
+// Tracks the active `EventSource` streams by their control-path id. `EventSource` is Sendable,
+// so an actor gives race-free access from the concurrent request handlers.
+actor StreamStore {
+    private var nextId = 0
+    private var streams: [String: EventSource] = [:]
+
+    func add(_ es: EventSource) -> String {
+        let id = String(nextId)
+        nextId += 1
+        streams[id] = es
+        return "/control/\(id)"
+    }
+
+    func remove(id: String) -> EventSource? {
+        streams.removeValue(forKey: id)
+    }
+}
+
+// Lets the `DELETE /` route stop the running service. The trigger is installed once the
+// service group exists (after the routes are declared), so it is set behind a lock.
+final class ShutdownHandle: @unchecked Sendable {
+    private let lock = NSLock()
+    private var handler: (@Sendable () async -> Void)?
+
+    func set(_ handler: @escaping @Sendable () async -> Void) {
+        lock.withLock { self.handler = handler }
+    }
+
+    func fire() async {
+        let handler = lock.withLock { self.handler }
+        await handler?()
+    }
+}
+
+let store = StreamStore()
+let shutdown = ShutdownHandle()
 
 let router = Router()
 
-router.get("/") { _, resp, next in
-    resp.send(StatusResp())
-    next()
+router.get("/") { _, _ in
+    StatusResp()
 }
 
-router.delete("/") { _, resp, next in
-    resp.send(["message": "Shutting down contract test service"])
-    next()
-    Kitura.stop()
+router.delete("/") { _, _ in
+    // Stop the service once this response has been written; graceful shutdown drains the
+    // in-flight request first.
+    Task { await shutdown.fire() }
+    return MessageResponse(message: "Shutting down contract test service")
 }
 
-router.post("/") { req, resp, next in
-    guard let createStreamReq = try? req.read(as: CreateStreamReq.self)
-    else {
-        resp.status(.badRequest).send(["message": "Body of POST to '/' invalid"])
-        return next()
-    }
+router.post("/") { request, context -> Response in
+    let createStreamReq = try await request.decode(as: CreateStreamReq.self, context: context)
     let es = EventSource(config: createStreamReq.createEventSourceConfig())
     let forwarder = CallbackForwarder(baseUrl: createStreamReq.callbackUrl)
-    let stream = es.events
-    let location: String = stateQueue.sync {
-        state[String(nextId)] = es
-        nextId += 1
-        return "/control/\(nextId - 1)"
-    }
+    let location = await store.add(es)
     // The consumer task drains the stream until `es.stop()` finishes it.
-    Task { await forwarder.consume(stream) }
+    Task { await forwarder.consume(es.events) }
     es.start()
-    resp.headers["Location"] = location
-    resp.send(["message": "Created test service entity at \(location)"])
-    next()
+    var response = try MessageResponse(message: "Created test service entity at \(location)")
+        .response(from: request, context: context)
+    response.headers[.location] = location
+    return response
 }
 
-router.delete("/control/:id") { req, resp, next in
-    stateQueue.sync {
-        if let es = state.removeValue(forKey: req.parameters["id"]!) {
-            es.stop()
-            resp.send(["message": "Shut down test service entity at \(req.matchedPath)"])
-        } else {
-            resp.status(.notFound).send(["message": "Test service entity not found at \(req.matchedPath)"])
-        }
+router.delete("/control/:id") { _, context -> MessageResponse in
+    guard let id = context.parameters.get("id"), let es = await store.remove(id: id) else {
+        throw HTTPError(.notFound, message: "Test service entity not found")
     }
-    next()
+    es.stop()
+    return MessageResponse(message: "Shut down test service entity at /control/\(id)")
 }
 
-Kitura.addHTTPServer(onPort: 8000, onAddress: "localhost", with: router)
-Kitura.run()
+let app = Application(
+    router: router,
+    configuration: .init(address: .hostname("127.0.0.1", port: 8000))
+)
+
+let serviceGroup = ServiceGroup(
+    configuration: .init(
+        services: [app],
+        gracefulShutdownSignals: [.sigterm, .sigint],
+        logger: Logger(label: "contract-test-service")
+    )
+)
+shutdown.set { await serviceGroup.triggerGracefulShutdown() }
+try await serviceGroup.run()

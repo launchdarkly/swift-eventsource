@@ -1,14 +1,14 @@
-// swift-tools-version:5.9
+// swift-tools-version:6.0
 
 import PackageDescription
 
 let package = Package(
   name: "ContractTestService",
   platforms: [
-    .iOS(.v16),
-    .macOS(.v13),
-    .watchOS(.v9),
-    .tvOS(.v16),
+    // Hummingbird's Router/Application are @available(macOS 14, iOS 17, tvOS 17); no watchOS.
+    .macOS(.v14),
+    .iOS(.v17),
+    .tvOS(.v17),
   ],
   products: [
     .executable(
@@ -19,14 +19,20 @@ let package = Package(
   dependencies: [
     // Local dependency to LDSwiftEventSource
     .package(name: "LDSwiftEventSource", path: ".."),
-    .package(url: "https://github.com/Kitura/Kitura", from: "2.9.200")
+    .package(url: "https://github.com/hummingbird-project/hummingbird.git", from: "2.0.0"),
+    .package(url: "https://github.com/swift-server/swift-service-lifecycle.git", from: "2.0.0"),
+    .package(url: "https://github.com/apple/swift-log.git", from: "1.5.0"),
+    .package(url: "https://github.com/apple/swift-http-types.git", from: "1.0.0")
   ],
   targets: [
-    .target(
+    .executableTarget(
       name: "ContractTestService",
       dependencies: [
         .product(name: "LDSwiftEventSource", package: "LDSwiftEventSource"),
-        "Kitura"
+        .product(name: "Hummingbird", package: "hummingbird"),
+        .product(name: "ServiceLifecycle", package: "swift-service-lifecycle"),
+        .product(name: "Logging", package: "swift-log"),
+        .product(name: "HTTPTypes", package: "swift-http-types")
       ]
     )
   ]
