@@ -333,6 +333,17 @@ final class EventSourceDelegate: NSObject, URLSessionDataDelegate, @unchecked Se
                     return
                 }
             }
+        } else if readyState != .open {
+            // The task completed with no error, but the stream never opened -- no usable HTTP response
+            // was delivered. On Linux, libcurl terminates a 3xx redirect with an empty or missing
+            // Location exactly this way (no error, no response, no willPerformHTTPRedirection call),
+            // whereas CFNetwork surfaces it as an error. Retrying the same URL just repeats it, so
+            // report an unrecoverable error and stop instead of reconnecting forever.
+            logger.info("Connection closed before any response was received; reporting as unrecoverable")
+            handler.onError(EventSourceError(statusCode: nil, headers: [:], recoverable: false, underlyingError: nil))
+            readyState = .shutdown
+            continuation.finish()
+            return
         } else {
             logger.info("Connection unexpectedly closed.")
         }

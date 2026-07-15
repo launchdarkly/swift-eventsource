@@ -281,6 +281,28 @@ final class LDSwiftEventSourceTests {
         collector.cancel()
     }
 
+    @Test func closeWithoutResponseEmitsUnrecoverableError() async throws {
+        var config = EventSource.Config(url: URL(string: "http://example.com")!)
+        config.urlSessionConfiguration = sessionWithMockProtocol()
+        config.reconnectTime = 0.1
+        let es = EventSource(config: config)
+        let collector = EventCollector(es.events)
+        es.start()
+        let handler = try #require(await MockingProtocol.requested.expectEvent())
+        // Finish the request without ever sending a response. This is how libcurl (Linux) terminates a
+        // 3xx redirect whose Location is empty or missing: the task completes with no error and no
+        // response. The client must surface an unrecoverable error and stop, not reconnect forever.
+        handler.finish()
+        let error = await collector.expectError()
+        #expect(error?.statusCode == nil)
+        #expect(error?.recoverable == false)
+        // The unrecoverable error ends the stream; no reconnect attempt should follow.
+        await MockingProtocol.requested.expectNoEvent()
+        es.stop()
+        await expectFullyConsumed(collector)
+        collector.cancel()
+    }
+
     @Test func lastEventIdUpdatedByEvents() async throws {
         var config = EventSource.Config(url: URL(string: "http://example.com")!)
         config.urlSessionConfiguration = sessionWithMockProtocol()
