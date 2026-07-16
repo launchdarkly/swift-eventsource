@@ -71,14 +71,34 @@ jobs:
         run: swift test --sanitize=thread
 
   contract-tests:
-    runs-on: macos-15
+    name: 'contract-tests (${{ matrix.name }})'
+    runs-on: ${{ matrix.os }}
+    # Empty for the macOS job, which runs directly on the runner VM.
+    container: ${{ matrix.container }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: macos
+            os: macos-15
+          - name: linux
+            os: ubuntu-latest
+            container: swift:6.1
 
     steps:
       - uses: actions/checkout@v4
 
-      - uses: maxim-lobanov/setup-xcode@60606e260d2fc5762a71e64e74b2174e8ea3c8bd
+      - name: Select Xcode
+        if: runner.os == 'macOS'
+        uses: maxim-lobanov/setup-xcode@60606e260d2fc5762a71e64e74b2174e8ea3c8bd
         with:
           xcode-version: 16.4
+
+      # The swift container lacks make (the composite action) and curl (the harness downloader).
+      - name: Install make and curl
+        if: runner.os == 'Linux'
+        run: apt-get update && apt-get install -y make curl
 
       - uses: ./.github/actions/contract-tests
         with:
