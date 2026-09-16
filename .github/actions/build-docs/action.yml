@@ -4,6 +4,12 @@ description: 'Build Documentation.'
 runs:
   using: composite
   steps:
+    # jazzy depends on mustache, which uses taint/untaint APIs that were
+    # removed in Ruby 3.2, so it needs a Ruby no newer than 3.1.
+    - uses: ruby/setup-ruby@984c0c890880bbf811283d6f09c4607c62d210a4 # v1.323.0
+      with:
+        ruby-version: '3.1'
+
     - name: Install jazzy gem
       shell: bash
       run: gem install jazzy
