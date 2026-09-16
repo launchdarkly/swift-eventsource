@@ -9,7 +9,7 @@
 LDSwiftEventSource is a cross platform implementation of the [EventSource specification](https://html.spec.whatwg.org/multipage/server-sent-events.html) written in Swift. It was developed for use in the [LaunchDarkly iOS SDK](https://github.com/launchdarkly/ios-client-sdk). Generated API docs are available on [GitHub Pages](https://launchdarkly.github.io/swift-eventsource/).
 
 ## Requirements
-- iOS 11.0+ / watchOS 4.0+ / tvOS 11.0+ / macOS 10.13+
+- iOS 15.0+ / watchOS 9.0+ / tvOS 15.0+ / macOS 12.0+
 - Swift 5.1+
 
 ## Installation
