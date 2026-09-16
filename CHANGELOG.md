@@ -2,6 +2,13 @@
 
 All notable changes to the LaunchDarkly Swift EventSource library will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [3.3.1](https://github.com/launchdarkly/swift-eventsource/compare/3.3.0...3.3.1) (2026-09-16)
+
+
+### Bug Fixes
+
+* raise minimum deployment targets to iOS 15, tvOS 15, watchOS 9, macOS 12 for Xcode 27 ([#115](https://github.com/launchdarkly/swift-eventsource/issues/115)) ([e8111f9](https://github.com/launchdarkly/swift-eventsource/commit/e8111f94817fe6a792be5f3602c56943bfb976c8))
+
 ## [3.3.0](https://github.com/launchdarkly/swift-eventsource/compare/3.2.0...3.3.0) (2024-05-31)
 
 
