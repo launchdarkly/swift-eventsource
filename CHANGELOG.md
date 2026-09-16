@@ -2,6 +2,17 @@
 
 All notable changes to the LaunchDarkly Swift EventSource library will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [3.3.1](https://github.com/launchdarkly/swift-eventsource/compare/3.3.0...3.3.1) (2026-09-16)
+
+This release raises the minimum deployment targets to iOS 15, tvOS 15, watchOS 9, and macOS 12, matching the minimum targets buildable with Xcode 27. There are no functional changes.
+
+If your application still deploys to older OS versions (iOS/tvOS 11–14, watchOS 4–8, macOS 10.13–11) and you build with Xcode 26 or earlier, pin `LDSwiftEventSource` to `3.3.0` — or, if you consume it through the LaunchDarkly iOS SDK, pin `LaunchDarkly` to `11.6.1`, which depends on exactly LDSwiftEventSource 3.3.0. Note that Xcode 27 cannot build for those OS versions with any version of this library. See LaunchDarkly's [End of Life Policy](https://launchdarkly.com/policies/end-of-life-policy/) regarding platform version support.
+
+
+### Bug Fixes
+
+* raise minimum deployment targets to iOS 15, tvOS 15, watchOS 9, macOS 12 for Xcode 27 ([#115](https://github.com/launchdarkly/swift-eventsource/issues/115)) ([e8111f9](https://github.com/launchdarkly/swift-eventsource/commit/e8111f94817fe6a792be5f3602c56943bfb976c8))
+
 ## [3.3.0](https://github.com/launchdarkly/swift-eventsource/compare/3.2.0...3.3.0) (2024-05-31)
 
 
