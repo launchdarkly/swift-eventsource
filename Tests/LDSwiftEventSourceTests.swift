@@ -402,6 +402,9 @@ final class LDSwiftEventSourceTests: XCTestCase {
         let handler = MockingProtocol.requested.expectEvent()
         handler.respond(statusCode: 200)
         XCTAssertEqual(mockHandler.events.expectEvent(), .opened)
+        // Comment used for synchronization
+        handler.respond(didLoad: ":comment\n")
+        XCTAssertEqual(mockHandler.events.expectEvent(), .comment("comment"))
 
         // The server closes an established stream without an error.
         handler.finish()
@@ -431,6 +434,9 @@ final class LDSwiftEventSourceTests: XCTestCase {
         let handler = MockingProtocol.requested.expectEvent()
         handler.respond(statusCode: 200)
         XCTAssertEqual(mockHandler.events.expectEvent(), .opened)
+        // Comment used for synchronization
+        handler.respond(didLoad: ":comment\n")
+        XCTAssertEqual(mockHandler.events.expectEvent(), .comment("comment"))
 
         // The server closes an established stream without an error.
         handler.finish()
