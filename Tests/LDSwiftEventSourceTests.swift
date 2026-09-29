@@ -247,6 +247,7 @@ final class LDSwiftEventSourceTests: XCTestCase {
         XCTAssertEqual(mockHandler.events.expectEvent(), .comment("comment"))
         XCTAssertEqual(es.getLastEventId(), "abc")
         handler.finish()
+        XCTAssertEqual(mockHandler.events.expectEvent(), .error(StreamClosedByServerError()))
         XCTAssertEqual(mockHandler.events.expectEvent(), .closed)
         // Expect to reconnect and include new event id
         let reconnectHandler = MockingProtocol.requested.expectEvent()
@@ -266,6 +267,7 @@ final class LDSwiftEventSourceTests: XCTestCase {
         XCTAssertEqual(mockHandler.events.expectEvent(), .opened)
         handler.respond(didLoad: "retry: 100\n\n")
         handler.finish()
+        XCTAssertEqual(mockHandler.events.expectEvent(), .error(StreamClosedByServerError()))
         XCTAssertEqual(mockHandler.events.expectEvent(), .closed)
         // Expect to reconnect before this times out
         _ = MockingProtocol.requested.expectEvent()
@@ -388,6 +390,74 @@ final class LDSwiftEventSourceTests: XCTestCase {
         MockingProtocol.requested.expectNoEvent(within: 1.0)
         es.stop()
         // Error should not have been given to the handler
+        mockHandler.events.expectNoEvent()
+    }
+
+    func testRetryOnStreamClosedByServer() {
+        var config = EventSource.Config(handler: mockHandler, url: URL(string: "http://example.com")!)
+        config.urlSessionConfiguration = sessionWithMockProtocol()
+        config.reconnectTime = 0.1
+        let es = EventSource(config: config)
+        es.start()
+        let handler = MockingProtocol.requested.expectEvent()
+        handler.respond(statusCode: 200)
+        XCTAssertEqual(mockHandler.events.expectEvent(), .opened)
+
+        // The server closes an established stream without an error.
+        handler.finish()
+
+        // The close is reported as a failure, and the client reconnects.
+        guard case let .error(err) = mockHandler.events.expectEvent(),
+              err is StreamClosedByServerError
+        else {
+            XCTFail("Expected StreamClosedByServerError to be given to handler")
+            return
+        }
+        XCTAssertEqual(mockHandler.events.expectEvent(), .closed)
+        _ = MockingProtocol.requested.expectEvent()
+        es.stop()
+    }
+
+    func testShutdownByErrorHandlerOnStreamClosedByServer() {
+        var config = EventSource.Config(handler: mockHandler, url: URL(string: "http://example.com")!)
+        config.urlSessionConfiguration = sessionWithMockProtocol()
+        config.reconnectTime = 0.1
+        config.connectionErrorHandler = { err in
+            XCTAssertTrue(err is StreamClosedByServerError)
+            return .shutdown
+        }
+        let es = EventSource(config: config)
+        es.start()
+        let handler = MockingProtocol.requested.expectEvent()
+        handler.respond(statusCode: 200)
+        XCTAssertEqual(mockHandler.events.expectEvent(), .opened)
+
+        // The server closes an established stream without an error.
+        handler.finish()
+
+        // The error handler owns the reconnect, so the client does not retry on its own.
+        XCTAssertEqual(mockHandler.events.expectEvent(), .closed)
+        MockingProtocol.requested.expectNoEvent(within: 1.0)
+        es.stop()
+        // Error should not have been given to the handler
+        mockHandler.events.expectNoEvent()
+    }
+
+    func testStopIsNotReportedAsStreamClosedByServer() {
+        var config = EventSource.Config(handler: mockHandler, url: URL(string: "http://example.com")!)
+        config.urlSessionConfiguration = sessionWithMockProtocol()
+        config.reconnectTime = 0.1
+        let es = EventSource(config: config)
+        es.start()
+        let handler = MockingProtocol.requested.expectEvent()
+        handler.respond(statusCode: 200)
+        XCTAssertEqual(mockHandler.events.expectEvent(), .opened)
+
+        // The client closes the stream itself.
+        es.stop()
+
+        // A close the client starts is not a failure, so no error is reported.
+        XCTAssertEqual(mockHandler.events.expectEvent(), .closed)
         mockHandler.events.expectNoEvent()
     }
 #endif

@@ -276,20 +276,25 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
         guard readyState != .shutdown
         else { return }
 
+        var connectionError: Error?
         if let error = error {
+            // A cancel is a close that this client started, so it is not a failure to report.
             if (error as NSError).code != NSURLErrorCancelled {
                 logger.log(.info, "Connection error: %@", error.localizedDescription)
-                if dispatchError(error: error) == .shutdown {
-                    logger.log(.info, "Connection has been explicitly shut down by error handler")
-                    if readyState == .open {
-                        config.handler.onClosed()
-                    }
-                    readyState = .shutdown
-                    return
-                }
+                connectionError = error
             }
         } else {
             logger.log(.info, "Connection unexpectedly closed.")
+            connectionError = StreamClosedByServerError()
+        }
+
+        if let connectionError = connectionError, dispatchError(error: connectionError) == .shutdown {
+            logger.log(.info, "Connection has been explicitly shut down by error handler")
+            if readyState == .open {
+                config.handler.onClosed()
+            }
+            readyState = .shutdown
+            return
         }
 
         if readyState == .open {

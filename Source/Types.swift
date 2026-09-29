@@ -95,6 +95,9 @@ public enum ReadyState: String, Equatable {
     case shutdown
 }
 
+/// Error class that indicates the remote server closed the connection without an error.
+public class StreamClosedByServerError: Error { }
+
 /// Error class that indicates the remote server returned an unsuccessful HTTP response code.
 public class UnsuccessfulResponseError: Error {
     /// The HTTP response code received.
