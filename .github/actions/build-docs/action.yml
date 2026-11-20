@@ -4,7 +4,7 @@ description: 'Build Documentation.'
 runs:
   using: composite
   steps:
-    - uses: ruby/setup-ruby@984c0c890880bbf811283d6f09c4607c62d210a4 # v1.323.0
+    - uses: ruby/setup-ruby@b3aaceaef7e0ee231b499e7b5f49c03fc1d32199 # v1.338.0
       with:
         ruby-version: '3.1'
 
